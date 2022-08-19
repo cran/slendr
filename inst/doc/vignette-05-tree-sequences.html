@@ -392,13 +392,13 @@ environment for us:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_env</span>()</span></code></pre></div>
 <pre><code>#&gt; Summary of the currently active Python environment:
 #&gt; 
-#&gt; Python binary: /Users/mp/Library/r-miniconda-arm64/envs/msprime-1.1.1_tskit-0.4.1_pyslim-0.700/bin/python 
+#&gt; Python binary: /Users/mp/Library/r-miniconda-arm64/envs/msprime-1.2.0_tskit-0.5.2_pyslim-1.0/bin/python 
 #&gt; Python version: 3.8.13 | packaged by conda-forge | (default, Mar 25 2022, 06:05:16)  [Clang 12.0.1 ] 
 #&gt; 
 #&gt; slendr requirements:
-#&gt;  - tskit: version 0.4.1 ✓ 
-#&gt;  - msprime: version 1.1.1 ✓ 
-#&gt;  - pyslim: version 0.700 ✓</code></pre>
+#&gt;  - tskit: version 0.5.2 ✓ 
+#&gt;  - msprime: version 1.2.0 ✓ 
+#&gt;  - pyslim: version 1.0 ✓</code></pre>
 <p>Now we’re good to go and ready to simulate and analyse tree sequence
 outputs in R!</p>
 <div id="model-of-neanderthal-introgression-into-eurasians" class="section level3">
@@ -560,20 +560,11 @@ downstream analysis.</p>
 <pre><code>#&gt; --------------------------------------------------
 #&gt; msprime command to be executed:
 #&gt; 
-#&gt; python3 \
-#&gt;     /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed86c14ba2d_introgression/script.py \
-#&gt;     --seed 314159 \
-#&gt;     --model /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed86c14ba2d_introgression \
-#&gt;     --output /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed866b8b61e.trees \
-#&gt;     --sequence-length 100000000 \
-#&gt;     --recombination-rate 1e-08 \
-#&gt;     --sampling-schedule /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed868bca041 \
-#&gt;     --verbose \
-#&gt;      
+#&gt; /Users/mp/Library/r-miniconda-arm64/envs/msprime-1.2.0_tskit-0.5.2_pyslim-1.0/bin/python /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e85b7d80f4_introgression/script.py --seed 314159 --model /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e85b7d80f4_introgression --output /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e8107e00ec.trees --sequence-length 100000000 --recombination-rate 1e-08 --sampling-schedule /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e8406e8e69 --verbose  
 #&gt; --------------------------------------------------
 #&gt; 
 #&gt; Tree sequence was saved to:
-#&gt;  /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed866b8b61e.trees 
+#&gt;  /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e8107e00ec.trees 
 #&gt; Loading the tree-sequence file...</code></pre>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>ts</span></code></pre></div>
 <pre><code>#&gt; ╔═══════════════════════════╗
@@ -656,7 +647,7 @@ to the tree-sequence file ourselves.</p>
 <span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>output_file</span></code></pre></div>
-<pre><code>#&gt; [1] &quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed869fe76cf&quot;</code></pre>
+<pre><code>#&gt; [1] &quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e858978327&quot;</code></pre>
 <p>In case have the tree-sequence output saved in a custom location on
 disk, we can load the tree sequence using the <em>slendr</em> function
 <code>ts_load()</code>. If we’re dealing with a tree sequence produced
@@ -931,65 +922,81 @@ in R:</p>
 <div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(ts)</span></code></pre></div>
 <pre><code>#&gt;   [1] &quot;alignments&quot;                      &quot;allele_frequency_spectrum&quot;      
 #&gt;   [3] &quot;as_fasta&quot;                        &quot;as_nexus&quot;                       
-#&gt;   [5] &quot;aslist&quot;                          &quot;at&quot;                             
-#&gt;   [7] &quot;at_index&quot;                        &quot;breakpoints&quot;                    
-#&gt;   [9] &quot;coiterate&quot;                       &quot;count_topologies&quot;               
-#&gt;  [11] &quot;delete_intervals&quot;                &quot;delete_sites&quot;                   
-#&gt;  [13] &quot;diffs&quot;                           &quot;discrete_genome&quot;                
-#&gt;  [15] &quot;discrete_time&quot;                   &quot;divergence&quot;                     
-#&gt;  [17] &quot;diversity&quot;                       &quot;draw_svg&quot;                       
-#&gt;  [19] &quot;draw_text&quot;                       &quot;dump&quot;                           
-#&gt;  [21] &quot;dump_tables&quot;                     &quot;dump_text&quot;                      
-#&gt;  [23] &quot;edge&quot;                            &quot;edge_diffs&quot;                     
-#&gt;  [25] &quot;edges&quot;                           &quot;edgesets&quot;                       
-#&gt;  [27] &quot;equals&quot;                          &quot;f2&quot;                             
-#&gt;  [29] &quot;f3&quot;                              &quot;f4&quot;                             
-#&gt;  [31] &quot;file_uuid&quot;                       &quot;first&quot;                          
-#&gt;  [33] &quot;Fst&quot;                             &quot;genealogical_nearest_neighbours&quot;
-#&gt;  [35] &quot;general_stat&quot;                    &quot;genetic_relatedness&quot;            
-#&gt;  [37] &quot;genotype_matrix&quot;                 &quot;get_ll_tree_sequence&quot;           
-#&gt;  [39] &quot;get_num_mutations&quot;               &quot;get_num_nodes&quot;                  
-#&gt;  [41] &quot;get_num_records&quot;                 &quot;get_num_sites&quot;                  
-#&gt;  [43] &quot;get_num_trees&quot;                   &quot;get_pairwise_diversity&quot;         
-#&gt;  [45] &quot;get_population&quot;                  &quot;get_sample_size&quot;                
-#&gt;  [47] &quot;get_samples&quot;                     &quot;get_sequence_length&quot;            
-#&gt;  [49] &quot;get_time&quot;                        &quot;haplotypes&quot;                     
-#&gt;  [51] &quot;has_reference_sequence&quot;          &quot;ibd_segments&quot;                   
-#&gt;  [53] &quot;individual&quot;                      &quot;individuals&quot;                    
-#&gt;  [55] &quot;kc_distance&quot;                     &quot;keep_intervals&quot;                 
-#&gt;  [57] &quot;last&quot;                            &quot;ll_tree_sequence&quot;               
-#&gt;  [59] &quot;load&quot;                            &quot;load_tables&quot;                    
-#&gt;  [61] &quot;ltrim&quot;                           &quot;max_root_time&quot;                  
-#&gt;  [63] &quot;mean_descendants&quot;                &quot;metadata&quot;                       
-#&gt;  [65] &quot;metadata_schema&quot;                 &quot;migration&quot;                      
-#&gt;  [67] &quot;migrations&quot;                      &quot;mutation&quot;                       
-#&gt;  [69] &quot;mutations&quot;                       &quot;nbytes&quot;                         
-#&gt;  [71] &quot;newick_trees&quot;                    &quot;node&quot;                           
-#&gt;  [73] &quot;nodes&quot;                           &quot;num_edges&quot;                      
-#&gt;  [75] &quot;num_individuals&quot;                 &quot;num_migrations&quot;                 
-#&gt;  [77] &quot;num_mutations&quot;                   &quot;num_nodes&quot;                      
-#&gt;  [79] &quot;num_populations&quot;                 &quot;num_provenances&quot;                
-#&gt;  [81] &quot;num_samples&quot;                     &quot;num_sites&quot;                      
-#&gt;  [83] &quot;num_trees&quot;                       &quot;pairwise_diversity&quot;             
-#&gt;  [85] &quot;parse_windows&quot;                   &quot;population&quot;                     
-#&gt;  [87] &quot;populations&quot;                     &quot;provenance&quot;                     
-#&gt;  [89] &quot;provenances&quot;                     &quot;records&quot;                        
-#&gt;  [91] &quot;reference_sequence&quot;              &quot;rtrim&quot;                          
-#&gt;  [93] &quot;sample_count_stat&quot;               &quot;sample_size&quot;                    
-#&gt;  [95] &quot;samples&quot;                         &quot;segregating_sites&quot;              
-#&gt;  [97] &quot;sequence_length&quot;                 &quot;simplify&quot;                       
-#&gt;  [99] &quot;site&quot;                            &quot;sites&quot;                          
-#&gt; [101] &quot;subset&quot;                          &quot;table_metadata_schemas&quot;         
-#&gt; [103] &quot;tables&quot;                          &quot;tables_dict&quot;                    
-#&gt; [105] &quot;Tajimas_D&quot;                       &quot;time_units&quot;                     
-#&gt; [107] &quot;to_macs&quot;                         &quot;to_nexus&quot;                       
-#&gt; [109] &quot;trait_correlation&quot;               &quot;trait_covariance&quot;               
-#&gt; [111] &quot;trait_linear_model&quot;              &quot;trait_regression&quot;               
-#&gt; [113] &quot;trees&quot;                           &quot;trim&quot;                           
-#&gt; [115] &quot;union&quot;                           &quot;variants&quot;                       
-#&gt; [117] &quot;write_fasta&quot;                     &quot;write_nexus&quot;                    
-#&gt; [119] &quot;write_vcf&quot;                       &quot;Y1&quot;                             
-#&gt; [121] &quot;Y2&quot;                              &quot;Y3&quot;</code></pre>
+#&gt;   [5] &quot;as_vcf&quot;                          &quot;aslist&quot;                         
+#&gt;   [7] &quot;at&quot;                              &quot;at_index&quot;                       
+#&gt;   [9] &quot;breakpoints&quot;                     &quot;coiterate&quot;                      
+#&gt;  [11] &quot;count_topologies&quot;                &quot;decapitate&quot;                     
+#&gt;  [13] &quot;delete_intervals&quot;                &quot;delete_sites&quot;                   
+#&gt;  [15] &quot;diffs&quot;                           &quot;discrete_genome&quot;                
+#&gt;  [17] &quot;discrete_time&quot;                   &quot;divergence&quot;                     
+#&gt;  [19] &quot;diversity&quot;                       &quot;draw_svg&quot;                       
+#&gt;  [21] &quot;draw_text&quot;                       &quot;dump&quot;                           
+#&gt;  [23] &quot;dump_tables&quot;                     &quot;dump_text&quot;                      
+#&gt;  [25] &quot;edge&quot;                            &quot;edge_diffs&quot;                     
+#&gt;  [27] &quot;edges&quot;                           &quot;edges_child&quot;                    
+#&gt;  [29] &quot;edges_left&quot;                      &quot;edges_parent&quot;                   
+#&gt;  [31] &quot;edges_right&quot;                     &quot;edgesets&quot;                       
+#&gt;  [33] &quot;equals&quot;                          &quot;f2&quot;                             
+#&gt;  [35] &quot;f3&quot;                              &quot;f4&quot;                             
+#&gt;  [37] &quot;file_uuid&quot;                       &quot;first&quot;                          
+#&gt;  [39] &quot;Fst&quot;                             &quot;genealogical_nearest_neighbours&quot;
+#&gt;  [41] &quot;general_stat&quot;                    &quot;genetic_relatedness&quot;            
+#&gt;  [43] &quot;genotype_matrix&quot;                 &quot;get_ll_tree_sequence&quot;           
+#&gt;  [45] &quot;get_num_mutations&quot;               &quot;get_num_nodes&quot;                  
+#&gt;  [47] &quot;get_num_records&quot;                 &quot;get_num_sites&quot;                  
+#&gt;  [49] &quot;get_num_trees&quot;                   &quot;get_pairwise_diversity&quot;         
+#&gt;  [51] &quot;get_population&quot;                  &quot;get_sample_size&quot;                
+#&gt;  [53] &quot;get_samples&quot;                     &quot;get_sequence_length&quot;            
+#&gt;  [55] &quot;get_time&quot;                        &quot;haplotypes&quot;                     
+#&gt;  [57] &quot;has_reference_sequence&quot;          &quot;ibd_segments&quot;                   
+#&gt;  [59] &quot;indexes_edge_insertion_order&quot;    &quot;indexes_edge_removal_order&quot;     
+#&gt;  [61] &quot;individual&quot;                      &quot;individual_locations&quot;           
+#&gt;  [63] &quot;individual_populations&quot;          &quot;individual_times&quot;               
+#&gt;  [65] &quot;individuals&quot;                     &quot;individuals_flags&quot;              
+#&gt;  [67] &quot;individuals_location&quot;            &quot;individuals_population&quot;         
+#&gt;  [69] &quot;individuals_time&quot;                &quot;kc_distance&quot;                    
+#&gt;  [71] &quot;keep_intervals&quot;                  &quot;last&quot;                           
+#&gt;  [73] &quot;ll_tree_sequence&quot;                &quot;load&quot;                           
+#&gt;  [75] &quot;load_tables&quot;                     &quot;ltrim&quot;                          
+#&gt;  [77] &quot;max_root_time&quot;                   &quot;mean_descendants&quot;               
+#&gt;  [79] &quot;metadata&quot;                        &quot;metadata_schema&quot;                
+#&gt;  [81] &quot;migration&quot;                       &quot;migrations&quot;                     
+#&gt;  [83] &quot;migrations_dest&quot;                 &quot;migrations_left&quot;                
+#&gt;  [85] &quot;migrations_node&quot;                 &quot;migrations_right&quot;               
+#&gt;  [87] &quot;migrations_source&quot;               &quot;migrations_time&quot;                
+#&gt;  [89] &quot;mutation&quot;                        &quot;mutations&quot;                      
+#&gt;  [91] &quot;mutations_node&quot;                  &quot;mutations_parent&quot;               
+#&gt;  [93] &quot;mutations_site&quot;                  &quot;mutations_time&quot;                 
+#&gt;  [95] &quot;nbytes&quot;                          &quot;newick_trees&quot;                   
+#&gt;  [97] &quot;node&quot;                            &quot;nodes&quot;                          
+#&gt;  [99] &quot;nodes_flags&quot;                     &quot;nodes_individual&quot;               
+#&gt; [101] &quot;nodes_population&quot;                &quot;nodes_time&quot;                     
+#&gt; [103] &quot;num_edges&quot;                       &quot;num_individuals&quot;                
+#&gt; [105] &quot;num_migrations&quot;                  &quot;num_mutations&quot;                  
+#&gt; [107] &quot;num_nodes&quot;                       &quot;num_populations&quot;                
+#&gt; [109] &quot;num_provenances&quot;                 &quot;num_samples&quot;                    
+#&gt; [111] &quot;num_sites&quot;                       &quot;num_trees&quot;                      
+#&gt; [113] &quot;pairwise_diversity&quot;              &quot;parse_windows&quot;                  
+#&gt; [115] &quot;population&quot;                      &quot;populations&quot;                    
+#&gt; [117] &quot;provenance&quot;                      &quot;provenances&quot;                    
+#&gt; [119] &quot;records&quot;                         &quot;reference_sequence&quot;             
+#&gt; [121] &quot;rtrim&quot;                           &quot;sample_count_stat&quot;              
+#&gt; [123] &quot;sample_size&quot;                     &quot;samples&quot;                        
+#&gt; [125] &quot;segregating_sites&quot;               &quot;sequence_length&quot;                
+#&gt; [127] &quot;simplify&quot;                        &quot;site&quot;                           
+#&gt; [129] &quot;sites&quot;                           &quot;sites_position&quot;                 
+#&gt; [131] &quot;split_edges&quot;                     &quot;subset&quot;                         
+#&gt; [133] &quot;table_metadata_schemas&quot;          &quot;tables&quot;                         
+#&gt; [135] &quot;tables_dict&quot;                     &quot;Tajimas_D&quot;                      
+#&gt; [137] &quot;time_units&quot;                      &quot;to_macs&quot;                        
+#&gt; [139] &quot;to_nexus&quot;                        &quot;trait_correlation&quot;              
+#&gt; [141] &quot;trait_covariance&quot;                &quot;trait_linear_model&quot;             
+#&gt; [143] &quot;trait_regression&quot;                &quot;trees&quot;                          
+#&gt; [145] &quot;trim&quot;                            &quot;union&quot;                          
+#&gt; [147] &quot;variants&quot;                        &quot;write_fasta&quot;                    
+#&gt; [149] &quot;write_nexus&quot;                     &quot;write_vcf&quot;                      
+#&gt; [151] &quot;Y1&quot;                              &quot;Y2&quot;                             
+#&gt; [153] &quot;Y3&quot;</code></pre>
 <p>In fact, you will recognize some of the elements in the output above
 from examples involving <code>ts_</code> functions in this vignette! In
 short, there is no blackbox—<em>slendr</em> only provides a slightly

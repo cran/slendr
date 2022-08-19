@@ -1,6 +1,16 @@
+# slendr 0.3.0
+
+-   SLiM 4.0 is now required for running simulations with the `slim()` engine. If you want to run _slendr_ simulations with SLiM (spatial or non-spatial), you will need to upgrade you SLiM installation. SLiM 3.7.1 version is no longer supported as the upcoming new _slendr_ spatial features will depend on SLiM 4.x and maintaining two functionally identical yet syntactically different back ends is not feasible (PR [#104](https://github.com/bodkan/slendr/pull/104)).
+
+-   At the same time as the SLiM 4.0 release, new versions of Python modules msprime, tskit and pyslim have also been released. In fact, to be able to work with SLiM 4.0 tree sequences properly, those Python modules must be upgraded as well. Next time you load `library(slendr)`, you will be prompted to setup a new updated Python environment which you can do easily by running `setup_env()`.
+
+-   Experimental support for running coalescent msprime simulations and analysing tree-sequence data using tskit on the Windows platform has now been implemented (PR [#102](https://github.com/bodkan/slendr/pull/102)).
+
 # slendr 0.2.0
 
--   Big changes to the way tree-sequence outputs are handled by *slendr* by default. See [this comment](https://github.com/bodkan/slendr/pull/100#issue-1310869866) for an extended description and examples of the change. (PR [#100](https://github.com/bodkan/slendr/pull/100)).
+-   _slendr_ is now [on CRAN](https://CRAN.R-project.org/package=slendr)!
+
+-   Big changes to the way tree-sequence outputs are handled by *slendr* by default. See [this comment](https://github.com/bodkan/slendr/pull/100#issue-1310869866) for an extended description and examples of the change. (PR [#100](https://github.com/bodkan/slendr/pull/100)). Briefly, simulation functions `slim()` and `msprime()` now return a tree-sequence object by default (can be switched off by setting `load = FALSE`), avoiding the need to always run `ts <- ts_load(model)` as previously. At the same time, a parameter `output = ` can be now used in `slim()` and `msprime()` to specify the location where a tree-sequence file should be saved (temporary file by default).
 
 -   ***slendr*****'s tree-sequence R interface to the [tskit](https://tskit.dev/tskit/docs/stable/introduction.html) Python module has been generalized to load, process, and analyze tree sequences from non-*slendr* models!** This means that users can use the *slendr* R package even for analyzing tree sequences coming from standard msprime and SLiM scripts, including all spatial capabilities that have been only available for *slendr* tree sequences so far. Please note that this generalization is still rather experimental and there might be corner cases where a tree sequence from your msprime or SLiM script does not load properly or leads to other errors. If this happens, please open a GitHub issue with the script in question attached. (PR [#91](https://github.com/bodkan/slendr/pull/91))
 
@@ -28,6 +38,6 @@
 
 -   Extensive set of runnable examples including figures and a built-in pre-compiled example model have been added to the documentation. ([#395df62c](https://github.com/bodkan/slendr/commit/395df62c))
 
-# slendr 0.1.0 (21 Mar 2022)
+# slendr 0.1.0
 
 -   First numbered version of *slendr* to celebrate its [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.03.20.485041v1). 🥳 🎉

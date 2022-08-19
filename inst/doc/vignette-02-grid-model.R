@@ -103,9 +103,9 @@ model <- compile_model(
   simulation_length = 1000
 )
 
-## ---- eval = FALSE------------------------------------------------------------
-#  ts <- slim(model, sequence_length = 10000, recombination_rate = 0) # simulate a single 10kb locus
-#  ts
+## -----------------------------------------------------------------------------
+ts <- slim(model, sequence_length = 10000, recombination_rate = 0) # simulate a single 10kb locus
+ts
 
 ## ---- results = FALSE---------------------------------------------------------
 map <- world(

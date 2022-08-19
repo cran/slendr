@@ -385,24 +385,24 @@ splitting from an ancestral population <code>p1</code> (lets save it to
     initializeRecombinationRate(1e-8);
 }
 
-1 {
+1 early() {
     sim.addSubpop(&quot;p1&quot;, 10);
 }
 
-1000 {
+1000 early() {
     sim.addSubpopSplit(&quot;p2&quot;, 500, p1);
 }
 
-3000 {
+3000 early() {
     sim.addSubpopSplit(&quot;p3&quot;, 2500, p1);
 }
 
-5000 {
+5000 early() {
     sim.addSubpopSplit(&quot;p4&quot;, 10000, p1);
 }
 
 6000 late() {
-    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed810e6379c&quot;);
+    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e819fcb655&quot;);
 }</code></pre>
 <p>After we run this script in SLiM, we can use <em>slendr</em> to load
 the output tree sequence (saved to
@@ -452,7 +452,7 @@ also include spatial information—see below):</p>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; --------------------- </span></span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; overview of the underlying table object:</span></span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 26,020 × 10</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 26,020 × 11</span></span>
 <span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    pop   node_id  time time_tskit sampled remembe…¹ retai…² alive pedig…³ ind_id</span></span>
 <span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;   &lt;int&gt; &lt;dbl&gt;      &lt;dbl&gt; &lt;lgl&gt;   &lt;lgl&gt;     &lt;lgl&gt;   &lt;lgl&gt;   &lt;dbl&gt;  &lt;dbl&gt;</span></span>
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 p1          0     0          0 TRUE    FALSE     FALSE   TRUE   2.01e7      0</span></span>
@@ -465,9 +465,9 @@ also include spatial information—see below):</p>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 p1          7     0          0 TRUE    FALSE     FALSE   TRUE   2.01e7      3</span></span>
 <span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 p1          8     0          0 TRUE    FALSE     FALSE   TRUE   2.01e7      4</span></span>
 <span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 p1          9     0          0 TRUE    FALSE     FALSE   TRUE   2.01e7      4</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 26,010 more rows, and abbreviated variable names ¹​remembered,</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ²​retained, ³​pedigree_id</span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows</span></span></code></pre></div>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 26,010 more rows, 1 more variable: pop_id &lt;int&gt;, and abbreviated</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   variable names ¹​remembered, ²​retained, ³​pedigree_id</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names</span></span></code></pre></div>
 <p>Moving on to tskit statistics, we can use the data table above to
 extract a list of nodes belonging to each population (this is what
 various tskit tree-sequence statistics operate on, and <em>slendr</em>
@@ -606,7 +606,7 @@ modifyChild() {
 }
 
 10000 late() {
-    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpCCdv89/file15ed84ff4c17c&quot;);
+    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e876affd47&quot;);
 }</code></pre>
 <p>We can then load and simplify the output tree sequence in just as we
 did above in this vignette (or anywhere in the <em>slendr</em>
@@ -639,7 +639,7 @@ spatial <a href="https://r-spatial.github.io/sf/"><em>sf</em></a> column
 <span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; --------------------- </span></span>
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; overview of the underlying sf object:</span></span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1,955 × 11</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1,955 × 12</span></span>
 <span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    pop   node_id  time time_…¹               location sampled remembered retai…²</span></span>
 <span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;   &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt;                &lt;POINT&gt; &lt;lgl&gt;   &lt;lgl&gt;      &lt;lgl&gt;  </span></span>
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 p1          0     0       0   (0.904485 0.0777489) TRUE    FALSE      TRUE   </span></span>
@@ -652,9 +652,10 @@ spatial <a href="https://r-spatial.github.io/sf/"><em>sf</em></a> column
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 p1          7     0       0  (0.7617792 0.2616453) TRUE    FALSE      TRUE   </span></span>
 <span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 p1          8     0       0 (0.9807475 0.04223008) TRUE    FALSE      TRUE   </span></span>
 <span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 p1          9     0       0 (0.9807475 0.04223008) TRUE    FALSE      TRUE   </span></span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 1,945 more rows, 3 more variables: alive &lt;lgl&gt;, pedigree_id &lt;dbl&gt;,</span></span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ind_id &lt;dbl&gt;, and abbreviated variable names ¹​time_tskit, ²​retained</span></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names</span></span></code></pre></div>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 1,945 more rows, 4 more variables: alive &lt;lgl&gt;, pedigree_id &lt;dbl&gt;,</span></span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ind_id &lt;dbl&gt;, pop_id &lt;int&gt;, and abbreviated variable names ¹​time_tskit,</span></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ²​retained</span></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names</span></span></code></pre></div>
 <p>Because we get the tree sequence converted to the spatial <a href="https://r-spatial.github.io/sf/"><em>sf</em></a> data format, we
 can use standard geospatial packages to use any spatial data analysis
 methods that those packages provide.</p>
