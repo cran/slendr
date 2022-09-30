@@ -10,16 +10,8 @@ knitr::opts_chunk$set(
   eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
 )
 
-## ---- eval = FALSE------------------------------------------------------------
-#  install.packages("devtools")
-
-## ---- eval = FALSE------------------------------------------------------------
-#  devtools::install_github("bodkan/slendr")
-
 ## -----------------------------------------------------------------------------
 library(slendr)
-
-set.seed(314159)
 
 ## ---- world_zoom, results = FALSE---------------------------------------------
 map <- world(

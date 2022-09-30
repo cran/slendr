@@ -6,7 +6,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/bodkan/slendr/workflows/R-CMD-check/badge.svg)](https://github.com/bodkan/slendr/actions) [![Coverage status](https://codecov.io/gh/bodkan/slendr/branch/main/graph/badge.svg)](https://codecov.io/github/bodkan/slendr?branch=main) [![Binder](http://mybinder.org/badge.svg)](http://beta.mybinder.org/v2/gh/bodkan/slendr/main?urlpath=rstudio)
+[![CRAN-version](https://www.r-pkg.org/badges/version/slendr)](https://cran.r-project.org/package=slendr) [![CRAN-downloads](https://cranlogs.r-pkg.org/badges/grand-total/slendr)](https://cran.r-project.org/package=slendr) [![R-CMD-check](https://github.com/bodkan/slendr/workflows/R-CMD-check/badge.svg)](https://github.com/bodkan/slendr/actions) [![Coverage status](https://codecov.io/gh/bodkan/slendr/branch/main/graph/badge.svg)](https://codecov.io/github/bodkan/slendr?branch=main) [![Binder](http://mybinder.org/badge.svg)](http://beta.mybinder.org/v2/gh/bodkan/slendr/main?urlpath=rstudio)
 
 <!-- badges: end -->
 
@@ -14,7 +14,7 @@
 
 *slendr* is an R package toolbox for defining population genetic models and simulating genomic data entirely from R. It has been originally conceived as a framework for simulating spatially-explicit genomic data on real geographic landscapes but it has grown to be much more than that.
 
-A detailed description of the *slendr* architecture and an extensive set of practical code examples can be found in our [preprint](https://www.biorxiv.org/content/10.1101/2022.03.20.485041v1) on bioRxiv—if you're curious about the software, please check out the paper!
+This page briefly summarizes *slendr'*s most important features. A a much detailed description of the *slendr* architecture and an extensive set of practical code examples can be found in our [preprint](https://www.biorxiv.org/content/10.1101/2022.03.20.485041v1) on bioRxiv and on our [website](https://www.slendr.net).
 
 ------------------------------------------------------------------------
 
@@ -54,21 +54,17 @@ Once you get a browser-based RStudio session, you can navigate to the `vignettes
 
 ### Installation
 
-*slendr* is currently on its way to CRAN which means that you can't (yet!) install it by simply calling `install.packages("slendr")`.
+*slendr* is now available CRAN which means that you can install it simply by entering `install.packages("slendr")` into your R console.
 
-If you would like to test the software, you will have to get its development version from GitHub via the *devtools* R package (`install.packages("devtools")`) by calling `devtools::install_github("bodkan/slendr")`.
-
-The main dependency of *slendr* is the R package [*sf*](https://r-spatial.github.io/sf/)*.* Under normal circumstances, installing *slendr* with *devtools* will fetch all the necessary dependencies (including *sf*) from the CRAN R package repository. However, should you run into any issues, take a look at [our "Installation instructions" vignette](https://www.slendr.net/articles/vignette-00-installation.html) which describes the installation procedure in a bit more detail.
+If you would like to test the latest features of the software (perhaps because you need some bug fixes), you can install it with `devtools::install_github("bodkan/slendr")` (note that this requires the R package *devtools*).
 
 ------------------------------------------------------------------------
 
-**This software is still under development!**
+**This software is under active development!**
 
-... but we have been making steady progress towards the first stable release which will happen as soon as we publish *slendr* on CRAN.
+If you would like to stay updated:
 
-If you would like to stay updated with the developments:
-
-1.  Click on the "Watch" button on the project's [Github website](https://github.com/bodkan/slendr/).
+1.  Click on the "Watch" button on the project's [GitHub website](https://github.com/bodkan/slendr/).
 
 2.  Follow me on [Twitter](https://twitter.com/dr_bodkan) where I will be posting progress updates.
 
@@ -251,11 +247,11 @@ explore_model(model)
 
 The function has two modes:
 
-a\) Plotting (and "playing") spatial map dynamics:
+a) Plotting (and "playing") spatial map dynamics:
 
 ![](man/figures/shiny_maps.jpg)
 
-b\) Displaying the demographic history graph (splits and gene-flow events) embedded in the specified model:
+b) Displaying the demographic history graph (splits and gene-flow events) embedded in the specified model:
 
 ![](man/figures/shiny_graph.jpg)
 
@@ -263,7 +259,7 @@ b\) Displaying the demographic history graph (splits and gene-flow events) embed
 
 Finally, we can execute the compiled model in SLiM. Here we run the simulation in a batch mode, but we could also run it in SLiMgui by setting `method = "gui"`. This would allow us to inspect the spatial simulation as it happens in real time.
 
-The `slim` function generates a complete SLiM script tailored to run the spatial model we defined above. This saves you, the user, a tremendous amount of time, because you don't have to write new SLiM code every time you design a new demographic model. The output of the simulation run from any *slendr* model is always a [tree sequence](https://tskit.dev/learn.html#what), here loaded into an object `ts_slim`.
+The `slim` function generates a complete SLiM script tailored to run the spatial model we defined above. This saves you, the user, a tremendous amount of time, because you don't have to write new SLiM code every time you design a new demographic model. The output of the simulation run from any *slendr* model is always a [tree sequence](https://tskit.dev/learn/), here loaded into an object `ts_slim`.
 
 
 ```r
@@ -303,7 +299,7 @@ The example above provides only a very brief and incomplete overview of the full
 
 -   You can build complex spatial models which are still abstract (not assuming any real geographic location), including traditional simulations of demes in a lattice structure. A complete example is shown [this vignette](https://www.slendr.net/articles/vignette-02-grid-model.html).
 
--   Because *slendr* & SLiM save data in a tree-sequence file format, thanks to the R package [*reticulate*](https://rstudio.github.io/reticulate/index.html) for interfacing with Python code, we have the full power of [*tskit*](https://tskit.dev/tskit/docs/stable/) and [*pyslim*](https://tskit.dev/pyslim) for manipulating tree-sequence data right at our fingertips, all within the convenient environment of R. An extended example can be found in [this vignette](https://www.slendr.net/articles/vignette-05-tree-sequences.html).
+-   Because *slendr* & SLiM save data in a tree-sequence file format, thanks to the R package [*reticulate*](https://rstudio.github.io/reticulate/index.html) for interfacing with Python code, we have the full power of [*tskit*](https://tskit.dev/tskit/docs/stable/) and [*pyslim*](https://tskit.dev/pyslim/docs/latest/introduction.html) for manipulating tree-sequence data right at our fingertips, all within the convenient environment of R. An extended example can be found in [this vignette](https://www.slendr.net/articles/vignette-05-tree-sequences.html).
 
 -   For spatially explicit population models, the *slendr* package automatically converts the simulated output data to a format which makes it possible to analyse it with many available R packages for geospatial data analysis. A brief description of this functionality can be found in [this vignette](https://www.slendr.net/articles/vignette-06-locations.html).
 

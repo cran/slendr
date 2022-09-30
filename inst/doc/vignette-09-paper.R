@@ -9,20 +9,26 @@ knitr::opts_chunk$set(
   eval = eval_chunk
 )
 
+record_snapshot <- FALSE # only save PDFs on a local machine
+
 ## -----------------------------------------------------------------------------
-save_pdf <- FALSE # only save PDFs on a local machine
-sequence_scaling <- 10 # modify to get around GitHub actions "Killed"
+# workaround for GitHub actions getting "Killed" due to out of memory issues
+# -- when running unit tests on GitHub, smaller amount of sequence will be
+# simulated
+if (Sys.getenv("RUNNER_OS") != "") {
+  scaling <- 10 # use 10X less sequence on GitHub actions
+} else {
+  scaling <- 1 # but simulate normal amount of data otherwise
+}
 
-suppressPackageStartupMessages({
-  library(slendr)
+library(slendr)
 
-  library(dplyr)
-  library(ggplot2)
-  library(purrr)
-  library(tidyr)
-  library(cowplot)
-  library(forcats)
-})
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(tidyr)
+library(cowplot)
+library(forcats)
 
 SEED <- 42
 set.seed(SEED)
@@ -33,106 +39,62 @@ p_code <- ggplot() +
   geom_text(aes(x = 1, y = 1), label = "code will be here") +
   theme_void()
 
-## ---- eval = eval_chunk && !file.exists("~/Documents/postdoc/slendr/slendr_models/ex1/output_msprime.trees")----
-#  o <- population("o", time = 1, N = 100)
-#  c <- population("c", time = 2500, N = 100, parent = o)
-#  a <- population("a", time = 2800, N = 100, parent = c)
-#  b <- population("b", time = 3700, N = 100, parent = a)
-#  x1 <- population("x1", time = 4000, N = 15000, parent = c)
-#  x2 <- population("x2", time = 4300, N = 15000, parent = x1)
-#  
-#  gf <- gene_flow(from = b, to = x1, start = 5400, end = 5800, 0.1)
-#  
-#  model <- compile_model(
-#    populations = list(o, a, b, c, x1, x2), gene_flow = gf,
-#    generation_time = 1, simulation_length = 6000
-#  )
-#  
-#  plot_model(model, sizes = FALSE, proportions = TRUE)
-#  
-#  ts <- msprime(model, sequence_length = 100e6 / sequence_scaling, recombination_rate = 1e-8,
-#                random_seed = SEED) %>%
-#    ts_mutate(mutation_rate = 1e-8)
-#  
-#  samples <- ts_samples(ts) %>% group_by(pop) %>% sample_n(100)
-#  
-#  divergence <- ts_divergence(ts, split(samples$name, samples$pop))
-#  
-#  f4ratio <- ts_f4ratio(
-#    ts, X = filter(samples, pop %in% c("x1", "x2"))$name,
-#    A = "a_1", B = "b_1", C = "c_1", O = "o_1"
-#  )
+## ---- eval = eval_chunk, fig.keep='none'--------------------------------------
+o <- population("o", time = 1, N = 100)
+c <- population("c", time = 2500, N = 100, parent = o)
+a <- population("a", time = 2800, N = 100, parent = c)
+b <- population("b", time = 3700, N = 100, parent = a)
+x1 <- population("x1", time = 4000, N = 15000, parent = c)
+x2 <- population("x2", time = 4300, N = 15000, parent = x1)
 
-## ---- eval = eval_chunk && !file.exists("~/Documents/postdoc/slendr/slendr_models/ex1/output_slim.trees")----
-#  ts_slim <- slim(model, sequence_length = 100e6 / sequence_scaling, recombination_rate = 1e-8, random_seed = SEED) %>%
-#    ts_mutate(mutation_rate = 1e-8)
-#  
-#  divergence_slim <- ts_divergence(ts_slim, split(samples$name, samples$pop))
-#  
-#  f4ratio_slim <- ts_f4ratio(
-#    ts_slim, X = filter(samples, pop %in% c("x1", "x2"))$name,
-#    A = "a_1", B = "b_1", C = "c_1", O = "o_1"
-#  )
+gf <- gene_flow(from = b, to = x1, start = 5400, end = 5800, 0.1)
 
-## ---- include = FALSE, eval = eval_chunk && file.exists("~/Documents/postdoc/slendr/slendr_models/ex1/output_msprime.trees") && file.exists("~/Documents/postdoc/slendr/slendr_models/ex1/output_slim.trees")----
-model <- read_model("~/Documents/postdoc/slendr/slendr_models/ex1/")
-ts <- ts_load(file.path(model$path, "output_msprime.trees"), model = model) %>%
+model <- compile_model(
+  populations = list(o, a, b, c, x1, x2), gene_flow = gf,
+  generation_time = 1, simulation_length = 6000
+)
+
+plot_model(model, sizes = FALSE, proportions = TRUE) # panel B
+
+ts <- msprime(model, sequence_length = 100e6 / scaling, recombination_rate = 1e-8, random_seed = SEED) %>%
   ts_mutate(mutation_rate = 1e-8, random_seed = SEED)
 
 samples <- ts_samples(ts) %>% group_by(pop) %>% sample_n(100)
 
-# output of ts_divergence is visualized in panel C
+# panel C
 divergence <- ts_divergence(ts, split(samples$name, samples$pop))
 
-# output of ts_f4ratio is visualized in panel D
+# panel D
 f4ratio <- ts_f4ratio(
   ts, X = filter(samples, pop %in% c("x1", "x2"))$name,
   A = "a_1", B = "b_1", C = "c_1", O = "o_1"
 )
 
-ts_slim <- ts_load(file.path(model$path, "output_slim.trees"), model = model) %>% ts_mutate(mutation_rate = 1e-8, random_seed = SEED)
-
-divergence_slim <- ts_divergence(ts_slim, split(samples$name, samples$pop))
-
-f4ratio_slim <- ts_f4ratio(
-  ts_slim, X = filter(samples, pop %in% c("x1", "x2"))$name,
-  A = "a_1", B = "b_1", C = "c_1", O = "o_1"
-)
+## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex1"))
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex1.trees")
 
 ## ---- figure_ex1, fig.height=6, fig.width=9-----------------------------------
-divergence_both <- bind_rows(
-  divergence %>% mutate(backend = "msprime"),
-  divergence_slim %>% mutate(backend = "SLiM")
-) %>%
-  mutate(pair = paste(x, "-", y))
+divergence <- divergence %>% mutate(pair = paste(x, "-", y))
 
-f4ratio_both <- bind_rows(
-  f4ratio %>% mutate(backend = "msprime"),
-  f4ratio_slim %>% mutate(backend = "SLiM")
-) %>% mutate(population = gsub("^(.*)_.*$", "\\1", X), alpha = alpha * 100)
+f4ratio <- f4ratio %>% mutate(population = gsub("^(.*)_.*$", "\\1", X), alpha = alpha * 100)
 
-p_ex1_divergence <- divergence_both %>%
-  ggplot(aes(fct_reorder(pair, divergence), color = backend, shape = backend, divergence)) +
-  geom_point(size = 3) +
+p_ex1_divergence <- divergence %>%
+  ggplot(aes(fct_reorder(pair, divergence), divergence)) +
+  geom_point(size = 2.5) +
   xlab("population pair") + ylab("pairwise divergence") +
   theme_minimal() +
-  scale_alpha_manual(values = c(1, 0.25)) +
-  scale_color_manual(values = c("black", "darkgray")) +
-  guides(shape = guide_legend("slendr simulation engine used:"),
-         color = guide_legend("slendr simulation engine used:",
-                              override.aes = list(size = 3))) +
   theme(legend.position = "bottom",
         legend.text = element_text(size = 10),
-        axis.text.x = element_text(hjust = 1, angle = 45, size = 9),
+        axis.text.x = element_text(hjust = 1, angle = 45, size = 8),
         axis.title.x = element_blank())
 
-p_ex1_f4ratio <- f4ratio_both %>%
+p_ex1_f4ratio <- f4ratio %>%
   ggplot(aes(population, alpha)) + 
   geom_hline(yintercept = 0, linetype = 2) +
-  geom_jitter(aes(color = backend, shape = backend), alpha = 0.75,
-              position = position_jitterdodge(jitter.width = 0.25)) +
+  geom_jitter(alpha = 0.5) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
   ylab(base::expression(italic("f")[4]~"-ratio ancestry proportion [%]")) +
-  scale_color_manual(values = c("black", "darkgray")) +
   theme_minimal() +
   coord_cartesian(ylim = c(0, 20)) +
   theme(legend.position = "none",
@@ -163,54 +125,45 @@ p_ex1 <- plot_grid(
 
 p_ex1
 
-## ---- include = FALSE, eval = eval_chunk && save_pdf--------------------------
-#  ggsave("~/Documents/postdoc/slendr/ex1.pdf", p_ex1, width = 9, height = 6, units = "in")
+## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex1.pdf", p_ex1, width = 9, height = 6, units = "in")
 
-## ---- eval = eval_chunk && !file.exists("~/Documents/postdoc/slendr/slendr_models/ex2/output_slim.trees")----
-#  map <- world(xrange = c(0, 10), yrange = c(0, 10),
-#               landscape = region(center = c(5, 5), radius = 5))
-#  
-#  p1 <- population("pop1", time = 1, N = 2000, map = map, competition = 0)
-#  p2 <- population("pop2", time = 1, N = 2000, map = map, competition = 9)
-#  p3 <- population("pop3", time = 1, N = 2000, map = map, competition = 6)
-#  p4 <- population("pop4", time = 1, N = 2000, map = map, competition = 5)
-#  p5 <- population("pop5", time = 1, N = 2000, map = map, competition = 4)
-#  p6 <- population("pop6", time = 1, N = 2000, map = map, competition = 3)
-#  p7 <- population("pop7", time = 1, N = 2000, map = map, competition = 2)
-#  p8 <- population("pop8", time = 1, N = 2000, map = map, competition = 1)
-#  
-#  model <- compile_model(
-#    populations = list(p1, p2, p3, p4, p5, p6, p7, p8),
-#    generation_time = 1, simulation_length = 5000, resolution = 0.1,
-#    mating = 0.1, dispersal = 0.05
-#  )
-#  
-#  ts <- slim(model, sequence_length = 10e6 / sequence_scaling, recombination_rate = 1e-8, verbose = TRUE) %>%
-#    ts_simplify() %>%
-#    ts_mutate(mutation_rate = 1e-7)
-#  
-#  locations <- ts_nodes(ts) %>% filter(time == max(time))
-#  
-#  heterozygosity <- ts_samples(ts) %>%
-#    group_by(pop) %>%
-#    sample_n(100) %>%
-#    mutate(pi = ts_diversity(ts, name)$diversity)
+## ---- eval = eval_chunk-------------------------------------------------------
+map <- world(xrange = c(0, 10), yrange = c(0, 10),
+             landscape = region(center = c(5, 5), radius = 5))
 
-## ---- include = FALSE, eval = eval_chunk && file.exists("~/Documents/postdoc/slendr/slendr_models/ex2/output_slim.trees")----
-model <- read_model("~/Documents/postdoc/slendr/slendr_models/ex2")
-map <- model$world
+p1 <- population("pop1", time = 1, N = 2000, map = map, competition = 0)
+p2 <- population("pop2", time = 1, N = 2000, map = map, competition = 9)
+p3 <- population("pop3", time = 1, N = 2000, map = map, competition = 6)
+p4 <- population("pop4", time = 1, N = 2000, map = map, competition = 5)
+p5 <- population("pop5", time = 1, N = 2000, map = map, competition = 4)
+p6 <- population("pop6", time = 1, N = 2000, map = map, competition = 3)
+p7 <- population("pop7", time = 1, N = 2000, map = map, competition = 2)
+p8 <- population("pop8", time = 1, N = 2000, map = map, competition = 1)
 
-ts <- ts_load(file = "~/Documents/postdoc/slendr/slendr_models/ex2/output_slim.trees",
-              model = model) %>% ts_simplify() %>% ts_mutate(mutation_rate = 1e-7, random_seed = SEED)
+model <- compile_model(
+  populations = list(p1, p2, p3, p4, p5, p6, p7, p8),
+  generation_time = 1, simulation_length = 5000, resolution = 0.1,
+  mating = 0.1, dispersal = 0.05
+)
+
+ts <-
+  slim(model, sequence_length = 10e6 / scaling, recombination_rate = 1e-8, random_seed = SEED) %>%
+  ts_simplify() %>%
+  ts_mutate(mutation_rate = 1e-7, random_seed = SEED)
+
+locations <- ts_nodes(ts) %>% filter(time == max(time))
 
 heterozygosity <- ts_samples(ts) %>%
   group_by(pop) %>%
   sample_n(100) %>%
   mutate(pi = ts_diversity(ts, name)$diversity)
 
-## ---- figure_ex2, fig.height=9, fig.width=6-----------------------------------
-locations <- ts_nodes(ts) %>% filter(time == max(time))
+## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex2"))
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex2.trees")
 
+## ---- figure_ex2, fig.height=9, fig.width=6-----------------------------------
 p_ex2_clustering <- ggplot() +
   geom_sf(data = map) +
   geom_sf(data = locations, aes(color = pop), size = 0.05, alpha = 0.25) +
@@ -251,10 +204,10 @@ p_ex2 <- plot_grid(
 
 p_ex2
 
-## ---- include = FALSE, eval = eval_chunk && save_pdf--------------------------
-#  ggsave("~/Documents/postdoc/slendr/ex2.pdf", p_ex2, width = 6, height = 9, units = "in")
+## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex2.pdf", p_ex2, width = 6, height = 9, units = "in")
 
-## ---- results='hide'----------------------------------------------------------
+## ---- fig.keep='none'---------------------------------------------------------
 map <- world(xrange = c(-15, 60), yrange = c(20, 65), crs = 3035)
 
 R1 <- region(
@@ -283,69 +236,69 @@ R5 <- region(
 
 ooa_trajectory <- list(c(40, 30), c(50, 30), c(60, 40), c(45, 55))
 
-## ---- eval = eval_chunk && !file.exists("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees")----
-#  map <- world(xrange = c(-15, 60), yrange = c(20, 65), crs = 3035)
-#  
-#  ooa <- population(
-#    "OOA", time = 50000, N = 500, remove = 23000,
-#     map = map, center = c(33, 30), radius = 400e3
-#  ) %>%
-#    move(trajectory = ooa_trajectory, start = 50000, end = 40000, snapshots = 30)
-#  
-#  ehg <- population(
-#    "EHG", time = 28000, N = 1000, parent = ooa, remove = 6000,
-#    map = map, polygon = R1
-#  )
-#  
-#  eur <- population(
-#    "EUR", time = 30000, N = 2000, parent = ooa,
-#    map = map, polygon = R2
-#  ) %>%
-#    resize(N = 10000, time = 5000, end = 0, how = "exponential")
-#  
-#  ana <- population(
-#    "ANA", time = 25000, N = 4000, parent = ooa, remove = 3000,
-#    map = map, polygon = R3
-#  ) %>%
-#    expand_range(by = 3e6, start = 10000, end = 7000, polygon = R4, snapshots = 15)
-#  
-#  yam <- population(
-#    "YAM", time = 7000, N = 600, parent = ehg, remove = 2500,
-#    map = m, polygon = R5
-#  ) %>%
-#    move(trajectory = list(c(15, 50)), start = 5000, end = 3000, snapshots = 10)
-#  
-#  gf <- list(
-#    gene_flow(ana, to = yam, rate = 0.5, start = 6500, end = 5000),
-#    gene_flow(ana, to = eur, rate = 0.6, start = 8000, end = 6000),
-#    gene_flow(yam, to = eur, rate = 0.7, start = 3500, end = 3000)
-#  )
-#  
-#  model <- compile_model(
-#    populations = list(ooa, ehg, eur, ana, yam), gene_flow = gf,
-#    generation_time = 30, resolution = 10e3,
-#    competition = 130e3, mating = 100e3,
-#    dispersal = 70e3,
-#  )
-#  
-#  samples <- schedule_sampling(
-#    model, times = seq(0, 50000, by = 1000),
-#    list(ehg, 20), list(ana, 20), list(yam, 20), list(eur, 20)
-#  )
-#  
-#  plot_model(model, sizes = FALSE)
-#  plot_map(model)
-#  
-#  ts <- slim(
-#    model, burnin = 200000, samples = samples, random_seed = SEED,
-#    sequence_length = 200000, recombination_rate = 1e-8
-#  )
+## ---- eval = eval_chunk, fig.keep='none'--------------------------------------
+map <- world(xrange = c(-15, 60), yrange = c(20, 65), crs = 3035)
+ 
+ooa <- population(
+  "OOA", time = 50000, N = 500, remove = 23000,
+   map = map, center = c(33, 30), radius = 400e3
+) %>%
+  move(trajectory = ooa_trajectory, start = 50000, end = 40000, snapshots = 30)
 
-## ---- include = FALSE, eval = eval_chunk &&  file.exists("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees")----
-model <- read_model("~/Documents/postdoc/slendr/slendr_models/ex3")
-map <- model$world
+ehg <- population(
+  "EHG", time = 28000, N = 1000, parent = ooa, remove = 6000,
+  map = map, polygon = R1
+)
 
-## ---- figure_ex3, fig.height=5, fig.width=7, eval = eval_chunk &&  file.exists("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees"), class.source = "fold-hide"----
+eur <- population(
+  "EUR", time = 30000, N = 2000, parent = ooa,
+  map = map, polygon = R2
+) %>%
+  resize(N = 10000, time = 5000, end = 0, how = "exponential")
+
+ana <- population(
+  "ANA", time = 25000, N = 4000, parent = ooa, remove = 3000,
+  map = map, polygon = R3
+) %>%
+  expand_range(by = 3e6, start = 10000, end = 7000, polygon = R4, snapshots = 15)
+
+yam <- population(
+  "YAM", time = 7000, N = 600, parent = ehg, remove = 2500,
+  map = m, polygon = R5
+) %>%
+  move(trajectory = list(c(15, 50)), start = 5000, end = 3000, snapshots = 10)
+
+gf <- list(
+  gene_flow(ana, to = yam, rate = 0.5, start = 6500, end = 5000),
+  gene_flow(ana, to = eur, rate = 0.6, start = 8000, end = 6000),
+  gene_flow(yam, to = eur, rate = 0.7, start = 3500, end = 3000)
+)
+
+model <- compile_model(
+  populations = list(ooa, ehg, eur, ana, yam), gene_flow = gf,
+  generation_time = 30, resolution = 10e3,
+  competition = 130e3, mating = 100e3,
+  dispersal = 70e3,
+)
+
+samples <- schedule_sampling(
+  model, times = seq(0, 50000, by = 1000),
+  list(ehg, 20), list(ana, 20), list(yam, 20), list(eur, 20)
+)
+
+plot_model(model, sizes = FALSE)
+plot_map(model)
+
+ts <- slim(
+  model, burnin = 200000, samples = samples, random_seed = SEED,
+  sequence_length = 200000, recombination_rate = 1e-8
+)
+
+## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3"))
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3.trees")
+
+## ---- figure_ex3, fig.height=5, fig.width=7, eval = eval_chunk----------------
 p_map <- plot_map(model) +
   theme(legend.position = "bottom") +
   guides(alpha = "none")
@@ -362,45 +315,58 @@ p_ex3 <- plot_grid(
 
 p_ex3
 
-## ---- include = FALSE, eval = eval_chunk && save_pdf--------------------------
-#  ggsave("~/Documents/postdoc/slendr/ex3.pdf", p_ex3, width = 9, height = 6, units = "in")
+## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3.pdf", p_ex3, width = 9, height = 6, units = "in")
 
-## ---- include = FALSE, eval = eval_chunk && file.exists("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees")----
-model <- read_model("~/Documents/postdoc/slendr/slendr_models/ex3")
-map <- model$world
-ts <- ts_load("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees", model = model)
-
-## ---- eval = eval_chunk && file.exists("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees")----
-ts_small <- ts_simplify(ts, c("EUR_599", "ANA_322", "EHG_7", 
-                              "EUR_578", "EUR_501", "YAM_30"))
+## ---- eval = eval_chunk-------------------------------------------------------
+ts_small <- ts_simplify(ts, c("EUR_581", "ANA_120", "EHG_440",
+                              "EUR_597", "YAM_59"))
 
 tree <- ts_phylo(ts_small, i = 10)
 nodes <- ts_nodes(tree)
 edges <- ts_edges(tree)
 
-ancestors <- ts_ancestors(ts, "EUR_599")
+ancestors <- ts_ancestors(ts, "EUR_581")
 
-## ---- figure_ex4, eval = Sys.getenv("R_HAS_GGTREE") == TRUE && eval_chunk && file.exists("~/Documents/postdoc/slendr/slendr_models/ex3/output_slim.trees"), fig.height=9, fig.width=7, class.source = "fold-hide"----
+## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3_small.trees")
+
+## ---- figure_ex4, eval = Sys.getenv("R_HAS_GGTREE") == TRUE && eval_chunk, fig.height=9, fig.width=7, class.source = "fold-hide"----
 #  library(ggtree)
 #  
 #  # prepare annotation table for ggtree linking R phylo node ID (not tskit integer
 #  # ID!) of each node with its population name
 #  df <- as_tibble(nodes) %>% select(node = phylo_id, pop)
 #  
-#  highlight_nodes <- as_tibble(nodes) %>% dplyr::filter(name == "EUR_599") %>% .$phylo_id
+#  abs_comma <- function (x, ...) {
+#    format(abs(x) / 1000, ..., scientific = FALSE, trim = TRUE)
+#  }
+#  
+#  highlight_nodes <- as_tibble(nodes) %>% dplyr::filter(name == "EUR_581") %>% .$phylo_id
+#  
 #  p_tree <- ggtree(tree, aes(color = pop, fill = pop)) %<+% df +
 #    geom_tiplab(align = TRUE, geom = "label", offset = 2000,
-#                color = "white", fontface = "bold", size = 3) +
+#                color = "white", fontface = "bold", size = 2.7) +
 #    geom_tiplab(align = TRUE, geom = NULL, linetype = "dotted", size = 0) +
-#    geom_point2(aes(subset = (node %in% highlight_nodes)), color = "black", size = 3) +
+#    geom_point2(aes(subset = (node %in% highlight_nodes)), color = "black", size = 2.7) +
 #    geom_label2(aes(label = label, subset = !isTip),
-#                color = "black", size = 3) +
+#                color = "black", size = 2.7) +
 #    theme_tree2() +
 #    theme(legend.position = "none") +
-#    xlab("time before present [years ago]") +
-#    scale_x_continuous(limits = c(-55000, 22000), labels = abs,
-#                       breaks = -c(60, 40, 20, 0) * 1000)
+#    xlab("time before present [thousand years ago]") +
+#    scale_x_continuous(limits = c(-120000, 31000), labels = abs_comma,
+#                       breaks = -c(120, 100, 80, 60, 40, 20, 0) * 1000)
 #  p_tree <- revts(p_tree)
+#  
+#  # nodes$label <- ifelse(is.na(nodes$name), nodes$node_id, nodes$name)
+#  nodes$label <- sapply(1:nrow(nodes), function(i) {
+#    if (is.na(nodes[i, ]$name))
+#      nodes[i, ]$node_id
+#    else {
+#      ind <- nodes[i, ]$name
+#      paste(nodes[!is.na(nodes$name) & nodes$name == ind, ]$node_id, collapse = "&")
+#    }
+#  })
 #  
 #  p_map <- ggplot() +
 #    geom_sf(data = map) +
@@ -410,18 +376,19 @@ ancestors <- ts_ancestors(ts, "EUR_599")
 #    geom_sf_label(data = nodes[!nodes$sampled, ],
 #                  aes(label = node_id, fill = pop), size = 3) +
 #    geom_sf_label(data = nodes[nodes$sampled, ],
-#                  aes(label = node_id, fill = pop), size = 3,
+#                  aes(label = label, fill = pop), size = 3,
 #                  fontface = "bold", color = "white") +
-#    coord_sf(xlim = c(4047066.1, 8688656.9),
-#             ylim = c(757021.7, 4972983.3), expand = 0) +
-#    labs(x = "longitude", y = "latitude") +
+#    coord_sf(xlim = c(3177066.1, 7188656.9),
+#             ylim = c(757021.7, 5202983.3), expand = 0) +
 #    guides(fill = guide_legend("", override.aes = aes(label = ""))) +
 #    guides(color = "none", shape = "none") +
 #    theme_bw() +
-#    theme(legend.position = "bottom")
+#    theme(legend.position = "bottom",
+#          axis.title.x = element_blank(),
+#          axis.title.y = element_blank())
 #  
 #  chrom_names <- stats::setNames(
-#    c("EUR_599 (chromosome 1, node 10)", "EUR_599 (chromosome 2, node 11)"),
+#    c("EUR_581 (node 10)", "EUR_581 (node 11)"),
 #    unique(ancestors$node_id)
 #  )
 #  
@@ -430,7 +397,7 @@ ancestors <- ts_ancestors(ts, "EUR_599")
 #    geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
 #    geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
 #            aes(shape = parent_pop, color = parent_pop)) +
-#    geom_sf(data = filter(ts_nodes(ts), name == "EUR_599"), size = 3) +
+#    geom_sf(data = filter(ts_nodes(ts), name == "EUR_581"), size = 3) +
 #    coord_sf(expand = 0) +
 #    labs(x = "longitude", y = "latitude") +
 #    theme_bw() +
@@ -443,7 +410,7 @@ ancestors <- ts_ancestors(ts, "EUR_599")
 #    p_code,
 #    plot_grid(p_tree + theme(legend.position = "none"),
 #              p_map + theme(legend.position = "none"),
-#              labels = c("B", "C")),
+#              labels = c("B", "C"), rel_widths = c(1, 0.9)),
 #    p_ancestors,
 #    p_legend,
 #    labels = c("A", "", "D", ""),
@@ -452,6 +419,6 @@ ancestors <- ts_ancestors(ts, "EUR_599")
 #  
 #  p_ex4
 
-## ---- include = FALSE, eval = eval_chunk && save_pdf--------------------------
-#  ggsave("~/Documents/postdoc/slendr/ex4.pdf", p_ex4, width = 7, height = 9, units = "in")
+## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex4.pdf", p_ex4, width = 7, height = 9, units = "in")
 

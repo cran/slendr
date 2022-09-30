@@ -88,7 +88,10 @@ print.slendr_model <- function(x, ...) {
   } else
     cat("non-spatial\n\n")
 
-  cat("configuration files in:", normalizePath(x$path), "\n")
+  if (is.null(x$path))
+    cat("non-serialized slendr model\n")
+  else
+    cat("configuration files in:", normalizePath(x$path), "\n")
 }
 
 
@@ -271,7 +274,7 @@ print_pop_history <- function(x) {
       if (is.character(parent) && parent == "ancestor")
         cat("created as an ancestral population", sprintf("(N = %d)", event$N))
       else {
-        cat("split from", parent$pop[1])
+        cat("split from", parent$pop[1], sprintf("(N = %d)", event$N))
       }
     }
 

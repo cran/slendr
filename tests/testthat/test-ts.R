@@ -231,7 +231,7 @@ test_that("simplification retains only specified samples (SLiM)", {
   expect_true(all(df_data$time == df_samples$time))
   expect_true(all(df_data$pop == df_samples$pop))
 
-  suppressWarnings(ts2 <- ts_load(model, file = msprime_ts, recapitate = TRUE, recombination_rate = 0, Ne = 1))
+  suppressWarnings(ts2 <- ts_load(model, file = slim_ts, recapitate = TRUE, recombination_rate = 0, Ne = 1))
   simplify_to <- sample(ts_samples(ts2)$name, 10)
 
   ts2 <- ts_simplify(ts2, simplify_to = simplify_to)
@@ -703,4 +703,10 @@ test_that("metadata is the same for SLiM and msprime conditional on a model", {
   expect_equal(sdata4$time, mdata4$time)
   expect_equal(sdata5$time, mdata5$time)
   expect_equal(sdata6$time, mdata6$time)
+})
+
+test_that("all names of individuals must be present in the tree sequence", {
+  ts <- ts_load(file = msprime_ts, model = model)
+  expect_error(ts_diversity(ts, c("p1_1", "p2_2")), "Not all individual names")
+  expect_s3_class(ts_diversity(ts, c("pop1_1", "pop2_2")), "data.frame")
 })

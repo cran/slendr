@@ -16,7 +16,7 @@
 #' \code{\link{ts_simplify}}.
 #'
 #' @param file A path to the tree-sequence file (either originating from a
-#'   slendr model or a standard non-slendr tree sequence)
+#'   slendr model or a standard non-slendr tree sequence).
 #' @param model Optional \code{slendr_model} object which produced the
 #'   tree-sequence \code{file}. Used for adding various annotation data and
 #'   metadata to the standard tskit tree-sequence object.
@@ -89,7 +89,7 @@ ts_load <- function(file, model = NULL,
          call. = FALSE)
 
   # load the tree sequence, converting it to a SLiM tree sequence if necessary
-  ts <- tskit$load(path.expand(file))
+  ts <- if (is.character(file)) tskit$load(path.expand(file)) else file
 
   if (length(ts$metadata) == 0 || is.null(ts$metadata$SLiM))
     type <- "generic"
@@ -166,7 +166,7 @@ ts_load <- function(file, model = NULL,
 #' @export
 ts_save <- function(ts, file) {
   check_ts_class(ts)
-  ts$dump(file)
+  ts$dump(path.expand(file))
 }
 
 
@@ -599,7 +599,7 @@ ts_genotypes <- function(ts) {
 #' Convert genotypes to the EIGENSTRAT file format
 #'
 #' EIGENSTRAT data produced by this function can be used by the admixr R package
-#' (<https://bodkan.net/admixr/>).
+#' (<https://www.bodkan.net/admixr/>).
 #'
 #' In case an outgroup was not formally specified in a slendr model which
 #' generated the tree sequence data, it is possible to artificially create an
@@ -1667,6 +1667,8 @@ multiway_stat <- function(ts, stat = c("fst", "divergence"),
   if (is.matrix(values))
     values <- split(values, col(values))
 
+  if (!is.list(values)) values <- as.numeric(values) # convert 1D arrays to simple vectors
+
   if (is.null(names(sample_sets)))
     set_names <- paste0("set_", seq_len(n_sets))
   else
@@ -1785,6 +1787,8 @@ oneway_stat <- function(ts, stat, sample_sets, mode, windows, span_normalise = N
 
   if (is.matrix(values))
     values <- split(values, col(values))
+
+  if (!is.list(values)) values <- as.numeric(values) # convert 1D arrays to simple vectors
 
   if (all(sapply(sample_sets, length) == 1))
     set_names <- unlist(sample_sets)
@@ -1993,6 +1997,7 @@ ts_afs <- function(ts, sample_sets = NULL, mode = c("site", "branch", "node"),
 #' @importFrom ape as.phylo
 #' @export as.phylo.slendr_phylo
 #' @export
+#' @keywords internal
 as.phylo.slendr_phylo <- function(x) { class(x) <- "phylo"; x }
 
 
@@ -2014,6 +2019,8 @@ get_node_ids <- function(ts, x) {
   if (is.null(x)) {
     ids <- ts_nodes(ts) %>% .[.$sampled, ]$node_id
   } else if (is.character(x)) {
+    if (length(intersect(x, ts_samples(ts)$name)) != length(x))
+      stop("Not all individual names are among those recorded in the tree sequence", call. = FALSE)
     ids <- ts_nodes(ts) %>% dplyr::filter(name %in% x) %>% .$node_id
   } else if (is.numeric(x)) {
     ids <- as.integer(x)
@@ -2045,6 +2052,10 @@ get_ts_raw_nodes <- function(ts) {
     node_table$time <- table$time
 
   node_table$time_tskit <- table$time
+
+  # -1 as a missing value in tskit is not very R like, so let's replace it with
+  # a proper NA
+  node_table$pop_id[node_table$pop_id == -1] <- NA
 
   node_table
 }
@@ -2197,8 +2208,9 @@ get_pyslim_table_data <- function(ts, simplify_to = NULL) {
     dplyr::bind_rows(sampled, not_sampled) %>%
     dplyr::right_join(nodes, by = "ind_id") %>%
     dplyr::mutate(time = ifelse(is.na(ind_id), time.y, time.x),
+                  time_tskit = time_tskit.y,
                   sampled = ifelse(is.na(ind_id), FALSE, sampled)) %>%
-    dplyr::rename(pop = pop.y, pop_id = pop_id.y, time_tskit = time_tskit.x)
+    dplyr::rename(pop = pop.y, pop_id = pop_id.y)
 
   if (spatial) {
     combined <- convert_to_sf(combined, model)
@@ -2251,9 +2263,17 @@ get_tskit_table_data <- function(ts, simplify_to = NULL) {
     }))
     individuals$pop <- pop_names[individuals$pop_id + 1]
     nodes$pop <- pop_names[nodes$pop_id + 1]
+    if (is.null(nodes[["pop"]])) nodes$pop <- NA
   }
 
-  individuals <- dplyr::arrange(individuals, -time, pop)
+  if (nrow(individuals)) {
+    if (length(ts$tables$populations)) {
+      individuals <- dplyr::arrange(individuals, -time, pop)
+    } else {
+      individuals <- dplyr::arrange(individuals, -time)
+      individuals$pop <- NA
+    }
+  }
 
   # load information about samples at times and from populations of remembered
   # individuals
@@ -2277,13 +2297,20 @@ get_tskit_table_data <- function(ts, simplify_to = NULL) {
     # on which nodes are actually sampled)
     nodes$sampled <- FALSE
     nodes$sampled[ts$samples() + 1] <- TRUE
-    nodes$time_tskit.x <- nodes$time_tskit; nodes$time_tskit <- NULL
+
+    nodes$time_tskit.y <- nodes$time_tskit
+    nodes$time_tskit <- NULL
+
+    nodes$pop.y <- nodes$pop
+    nodes$pop <- individuals$pop <- NULL
+
+    nodes$sampled <- nodes$node_id %in% as.vector(ts$samples())
   }
 
   # add numeric node IDs to each individual
   combined <- dplyr::select(individuals, -time, -pop_id) %>%
     dplyr::right_join(nodes, by = "ind_id") %>%
-    dplyr::rename(pop = pop.y, time_tskit = time_tskit.x)
+    dplyr::rename(pop = pop.y, time_tskit = time_tskit.y)
 
   # for tree sequences which have some individuals/nodes marked as 'sampled', mark the
   # nodes which do not have individuals assigned to them as FALSE

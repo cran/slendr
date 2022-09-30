@@ -7,6 +7,7 @@
 #'   particular software dependency is missing for an example to run.
 #'
 #' @export
+#' @keywords internal
 check_dependencies <- function(python = FALSE, slim = FALSE) {
   # check whether SLiM and Python are present (only if needed!)
   missing_slim <- if (slim) !all(Sys.which("slim") != "") else FALSE
@@ -703,7 +704,7 @@ utils::globalVariables(
     "gen", "newx", "newy", "child", "time", "node_label", "chr_name", "pos",
     "pyslim", "tskit", "msprime", "x", "y", "x_orig", "y_orig",
     "orig_x", "orig_y", "phylo_id", "raster_x", "raster_y",
-    "pop.y", "pop_id.y", "time_tskit", "time_tskit.x",
+    "pop.y", "pop_id.y", "time_tskit", "time_tskit.x", "time_tskit.y",
     "N", "center", "child_node_id", "child_phylo_id", "geometry", "parent_node_id",
     "parent_phylo_id", "set_boundary", "xend", "xmax", "xmin", "yend"
   ), package = "slendr"

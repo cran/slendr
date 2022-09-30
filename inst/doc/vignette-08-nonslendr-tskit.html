@@ -120,13 +120,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -402,7 +409,7 @@ splitting from an ancestral population <code>p1</code> (lets save it to
 }
 
 6000 late() {
-    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e819fcb655&quot;);
+    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpDV7cEs/file12a184d0468a&quot;);
 }</code></pre>
 <p>After we run this script in SLiM, we can use <em>slendr</em> to load
 the output tree sequence (saved to
@@ -466,8 +473,7 @@ also include spatial information—see below):</p>
 <span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 p1          8     0          0 TRUE    FALSE     FALSE   TRUE   2.01e7      4</span></span>
 <span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 p1          9     0          0 TRUE    FALSE     FALSE   TRUE   2.01e7      4</span></span>
 <span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 26,010 more rows, 1 more variable: pop_id &lt;int&gt;, and abbreviated</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   variable names ¹​remembered, ²​retained, ³​pedigree_id</span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names</span></span></code></pre></div>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   variable names ¹​remembered, ²​retained, ³​pedigree_id</span></span></code></pre></div>
 <p>Moving on to tskit statistics, we can use the data table above to
 extract a list of nodes belonging to each population (this is what
 various tskit tree-sequence statistics operate on, and <em>slendr</em>
@@ -563,8 +569,7 @@ and analyze it with the slendr functionality:</p>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 0         NA       7     0          0 TRUE         0</span></span>
 <span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 0         NA       8     0          0 TRUE         0</span></span>
 <span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 0         NA       9     0          0 TRUE         0</span></span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 189 more rows</span></span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows</span></span></code></pre></div>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 189 more rows</span></span></code></pre></div>
 </div>
 <div id="spatial-slim-non-slendr-tree-sequences" class="section level4">
 <h4>Spatial SLiM (non-slendr) tree sequences</h4>
@@ -606,7 +611,7 @@ modifyChild() {
 }
 
 10000 late() {
-    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpcoPz8a/file102e876affd47&quot;);
+    sim.treeSeqOutput(&quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpDV7cEs/file12a18500bc328&quot;);
 }</code></pre>
 <p>We can then load and simplify the output tree sequence in just as we
 did above in this vignette (or anywhere in the <em>slendr</em>
@@ -654,8 +659,7 @@ spatial <a href="https://r-spatial.github.io/sf/"><em>sf</em></a> column
 <span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 p1          9     0       0 (0.9807475 0.04223008) TRUE    FALSE      TRUE   </span></span>
 <span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 1,945 more rows, 4 more variables: alive &lt;lgl&gt;, pedigree_id &lt;dbl&gt;,</span></span>
 <span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ind_id &lt;dbl&gt;, pop_id &lt;int&gt;, and abbreviated variable names ¹​time_tskit,</span></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ²​retained</span></span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names</span></span></code></pre></div>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ²​retained</span></span></code></pre></div>
 <p>Because we get the tree sequence converted to the spatial <a href="https://r-spatial.github.io/sf/"><em>sf</em></a> data format, we
 can use standard geospatial packages to use any spatial data analysis
 methods that those packages provide.</p>
