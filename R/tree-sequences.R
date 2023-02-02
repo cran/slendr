@@ -46,6 +46,8 @@
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -153,6 +155,8 @@ ts_load <- function(file, model = NULL,
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -190,6 +194,8 @@ ts_save <- function(ts, file) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -305,6 +311,8 @@ ts_recapitate <- function(ts, recombination_rate, Ne = NULL, demography = NULL, 
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -460,6 +468,8 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -520,6 +530,8 @@ ts_mutate <- function(ts, mutation_rate, random_seed = NULL,
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -547,6 +559,8 @@ ts_metadata <- function(ts) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -735,6 +749,8 @@ ts_vcf <- function(ts, path, chrom = NULL, individuals = NULL) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -901,7 +917,7 @@ ts_phylo <- function(ts, i, mode = c("index", "position"),
   # generate appropriate internal node labels based on the user's choice
   elem <- if (labels == "pop") "pop" else "node_id"
   node_labels <- purrr::map_chr(unique(sort(parents)),
-                                ~ data[data$phylo_id == .x, ][[elem]])
+                                ~ as.character(data[data$phylo_id == .x, ][[elem]]))
 
   tree <- list(
     edge = edge,
@@ -968,6 +984,8 @@ ts_phylo <- function(ts, i, mode = c("index", "position"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1074,6 +1092,8 @@ ts_table <- function(ts, table = c("individuals", "edges", "nodes", "mutations")
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1104,6 +1124,8 @@ ts_edges <- function(x) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1121,8 +1143,10 @@ ts_samples <- function(ts) {
          "of nodes and individuals from non-slendr tree sequences,\nuse the ",
          "function ts_nodes().\n", call. = FALSE)
   data <- ts_nodes(ts) %>% dplyr::filter(sampled, !is.na(name))
-  attr(ts, "metadata")$sampling %>%
+  samples <- attr(ts, "metadata")$sampling %>%
     dplyr::filter(name %in% data$name)
+
+  samples
 }
 
 #' Extract (spatio-)temporal ancestral history for given nodes/individuals
@@ -1143,6 +1167,8 @@ ts_samples <- function(ts) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1269,6 +1295,8 @@ ts_ancestors <- function(ts, x, verbose = FALSE, complete = TRUE) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1389,6 +1417,8 @@ ts_descendants <- function(ts, x, verbose = FALSE, complete = TRUE) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1433,6 +1463,8 @@ ts_tree <- function(ts, i, mode = c("index", "position"), ...) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1496,6 +1528,8 @@ ts_draw <- function(x, width = 1500, height = 500, labels = FALSE,
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1585,6 +1619,8 @@ ts_f4 <- function(ts, W, X, Y, Z, mode = c("site", "branch", "node"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1706,6 +1742,8 @@ multiway_stat <- function(ts, stat = c("fst", "divergence"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1735,6 +1773,8 @@ ts_fst <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1790,11 +1830,12 @@ oneway_stat <- function(ts, stat, sample_sets, mode, windows, span_normalise = N
 
   if (!is.list(values)) values <- as.numeric(values) # convert 1D arrays to simple vectors
 
-  if (all(sapply(sample_sets, length) == 1))
-    set_names <- unlist(sample_sets)
-  else if (is.null(names(sample_sets)))
-    set_names <- paste0("set_", seq_len(n_sets))
-  else
+  if (is.null(names(sample_sets)) || any(names(sample_sets) == "")) {
+    if (all(sapply(sample_sets, length) == 1))
+      set_names <- unlist(sample_sets)
+    else
+      set_names <- paste0("set_", seq_len(n_sets))
+  } else
     set_names <- names(sample_sets)
 
   result <- dplyr::tibble(set = set_names)
@@ -1814,6 +1855,8 @@ oneway_stat <- function(ts, stat, sample_sets, mode, windows, span_normalise = N
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1848,6 +1891,8 @@ ts_segregating <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1894,6 +1939,8 @@ ts_diversity <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -1943,6 +1990,8 @@ ts_tajima <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression.trees", package = "slendr")
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
@@ -2016,6 +2065,9 @@ print.slendr_ts <- function(x, ...) { summary(x, ...) }
 
 # Function for extracting numerical node IDs for various statistics
 get_node_ids <- function(ts, x) {
+  # slendr allows named lists to be used for easier group labelling in result tables
+  if (is.list(x)) x <- x[[1]]
+
   if (is.null(x)) {
     ids <- ts_nodes(ts) %>% .[.$sampled, ]$node_id
   } else if (is.character(x)) {
@@ -2206,7 +2258,7 @@ get_pyslim_table_data <- function(ts, simplify_to = NULL) {
   # add numeric node IDs to each individual
   combined <-
     dplyr::bind_rows(sampled, not_sampled) %>%
-    dplyr::right_join(nodes, by = "ind_id") %>%
+    dplyr::right_join(nodes, by = "ind_id", multiple = "all") %>% # required after dplyr v1.1.0
     dplyr::mutate(time = ifelse(is.na(ind_id), time.y, time.x),
                   time_tskit = time_tskit.y,
                   sampled = ifelse(is.na(ind_id), FALSE, sampled)) %>%
@@ -2309,7 +2361,7 @@ get_tskit_table_data <- function(ts, simplify_to = NULL) {
 
   # add numeric node IDs to each individual
   combined <- dplyr::select(individuals, -time, -pop_id) %>%
-    dplyr::right_join(nodes, by = "ind_id") %>%
+    dplyr::right_join(nodes, by = "ind_id", multiple = "all") %>%  # required after dplyr v1.1.0
     dplyr::rename(pop = pop.y, time_tskit = time_tskit.y)
 
   # for tree sequences which have some individuals/nodes marked as 'sampled', mark the
@@ -2370,7 +2422,10 @@ get_annotated_edges <- function(x) {
       dplyr::select(parent_pop = pop,
                     parent_node_id = node_id,
                     parent_time = time, parent_location = location)
-  parent_nodes <- dplyr::left_join(parent_nodes, edges, by = stats::setNames("parent", join1)) %>%
+  parent_nodes <- dplyr::left_join(
+    parent_nodes, edges,
+    by = stats::setNames("parent", join1), multiple = "all"
+  ) %>% # multiple = "all" required after dplyr v1.1.0
     dplyr::arrange(!!join1)
 
   # take the `parent_nodes` able above and do another join operation, this time
@@ -2386,16 +2441,11 @@ get_annotated_edges <- function(x) {
       dplyr::select(child_pop = pop,
                     child_node_id = node_id,
                     child_time = time, child_location = location)
-  edge_nodes <- dplyr::inner_join(edge_nodes, parent_nodes, by = stats::setNames("child", join2)) %>%
+  edge_nodes <- dplyr::inner_join(
+    edge_nodes, parent_nodes,
+    by = stats::setNames("child", join2)
+  ) %>%
     dplyr::arrange(!!join2)
-
-  # data %>%
-  #   dplyr::filter(phylo_id %in% edges$child) %>%
-  #   dplyr::select(child_pop  = pop,
-  #                 child_phylo_id = phylo_id, child_node_id = node_id,
-  #                 child_time = time, child_location = location) %>%
-  #   dplyr::inner_join(parent_nodes, by = c("child_phylo_id" = "child")) %>%
-  #   dplyr::arrange(child_phylo_id)
 
   # transforming individual child/parent location columns (type POINT) into a
   # line (type LINESTRING)
@@ -2655,5 +2705,8 @@ define_windows <- function(ts, breakpoints) {
 }
 
 concat <- function(x) {
-  paste(x, collapse = "+")
+  if (is.list(x) && !is.null(names(x)))
+    return(names(x))
+  else
+    return(paste(x, collapse = "+"))
 }

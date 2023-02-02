@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -13,11 +13,15 @@ knitr::opts_chunk$set(
 ## -----------------------------------------------------------------------------
 library(slendr)
 
+# activate the internal Python environment needed for simulation and
+# tree-sequence processing
+init_env()
+
 ## ---- world_zoom, results = FALSE---------------------------------------------
 map <- world(
-  xrange = c(-15, 60), # min-max longitude
-  yrange = c(20, 65),  # min-max latitude
-  crs = "EPSG:3035"    # projected CRS used internally
+  xrange = c(-13, 70), # min-max longitude
+  yrange = c(18, 65),  # min-max latitude
+  crs = "EPSG:3035"    # coordinate reference system (CRS) for West Eurasia
 )
 
 ## -----------------------------------------------------------------------------
@@ -26,8 +30,8 @@ map
 ## -----------------------------------------------------------------------------
 africa <- region(
   "Africa", map,
-  polygon = list(c(-18, 20), c(40, 20), c(30, 33),
-                 c(20, 32), c(10, 35), c(-8, 35))
+  polygon = list(c(-18, 20), c(38, 20), c(30, 33),
+                 c(20, 33), c(10, 38), c(-6, 35))
 )
 europe <- region(
   "Europe", map,
@@ -56,10 +60,7 @@ all(attr(europe, "map") == map)
 all(attr(anatolia, "map") == map)
 
 ## ----plot_afr-----------------------------------------------------------------
-afr <- population(
-  "AFR", parent = "ancestor", time = 52000, N = 3000,
-  map = map, polygon = africa
-)
+afr <- population("AFR", time = 52000, N = 3000, map = map, polygon = africa)
 
 plot_map(afr)
 

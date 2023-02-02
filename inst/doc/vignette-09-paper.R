@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
 
 knitr::opts_chunk$set(
@@ -10,6 +10,21 @@ knitr::opts_chunk$set(
 )
 
 record_snapshot <- FALSE # only save PDFs on a local machine
+
+# reporting knitr chunk run times based on:
+# https://bookdown.org/yihui/rmarkdown-cookbook/time-chunk.html#time-chunk
+all_times <- list()
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) {
+      now <<- Sys.time()
+    } else {
+      res <- difftime(Sys.time(), now)
+      all_times[[options$label]] <<- res
+    }
+  }
+}))
 
 ## -----------------------------------------------------------------------------
 # workaround for GitHub actions getting "Killed" due to out of memory issues
@@ -30,6 +45,8 @@ library(tidyr)
 library(cowplot)
 library(forcats)
 
+init_env()
+
 SEED <- 42
 set.seed(SEED)
 
@@ -39,7 +56,7 @@ p_code <- ggplot() +
   geom_text(aes(x = 1, y = 1), label = "code will be here") +
   theme_void()
 
-## ---- eval = eval_chunk, fig.keep='none'--------------------------------------
+## ---- ex1, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
 o <- population("o", time = 1, N = 100)
 c <- population("c", time = 2500, N = 100, parent = o)
 a <- population("a", time = 2800, N = 100, parent = c)
@@ -71,8 +88,8 @@ f4ratio <- ts_f4ratio(
 )
 
 ## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
-#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex1"))
-#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex1.trees")
+#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex1"))
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex1.trees")
 
 ## ---- figure_ex1, fig.height=6, fig.width=9-----------------------------------
 divergence <- divergence %>% mutate(pair = paste(x, "-", y))
@@ -90,7 +107,7 @@ p_ex1_divergence <- divergence %>%
         axis.title.x = element_blank())
 
 p_ex1_f4ratio <- f4ratio %>%
-  ggplot(aes(population, alpha)) + 
+  ggplot(aes(population, alpha)) +
   geom_hline(yintercept = 0, linetype = 2) +
   geom_jitter(alpha = 0.5) +
   geom_boxplot(outlier.shape = NA, alpha = 0.7) +
@@ -126,9 +143,9 @@ p_ex1 <- plot_grid(
 p_ex1
 
 ## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
-#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex1.pdf", p_ex1, width = 9, height = 6, units = "in")
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex1.pdf", p_ex1, width = 9, height = 6, units = "in")
 
-## ---- eval = eval_chunk-------------------------------------------------------
+## ---- ex2, time_it = TRUE, eval = eval_chunk----------------------------------
 map <- world(xrange = c(0, 10), yrange = c(0, 10),
              landscape = region(center = c(5, 5), radius = 5))
 
@@ -160,8 +177,8 @@ heterozygosity <- ts_samples(ts) %>%
   mutate(pi = ts_diversity(ts, name)$diversity)
 
 ## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
-#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex2"))
-#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex2.trees")
+#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex2"))
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex2.trees")
 
 ## ---- figure_ex2, fig.height=9, fig.width=6-----------------------------------
 p_ex2_clustering <- ggplot() +
@@ -205,10 +222,10 @@ p_ex2 <- plot_grid(
 p_ex2
 
 ## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
-#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex2.pdf", p_ex2, width = 6, height = 9, units = "in")
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex2.pdf", p_ex2, width = 6, height = 9, units = "in")
 
 ## ---- fig.keep='none'---------------------------------------------------------
-map <- world(xrange = c(-15, 60), yrange = c(20, 65), crs = 3035)
+map <- world(xrange = c(-13, 70), yrange = c(18, 65), crs = 3035)
 
 R1 <- region(
   "EHG range", map,
@@ -236,9 +253,9 @@ R5 <- region(
 
 ooa_trajectory <- list(c(40, 30), c(50, 30), c(60, 40), c(45, 55))
 
-## ---- eval = eval_chunk, fig.keep='none'--------------------------------------
-map <- world(xrange = c(-15, 60), yrange = c(20, 65), crs = 3035)
- 
+## ---- ex3, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
+map <- world(xrange = c(-13, 70), yrange = c(18, 65), crs = 3035)
+
 ooa <- population(
   "OOA", time = 50000, N = 500, remove = 23000,
    map = map, center = c(33, 30), radius = 400e3
@@ -264,7 +281,7 @@ ana <- population(
 
 yam <- population(
   "YAM", time = 7000, N = 600, parent = ehg, remove = 2500,
-  map = m, polygon = R5
+  map = map, polygon = R5
 ) %>%
   move(trajectory = list(c(15, 50)), start = 5000, end = 3000, snapshots = 10)
 
@@ -277,8 +294,7 @@ gf <- list(
 model <- compile_model(
   populations = list(ooa, ehg, eur, ana, yam), gene_flow = gf,
   generation_time = 30, resolution = 10e3,
-  competition = 130e3, mating = 100e3,
-  dispersal = 70e3,
+  competition = 150e3, mating = 120e3, dispersal = 90e3
 )
 
 samples <- schedule_sampling(
@@ -295,8 +311,35 @@ ts <- slim(
 )
 
 ## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
-#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3"))
-#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3.trees")
+#  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3"))
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3.trees")
+
+## ---- include=FALSE, eval=FALSE-----------------------------------------------
+#  devtools::load_all()
+#  init_env()
+#  model <- read_model("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3")
+#  ts <- ts_load("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3.trees", model = model)
+#  
+#  library(dplyr)
+#  library(ggplot2)
+#  library(purrr)
+#  library(tidyr)
+#  library(cowplot)
+#  library(forcats)
+#  
+#  init_env()
+#  
+#  SEED <- 42
+#  set.seed(SEED)
+#  
+#  # placeholder "figure" where a code chunk will be pasted
+#  p_code <- ggplot() +
+#    geom_text(aes(x = 1, y = 1), label = "code will be here") +
+#    theme_void()
+#  
+#  map <- world(xrange = c(-13, 70), yrange = c(18, 65), crs = 3035)
+#  
+#  e <- "EUR_578"
 
 ## ---- figure_ex3, fig.height=5, fig.width=7, eval = eval_chunk----------------
 p_map <- plot_map(model) +
@@ -316,22 +359,102 @@ p_ex3 <- plot_grid(
 p_ex3
 
 ## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
-#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3.pdf", p_ex3, width = 9, height = 6, units = "in")
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3.pdf", p_ex3, width = 9, height = 6, units = "in")
 
-## ---- eval = eval_chunk-------------------------------------------------------
-ts_small <- ts_simplify(ts, c("EUR_581", "ANA_120", "EHG_440",
-                              "EUR_597", "YAM_59"))
+## ---- include = FALSE, eval = FALSE-------------------------------------------
+#  # eurs <- ts_samples(ts) %>% filter(pop == "EUR") %>% pull(name)
+#  # # eurs <- c("EUR_542", "EUR_549", "EUR_567", "EUR_581", "EUR_582")
+#  # eurs <- e <- c("EUR_578")
+#  
+#  # #############
+#  # ###### FOUND THE IND_578 (see anc.pdf)
+#  # ###### actually ,keep the anc.pdf in the archive
+#  
+#  # # finding a EUR individual with illustratively rich spatial ancestry
+#  # pdf("~/Desktop/anc.pdf")
+#  # for (e in eurs) {
+#  # ancestors <- ts_ancestors(ts, e, verbose=T)
+#  # if (length(unique(as.character(ancestors$parent_pop))) < 5) next
+#  # chrom_names <- stats::setNames(
+#  #   c(paste(e, "(chromosome 1, node 10)"), paste(e, "(chromosome 2, node 11)")),
+#  #   unique(ancestors$node_id)
+#  # )
+#  # p_ancestors <- ggplot() +
+#  #   geom_sf(data = map) +
+#  #   geom_sf(data = ancestors, size = 0.5, alpha = 0.2) +
+#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+#  #           aes(shape = parent_pop, color = parent_pop)) +
+#  #   geom_sf(data = filter(ts_nodes(ts), name == e), size = 3) +
+#  #   coord_sf(expand = 0) +
+#  #   labs(x = "longitude", y = "latitude") +
+#  #   theme_bw() +
+#  #   facet_grid(. ~ node_id, labeller = labeller(node_id = chrom_names)) +
+#  #   theme(legend.position = "bottom"); print(p_ancestors)
+#  # }
+#  # dev.off()
+#  
+#  
+#  # # finding appropriate ancestors for plotting an illustrative tree ("YAM" ancestor)
+#  # ggplot() +
+#  #   geom_sf(data = map) +
+#  #   geom_sf(data = ancestors, size = 0.5, alpha = 0.2) +
+#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+#  #           aes(shape = parent_pop, color = parent_pop)) +
+#  #   geom_sf(data = filter(ts_nodes(ts), name == e), size = 1) +
+#  #   geom_sf_label(data = filter(ancestors, parent_pop == "YAM"), aes(label = parent_id), alpha = 0.5) +
+#  #   coord_sf(expand = 0) +
+#  #   labs(x = "longitude", y = "latitude") +
+#  #   theme_bw() +
+#  #   # facet_grid(. ~ node_id, labeller = labeller(node_id = chrom_names)) +
+#  #   theme(legend.position = "bottom")
+#  
+#  # # finding appropriate ancestors for plotting an illustrative tree ("ANA" ancestor)
+#  # ggplot() +
+#  #   geom_sf(data = map) +
+#  #   geom_sf(data = ancestors, size = 0.5, alpha = 0.2) +
+#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+#  #           aes(shape = parent_pop, color = parent_pop)) +
+#  #   geom_sf(data = filter(ts_nodes(ts), name == e), size = 1) +
+#  #   geom_sf_label(data = filter(ancestors, parent_pop == "ANA"), aes(label = parent_id), alpha = 0.5) +
+#  #   coord_sf(expand = 0, xlim = c(20, 40), ylim = c(35, 45), crs = 4326) +
+#  #   labs(x = "longitude", y = "latitude") +
+#  #   theme_bw() +
+#  #   # facet_grid(. ~ node_id, labeller = labeller(node_id = chrom_names)) +
+#  #   theme(legend.position = "bottom")
+#  
+#  # # finding appropriate leaves for plotting an illustrative tree ("EHG" ancestor)
+#  # ggplot() +
+#  #   geom_sf(data = map) +
+#  #   geom_sf(data = ancestors, size = 0.5, alpha = 0.2) +
+#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+#  #           aes(shape = parent_pop, color = parent_pop)) +
+#  #   geom_sf(data = filter(ts_nodes(ts), name == e), size = 1) +
+#  #   geom_sf_label(data = filter(ancestors, parent_pop == "EHG"), aes(label = parent_id), alpha = 0.5) +
+#  #   coord_sf(expand = 0) +
+#  #   labs(x = "longitude", y = "latitude") +
+#  #   theme_bw() +
+#  #   # facet_grid(. ~ node_id, labeller = labeller(node_id = chrom_names)) +
+#  #   theme(legend.position = "bottom")
+#  
+#  # ts_yam_anc <- ts_descendants(ts, x = 39806) %>% filter(!is.na(name)) %>% as.data.frame() %>% arrange(parent_time)
+#  # ts_ana_anc <- ts_descendants(ts, x = 41734) %>% filter(!is.na(name)) %>% as.data.frame() %>% filter(grepl("ANA_", name))
+#  # ts_ehg_anc <- ts_descendants(ts, x = 42843) %>% filter(!is.na(name)) %>% as.data.frame( %>% arrange(parent_time))
+#  
+#  # names <- c("EUR_578", ts_yam_anc$name, ts_ana_anc$name, ts_ehg_anc$name)
 
-tree <- ts_phylo(ts_small, i = 10)
+## ---- ex4, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
+ts_small <- ts_simplify(ts, simplify_to = c("EUR_578", "YAM_75", "ANA_163", "EHG_208"))
+
+tree <- ts_phylo(ts_small, i = 20 / scaling)
 nodes <- ts_nodes(tree)
 edges <- ts_edges(tree)
 
-ancestors <- ts_ancestors(ts, "EUR_581")
+ancestors <- ts_ancestors(ts, "EUR_578")
 
 ## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
-#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex3_small.trees")
+#  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3_small.trees")
 
-## ---- figure_ex4, eval = Sys.getenv("R_HAS_GGTREE") == TRUE && eval_chunk, fig.height=9, fig.width=7, class.source = "fold-hide"----
+## ---- figure_ex4, eval = Sys.getenv("R_HAS_GGTREE") == TRUE && eval_chunk, fig.height=9, fig.width=8.5, class.source = "fold-hide"----
 #  library(ggtree)
 #  
 #  # prepare annotation table for ggtree linking R phylo node ID (not tskit integer
@@ -342,7 +465,7 @@ ancestors <- ts_ancestors(ts, "EUR_581")
 #    format(abs(x) / 1000, ..., scientific = FALSE, trim = TRUE)
 #  }
 #  
-#  highlight_nodes <- as_tibble(nodes) %>% dplyr::filter(name == "EUR_581") %>% .$phylo_id
+#  highlight_nodes <- as_tibble(nodes) %>% dplyr::filter(name == "EUR_578") %>% .$phylo_id
 #  
 #  p_tree <- ggtree(tree, aes(color = pop, fill = pop)) %<+% df +
 #    geom_tiplab(align = TRUE, geom = "label", offset = 2000,
@@ -354,8 +477,8 @@ ancestors <- ts_ancestors(ts, "EUR_581")
 #    theme_tree2() +
 #    theme(legend.position = "none") +
 #    xlab("time before present [thousand years ago]") +
-#    scale_x_continuous(limits = c(-120000, 31000), labels = abs_comma,
-#                       breaks = -c(120, 100, 80, 60, 40, 20, 0) * 1000)
+#    scale_x_continuous(limits = c(-80000, 31000), labels = abs_comma,
+#                       breaks = -c(100, 80, 60, 40, 20, 0) * 1000)
 #  p_tree <- revts(p_tree)
 #  
 #  # nodes$label <- ifelse(is.na(nodes$name), nodes$node_id, nodes$name)
@@ -371,8 +494,6 @@ ancestors <- ts_ancestors(ts, "EUR_581")
 #  p_map <- ggplot() +
 #    geom_sf(data = map) +
 #    geom_sf(data = edges, aes(color = parent_pop), size = 0.5) +
-#    geom_sf(data = filter(nodes, is.na(name)),
-#            aes(color = pop, shape = pop), size = 5) +
 #    geom_sf_label(data = nodes[!nodes$sampled, ],
 #                  aes(label = node_id, fill = pop), size = 3) +
 #    geom_sf_label(data = nodes[nodes$sampled, ],
@@ -381,23 +502,25 @@ ancestors <- ts_ancestors(ts, "EUR_581")
 #    coord_sf(xlim = c(3177066.1, 7188656.9),
 #             ylim = c(757021.7, 5202983.3), expand = 0) +
 #    guides(fill = guide_legend("", override.aes = aes(label = ""))) +
-#    guides(color = "none", shape = "none") +
+#    guides(color = "none") +
+#    scale_colour_discrete(drop = FALSE) +
+#    scale_fill_discrete(drop = FALSE) +
 #    theme_bw() +
 #    theme(legend.position = "bottom",
 #          axis.title.x = element_blank(),
 #          axis.title.y = element_blank())
 #  
 #  chrom_names <- stats::setNames(
-#    c("EUR_581 (node 10)", "EUR_581 (node 11)"),
+#    c("EUR_578 (node 6)", "EUR_578 (node 7)"),
 #    unique(ancestors$node_id)
 #  )
 #  
 #  p_ancestors <- ggplot() +
 #    geom_sf(data = map) +
-#    geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
+#    geom_sf(data = ancestors, size = 0.5, alpha = 0.25) +
 #    geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
 #            aes(shape = parent_pop, color = parent_pop)) +
-#    geom_sf(data = filter(ts_nodes(ts), name == "EUR_581"), size = 3) +
+#    geom_sf(data = filter(ts_nodes(ts), name == "EUR_578"), size = 3) +
 #    coord_sf(expand = 0) +
 #    labs(x = "longitude", y = "latitude") +
 #    theme_bw() +
@@ -420,5 +543,13 @@ ancestors <- ts_ancestors(ts, "EUR_581")
 #  p_ex4
 
 ## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
-#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.3/ex4.pdf", p_ex4, width = 7, height = 9, units = "in")
+#  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex4.pdf", p_ex4, width = 8.5, height = 9, units = "in")
+
+## ---- echo=FALSE--------------------------------------------------------------
+data.frame(
+  example = as.vector(names(all_times)),
+  time = as.numeric(all_times),
+  units = sapply(all_times, units),
+  row.names = NULL
+) %>% knitr::kable()
 

@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -12,6 +12,8 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 library(slendr)
+
+init_env()
 
 set.seed(314159)
 

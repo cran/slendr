@@ -1,12 +1,16 @@
 ## ---- include = FALSE---------------------------------------------------------
+env_present <- slendr:::is_slendr_env_present()
+
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
-  eval = Sys.getenv("RUNNER_OS") != "macOS"
+  eval = Sys.getenv("RUNNER_OS") != "macOS" && env_present
 )
 
 ## -----------------------------------------------------------------------------
 library(slendr)
+
+init_env()
 
 # African ancestral population
 afr <- population("AFR", time = 52000, N = 3000)

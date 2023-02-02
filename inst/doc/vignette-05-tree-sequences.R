@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -7,14 +7,17 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 80,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.which("qpDstat") != ""
 )
 
 ## -----------------------------------------------------------------------------
 library(slendr)
 
+## ---- eval = FALSE------------------------------------------------------------
+#  setup_env()
+
 ## -----------------------------------------------------------------------------
-setup_env()
+init_env()
 
 ## -----------------------------------------------------------------------------
 check_env()
@@ -178,7 +181,7 @@ ggplot(inds, aes(pop, ancestry, fill = pop)) +
 dplyr::filter(inds, pop == "EUR") %>%
   ggplot(aes(time, ancestry)) +
   geom_point() +
-  geom_smooth(method = "lm", linetype = 2, color = "red", size = 0.5) +
+  geom_smooth(method = "lm", linetype = 2, color = "red", linewidth = 0.5) +
   xlim(40000, 0) + coord_cartesian(ylim = c(0, 0.1)) +
   labs(x = "time [years ago]", y = "Neanderthal ancestry proportion")
 
@@ -203,7 +206,7 @@ snps <- ts_eigenstrat(ts, prefix = file.path(tempdir(), "eigenstrat", "data"))
 #  bind_cols(result_admixr, result_ts) %>%
 #    ggplot(aes(alpha_ts, alpha_admixr)) +
 #    geom_point() +
-#    geom_abline(slope = 1, linetype = 2, color = "red", size = 0.5) +
+#    geom_abline(slope = 1, linetype = 2, color = "red", linewidth = 0.5) +
 #    labs(x = "f4-ratio statistic calculated with admixr/ADMIXTOOLS",
 #         y = "f4-ratio statistic calculated with tskit")
 

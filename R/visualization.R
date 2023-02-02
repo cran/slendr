@@ -45,8 +45,8 @@ plot_map <- function(..., time = NULL, gene_flow = FALSE,
     stop("'slendr_region' and 'slendr_pops' object cannot be plotted at once", call. = FALSE)
 
   if (gene_flow & (is.null(time) | !inherits(args[[1]], "slendr_model")))
-    stop("Migrations can be visualized only when a time point and a 'slendr_model'
-objects are specified", call. = FALSE)
+    warning("All gene-flow event will be visualized at once. If you wish to visualize\n",
+            "gene flows at a particular point in time, use the `time` argument.", call. = FALSE)
 
   # a single model object was provided
   if (length(args) == 1 & inherits(args[[1]], "slendr_model")) {
@@ -109,6 +109,8 @@ objects are specified", call. = FALSE)
 
   if (length(pops)) {
     pop_names <- order_pops(pops, direction)
+    if (any(duplicated(pop_names)))
+      stop("Duplicated population names within a single model are not allowed", call. = FALSE)
 
     # if the user specified a time point, "interpolate" all maps at that
     # time and return just those that match that time point (unless this
@@ -144,7 +146,12 @@ objects are specified", call. = FALSE)
       pop_maps <- pops
     }
 
-    if (intersect) pop_maps <- lapply(pop_maps, intersect_features)
+    if (intersect) {
+      intersected_maps <- pop_maps %>% Filter(has_map, .) %>% lapply(intersect_features)
+      if (length(intersected_maps) != length(pop_maps))
+        warning("Non-spatial populations in your model won't be visualized", call. = FALSE)
+      pop_maps <- intersected_maps
+    }
 
     pop_maps <- do.call(rbind, pop_maps)
     pop_maps$pop <- factor(pop_maps$pop, levels = pop_names)
@@ -209,6 +216,8 @@ objects are specified", call. = FALSE)
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' path <- system.file("extdata/models/introgression", package = "slendr")
 #' model <- read_model(path)
@@ -391,6 +400,12 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, log = FALSE) {
 
   if (model$direction == "forward") p <- p + scale_y_reverse()
 
+  # add each each epoch resize segment
+  for (lineage in size_changes) {
+    for (event in lineage)
+      p <- p + geom_polygon(data = event, aes(x, y, fill = pop))
+  }
+
   # add horizontal split lines
   if (!is.null(splits)) {
     p <- p + geom_segment(
@@ -398,12 +413,6 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, log = FALSE) {
       aes(x = x, xend = xend, y = y, yend = yend, color = from),
       size = 2
     )
-  }
-
-  # add each each epoch resize segment
-  for (lineage in size_changes) {
-    for (event in lineage)
-      p <- p + geom_polygon(data = event, aes(x, y, fill = pop))
   }
 
   # labels with population names
@@ -512,7 +521,7 @@ animate_model <- function(model, file, steps, gif = NULL, width = 800, height = 
 
 # Create a table of population split edges for graph visualization
 get_split_edges <- function(split_table) {
-  split_edges <- split_table[split_table$parent != "ancestor",
+  split_edges <- split_table[split_table$parent != "__pop_is_ancestor",
                              c("parent", "pop", "tsplit")]
   names(split_edges) <- c("from", "to", "time")
 

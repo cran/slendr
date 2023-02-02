@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -32,6 +32,8 @@ library(slendr)
 library(dplyr)
 library(magrittr)
 library(ggplot2)
+
+init_env()
 
 SEED <- 42
 set.seed(SEED)

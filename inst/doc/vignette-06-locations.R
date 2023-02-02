@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -16,31 +16,43 @@ library(slendr)
 library(dplyr)
 library(ggplot2)
 
+init_env()
+
 seed <- 314159
 set.seed(seed)
 
 ## ---- results = FALSE---------------------------------------------------------
 # simulated world map
 map <- world(
-  xrange = c(-15, 60),
-  yrange = c(20, 65),
-  crs = "EPSG:3035"
+  xrange = c(-13, 70), # min-max longitude
+  yrange = c(18, 65),  # min-max latitude
+  crs = "EPSG:3035"    # coordinate reference system (CRS) for West Eurasia
 )
 
 # couple of broad geographic regions
-africa <- region("Africa", map, polygon = list(c(-18, 20), c(40, 20), c(30, 33),
-                                               c(20, 32), c(10, 35), c(-8, 35)))
-europe <- region("Europe", map, polygon = list(c(-8, 35), c(-5, 36), c(10, 38),
-                                               c(20, 35), c(25, 35), c(33, 45),
-                                               c(20, 58), c(-5, 60), c(-15, 50)))
-anatolia <- region("Anatolia", map, polygon = list(c(28, 35), c(40, 35), c(42, 40),
-                                                   c(30, 43), c(27, 40), c(25, 38)))
+africa <- region(
+  "Africa", map,
+  polygon = list(c(-18, 20), c(38, 20), c(30, 33),
+                 c(20, 33), c(10, 38), c(-6, 35))
+)
+europe <- region(
+  "Europe", map,
+  polygon = list(
+    c(-8, 35), c(-5, 36), c(10, 38), c(20, 35), c(25, 35),
+    c(33, 45), c(20, 58), c(-5, 60), c(-15, 50)
+  )
+)
+anatolia <- region(
+  "Anatolia", map,
+  polygon = list(c(28, 35), c(40, 35), c(42, 40),
+                 c(30, 43), c(27, 40), c(25, 38))
+)
 
 # define population histories
 
 # African ancestral population
 afr <- population(
-  "AFR", parent = "ancestor", time = 52000, N = 3000,
+  "AFR", time = 52000, N = 3000,
   map = map, polygon = africa
 )
 
@@ -95,7 +107,7 @@ model <- compile_model(
   populations = list(afr, ooa, ehg, eur, ana, yam),
   gene_flow = gf,
   generation_time = 30, resolution = 10e3,
-  competition = 130e3, mating = 100e3, dispersal = 70e3
+  competition = 150e3, mating = 120e3, dispersal = 90e3
 )
 
 ## ---- demographic_model-------------------------------------------------------
@@ -107,7 +119,7 @@ plot_map(afr, ooa, ehg, eur, ana, yam)
 ## -----------------------------------------------------------------------------
 # one ancient individual every two thousand years
 ancient <- schedule_sampling(model,
-                    times = seq(40000, 1, by = -1000),
+                    times = seq(40000, 1, by = -500),
                     list(ooa, 1), list(ehg, 1), list(eur, 1),
                     list(ana, 1), list(yam, 1))
 
@@ -164,7 +176,7 @@ ggplot() +
   theme_bw()
 
 ## -----------------------------------------------------------------------------
-ind <- "EUR_51"
+ind <- "EUR_67"
 
 lineages <- ts_ancestors(ts, ind, verbose = TRUE)
 
@@ -178,27 +190,52 @@ filter(lineages, level == 1)
 counts <- filter(lineages, name == ind, level == 1) %>% as.data.frame() %>% count(node_id)
 
 ## ----level1_branches----------------------------------------------------------
-level1_branches <- ts_ancestors(ts, "EUR_10") %>% filter(level == 1)
+level1_branches <- ts_ancestors(ts, "EUR_67") %>% filter(level == 1)
 
 ggplot() +
   geom_sf(data = map, fill = "lightgray", color = NA) +
   geom_sf(data = level1_branches[, ]$child_location, shape = 13, size = 3, color = "red") +
-  geom_sf(data = level1_branches[, ]$parent_location, shape = 20, color = level1_branches[, ]$node_id) +
   geom_sf(data = level1_branches[, ]$connection, linetype = 3) +
+  geom_sf(data = level1_branches[, ]$parent_location, shape = 20, color = "blue") +
   theme_bw() +
   ggtitle("Parent nodes (blue) of a focal individual (red)")
+
+## -----------------------------------------------------------------------------
+as_tibble(level1_branches)[, c("name", "node_id", "child_id", "parent_id", "left_pos", "right_pos")]
+
+## ---- eval = FALSE, echo = FALSE----------------------------------------------
+#  # pdf("~/Desktop/x.pdf")
+#  # for (i in ts_samples(ts) %>% filter(pop == "EUR") %>% pull(name)) {
+#  
+#  # ancestors <- ts_ancestors(ts, i, verbose = TRUE)
+#  #   p_ancestors <- ggplot() +
+#  #   geom_sf(data = map) +
+#  #   geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
+#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+#  #           aes(shape = parent_pop, color = parent_pop)) +
+#  #   geom_sf(data = filter(ts_nodes(ts), name == i), size = 3) +
+#  #   coord_sf(expand = 0) +
+#  #   labs(x = "longitude", y = "latitude") +
+#  #   theme_bw() +
+#  #   facet_grid(. ~ node_id) +
+#  #   ggtitle(i) +
+#  #   theme(legend.position = "none"); print(p_ancestors)
+#  
+#  # }
+#  # dev.off()
 
 ## ----plot_ancestors_time------------------------------------------------------
 ggplot() +
   geom_sf(data = map) +
-  geom_sf(data = lineages, size = 0.5, aes(alpha = parent_time)) +
+  geom_sf(data = lineages, size = 0.5, alpha = 0.2) +
   geom_sf(data = sf::st_set_geometry(lineages, "parent_location"),
           aes(shape = parent_pop, color = parent_pop)) +
   geom_sf(data = filter(ts_nodes(ts), name == ind), size = 3) +
   guides(alpha = "none") +
   coord_sf(expand = 0) +
   labs(x = "longitude", y = "latitude") +
-  facet_grid(. ~ node_id)
+  facet_grid(. ~ node_id) +
+  ggtitle("Ancestry encoded by two nodes (chromosomes) of EUR_67")
 
 ## ---- include = F-------------------------------------------------------------
 nodes <- unique(lineages[!is.na(lineages$name), ]$node_id)
@@ -207,58 +244,50 @@ nodes <- unique(lineages[!is.na(lineages$name), ]$node_id)
 ts_samples(ts) %>% filter(pop == "ANA")
 
 ## ---- eval = FALSE, echo = FALSE----------------------------------------------
-#  # pdf("~/Desktop/y.pdf")
-#  # for (i in ts_samples(ts) %>% filter(pop == "ANA") %>% .$name) {
-#  #
-#  # lineages <- ts_ancestors(ts, i, verbose = TRUE)
-#  # { plot_ancestors(lineages, i) + ggtitle(i) } %>% print
-#  #
-#  # }
-#  # dev.off()
-
-## ---- eval = FALSE, echo = FALSE----------------------------------------------
 #  # pdf("~/Desktop/z.pdf")
-#  # for (i in ts_samples(ts) %>% filter(pop == "OOA") %>% .$name) {
-#  #
-#  # lineages <- ts_ancestors(ts, i, verbose = TRUE)
-#  # { plot_ancestors(lineages, i) + ggtitle(i) } %>% print
-#  #
-#  # }
-#  # dev.off()
-
-## ---- eval = FALSE, echo = FALSE----------------------------------------------
-#  # pdf("~/Desktop/w.pdf")
-#  # for (i in ts_samples(ts) %>% filter(pop == "AFR") %>% .$name) {
-#  #
-#  # lineages <- ts_ancestors(ts, i, verbose = TRUE)
-#  # { plot_ancestors(lineages, i) + ggtitle(i) } %>% print
-#  #
+#  # for (i in ts_samples(ts) %>% filter(pop == "ANA") %>% pull(name)) {
+#  
+#  # ancestors <- ts_ancestors(ts, i, verbose = TRUE)
+#  #   p_ancestors <- ggplot() +
+#  #   geom_sf(data = map) +
+#  #   geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
+#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+#  #           aes(shape = parent_pop, color = parent_pop)) +
+#  #   geom_sf(data = filter(ts_nodes(ts), name == i), size = 3) +
+#  #   coord_sf(expand = 0) +
+#  #   labs(x = "longitude", y = "latitude") +
+#  #   theme_bw() +
+#  #   facet_grid(. ~ node_id) +
+#  #   ggtitle(i) +
+#  #   theme(legend.position = "none"); print(p_ancestors)
+#  
 #  # }
 #  # dev.off()
 
 ## ---- include = FALSE---------------------------------------------------------
-ana_ind <- ts_samples(ts) %>% filter(name == "ANA_21")
+ana_ind <- ts_samples(ts) %>% filter(name == "ANA_45")
 
 ## ---- plot_ancestors_levels_ana-----------------------------------------------
-lineages <- ts_ancestors(ts, "ANA_21")
+lineages <- ts_ancestors(ts, "ANA_45")
 
 ggplot() +
   geom_sf(data = map) +
-  geom_sf(data = lineages, size = 0.5, aes(alpha = parent_time)) +
+  geom_sf(data = lineages, size = 0.5, alpha = 0.2) +
   geom_sf(data = sf::st_set_geometry(lineages, "parent_location"),
           aes(shape = parent_pop, color = parent_pop)) +
-  geom_sf(data = filter(ts_nodes(ts), name == "ANA_21"), size = 3) +
+  geom_sf(data = filter(ts_nodes(ts), name == "ANA_45"), size = 3) +
   guides(alpha = "none") +
   coord_sf(expand = 0) +
   labs(x = "longitude", y = "latitude") +
-  facet_grid(. ~ node_id)
+  facet_grid(. ~ node_id) +
+  ggtitle("Ancestry encoded by two nodes (chromosomes) of ANA_45")
 
 ## -----------------------------------------------------------------------------
 lineages <-
   ts_samples(ts) %>%
   pull(name) %>%
   ts_ancestors(ts, x = .)
-  
+
 select(lineages, connection, child_time, parent_time)
 
 ## -----------------------------------------------------------------------------
@@ -285,7 +314,7 @@ distances_long <- distances %>%
 distances_long %>%
   ggplot(aes(child_time, value, color = child_pop)) +
   geom_smooth(method = "loess", aes(group = child_pop)) +
-  geom_hline(yintercept = 0, linetype = 2, size = 0.5) +
+  geom_hline(yintercept = 0, linetype = 2, linewidth = 0.5) +
   labs(y = "kilometers", x = "time [years ago]") +
   theme(axis.text.x = element_text(hjust = 1, angle = 45),
         legend.position = "bottom") +

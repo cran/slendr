@@ -11,7 +11,7 @@
 check_dependencies <- function(python = FALSE, slim = FALSE) {
   # check whether SLiM and Python are present (only if needed!)
   missing_slim <- if (slim) !all(Sys.which("slim") != "") else FALSE
-  missing_python <- if (python) !check_env_present() else FALSE
+  missing_python <- if (python) !is_slendr_env_present() else FALSE
 
   if (missing_slim | missing_python) {
     if (interactive()) {
@@ -213,11 +213,21 @@ get_geneflows <- function(model, time) {
     after_op <- `<=`
   }
 
-  geneflows <- subset(model$geneflow, before_op(tstart_orig, time) & after_op(tend_orig, time))
+  if (!is.null(time))
+    geneflows <- subset(model$geneflow, before_op(tstart_orig, time) & after_op(tend_orig, time))
+  else
+    geneflows <- model$geneflow
+
   geneflows$from <- factor(geneflows$from, levels = pop_names)
   geneflows$to <- factor(geneflows$to, levels = pop_names)
 
   migr_coords <- lapply(seq_len(nrow(geneflows)), function(row_i) {
+
+    # if time point was not provided, simply take the midpoint of the current
+    # gene-flow event
+    if (is.null(time)) {
+      time <- geneflows[row_i, c("tstart_orig", "tend_orig")] %>% as.numeric() %>% mean()
+    }
 
     from <- model$populations[pop_names == geneflows[row_i, ]$from][[1]] %>%
       .[before_op(.$time, time), ] %>%
@@ -601,7 +611,7 @@ check_location_bounds <- function(locations, map) {
 # or ancestry proportions over time) back to user-specified time units
 # (either forward or backward)
 convert_slim_time <- function(times, model) {
-  ancestors <- dplyr::filter(model$splits, parent == "ancestor")
+  ancestors <- dplyr::filter(model$splits, parent == "__pop_is_ancestor")
 
   if (model$direction == "backward") {
     oldest_time <- max(ancestors[, ]$tsplit_orig)
@@ -661,7 +671,7 @@ ask_install <- function(module) {
   answer == 2
 }
 
-check_env_present <- function() {
+is_slendr_env_present <- function() {
   tryCatch({
     PYTHON_ENV %in% reticulate::conda_list()$name
   }, error = function(cond) FALSE
@@ -706,6 +716,7 @@ utils::globalVariables(
     "orig_x", "orig_y", "phylo_id", "raster_x", "raster_y",
     "pop.y", "pop_id.y", "time_tskit", "time_tskit.x", "time_tskit.y",
     "N", "center", "child_node_id", "child_phylo_id", "geometry", "parent_node_id",
-    "parent_phylo_id", "set_boundary", "xend", "xmax", "xmin", "yend"
+    "parent_phylo_id", "set_boundary", "xend", "xmax", "xmin", "yend",
+    "arc_degree"
   ), package = "slendr"
 )

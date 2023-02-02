@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -12,6 +12,8 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 library(slendr)
+
+init_env()
 
 ## -----------------------------------------------------------------------------
 map <- world(
@@ -107,7 +109,7 @@ model <- compile_model(
 ts <- slim(model, sequence_length = 10000, recombination_rate = 0) # simulate a single 10kb locus
 ts
 
-## ---- results = FALSE---------------------------------------------------------
+## ---- results = FALSE, warning = FALSE----------------------------------------
 map <- world(
   xrange = c(-25, 55),
   yrange = c(-32, 35),
@@ -118,7 +120,7 @@ n <- 20
 
 populations <-
   seq(1, n * n) %>%
-  lapply(create_pop, n_side = n, map = map, N = 100, radius = 150e3)
+  lapply(create_pop, n_side = n, map = map, N = 100, radius = 1.5)
 
 ## -----------------------------------------------------------------------------
 continent <- region(
@@ -147,9 +149,86 @@ check_area <- function(pop, map, continent) {
     return(pop)
 }
 
-filtered <- lapply(populations, check_area, map, continent) %>% 
+filtered <- lapply(populations, check_area, map, continent) %>%
   Filter(Negate(is.null), .)
 
 ## ---- demes_africa------------------------------------------------------------
 do.call(plot_map, filtered) + ggplot2::theme(legend.position = "none")
+
+## ---- map_america-------------------------------------------------------------
+xrange <- c(-90, -20)
+yrange <- c(-58, 15)
+
+map <- world(xrange = xrange, yrange = yrange, crs = "EPSG:31970")
+plot_map(map)
+
+## -----------------------------------------------------------------------------
+# non-spatial ancestral population
+p_anc <- population("p_anc", N = 1000, time = 1, remove = 500)
+
+# spatial populations
+p1 <- population("p1", N = 1000, time = 500, parent = p_anc, map = map, center = c(-75, 0), radius = 200e3)
+p2 <- population("p2", N = 1000, time = 500, parent = p_anc, map = map, center = c(-60, 5), radius = 200e3)
+p3 <- population("p3", N = 1000, time = 500, parent = p_anc, map = map, center = c(-65, -5), radius = 200e3)
+p4 <- population("p4", N = 1000, time = 500, parent = p_anc, map = map, center = c(-60, -20), radius = 200e3)
+p5 <- population("p5", N = 1000, time = 500, parent = p_anc, map = map, center = c(-65, -35), radius = 200e3)
+p6 <- population("p6", N = 1000, time = 500, parent = p_anc, map = map, center = c(-69, -42), radius = 200e3)
+p7 <- population("p7", N = 1000, time = 500, parent = p_anc, map = map, center = c(-51, -10), radius = 200e3)
+p8 <- population("p8", N = 1000, time = 500, parent = p_anc, map = map, center = c(-45, -15), radius = 200e3)
+p9 <- population("p9", N = 1000, time = 500, parent = p_anc, map = map, center = c(-71, -12), radius = 200e3)
+p10 <- population("p10", N = 1000, time = 500, parent = p_anc, map = map, center = c(-55, -25), radius = 200e3)
+
+## -----------------------------------------------------------------------------
+gf <- list(
+  gene_flow(p1, p2, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p2, p1, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p1, p3, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p3, p1, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p2, p3, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p3, p2, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p2, p7, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p7, p2, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p3, p7, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p7, p3, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p7, p8, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p8, p7, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p4, p7, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p7, p4, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p4, p5, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p5, p4, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p5, p6, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p6, p5, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p3, p4, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p4, p3, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p1, p9, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p9, p1, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p3, p9, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p9, p3, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p4, p9, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p9, p4, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p10, p4, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p4, p10, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p10, p8, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p8, p10, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p10, p5, 0.1, 1000, 2000, overlap = FALSE),
+  gene_flow(p5, p10, 0.1, 1000, 2000, overlap = FALSE)
+)
+
+## -----------------------------------------------------------------------------
+model <- compile_model(
+  populations = list(p_anc, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10), gene_flow = gf,
+  generation_time = 1, simulation_length = 5000,
+  serialize = FALSE
+)
+
+## ---- model_america-----------------------------------------------------------
+plot_model(model)
+
+## ---- model_map_america-------------------------------------------------------
+plot_map(model, gene_flow = TRUE)
+
+## -----------------------------------------------------------------------------
+ts <- msprime(model, sequence_length = 10e6, recombination_rate = 1e-8, random_seed = 42)
+
+ts
 

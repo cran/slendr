@@ -1,4 +1,4 @@
-#' Compile the spatial demographic model
+#' Compile a slendr demographic model
 #'
 #' First, compiles the vectorized population spatial maps into a series of
 #' binary raster PNG files, which is the format that SLiM understands and uses
@@ -65,13 +65,29 @@ compile_model <- function(populations, generation_time, path = NULL, resolution 
   if (is.null(slim_script))
     slim_script <- system.file("scripts", "script.slim", package = "slendr")
 
-  map <- get_map(populations[[1]])
-  if (!is.null(map) && is.null(resolution))
+  # get values of all map attributes across populations
+  maps <- lapply(populations, get_map) %>% Filter(Negate(is.null), .)
+
+  if (length(unique(maps)) > 1)
+    stop("Multiple spatial maps detected across populations but only a single\n",
+         "world map is allowed for spatial models.", call. = FALSE)
+  else if (length(unique(maps)) == 1)
+    map <- maps[[1]]
+  else
+    map <- NULL
+
+  if (!is.null(map) && length(maps) != length(populations))
+    warning("Model containing a mix of spatial and non-spatial populations will be compiled.\n",
+            "Although this is definitely supported, make sure this is really what you want.",
+            call. = FALSE)
+
+  if (!is.null(map) && is.null(resolution) && serialize)
     stop("A map resolution must be specified for spatial models", call. = FALSE)
 
   if (!serialize && is.null(path) && inherits(map, "slendr_map")) {
-    stop("Spatial models must be serialized to disk for SLiM to simulate data from",
-         call. = FALSE)
+    warning("Spatial models must be serialized to disk for SLiM to simulate data from.\n",
+            "Compiled like this, your model can only be simulated with msprime.",
+            call. = FALSE)
   }
   if (serialize && is.null(path))
     path <- tempfile()
@@ -120,9 +136,6 @@ compile_model <- function(populations, generation_time, path = NULL, resolution 
 
   if (is.data.frame(gene_flow)) gene_flow <- list(gene_flow)
 
-  if (length(unique(sapply(populations, has_map))) != 1)
-    stop("Populations must be either all spatial or non-spatial, but not both", call. = FALSE)
-
   # make sure all populations share the same direction of time
   time_dir <- setdiff(unique(sapply(populations, time_direction)), "unknown")
 
@@ -157,7 +170,7 @@ setting `direction = 'backward'.`", call. = FALSE)
   admix_table <- compile_geneflows(gene_flow, split_table, generation_time, time_dir, end_time)
   resize_table <- compile_resizes(populations, generation_time, time_dir, end_time, split_table)
 
-  if (inherits(map, "slendr_map")) {
+  if (serialize && inherits(map, "slendr_map")) {
     if (!is.null(competition)) check_resolution(map, competition)
     if (!is.null(mating)) check_resolution(map, mating)
     if (!is.null(dispersal)) check_resolution(map, dispersal)
@@ -224,6 +237,8 @@ setting `direction = 'backward'.`", call. = FALSE)
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' path <- system.file("extdata/models/introgression", package = "slendr")
 #' model <- read_model(path)
@@ -347,6 +362,8 @@ read_model <- function(path) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE, slim = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
 #'
@@ -460,8 +477,8 @@ slim <- function(
     -d 'OUTPUT_LOCATIONS=\"%s\"' \\
     -d COALESCENT_ONLY=%s \\
     -d MAX_ATTEMPTS=%i \\
-    %s",
-      binary,
+    %s 2>&1",
+      binary, # path to the SLiM binary on the command line
       seed,
       samples,
       path.expand(model_dir),
@@ -486,7 +503,7 @@ slim <- function(
 
     # execute the command, capture all log output and decide whether to print
     # any of the log information to the console
-    log_output <- suppressWarnings(system(paste(slim_command, "2>&1"), intern = TRUE))
+    log_output <- suppressWarnings(system(slim_command, intern = TRUE))
     log_warnings <- grep("WARNING", log_output, value = TRUE)
     if (verbose)
       cat(log_output, sep = "\n")
@@ -557,6 +574,8 @@ slim <- function(
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model
 #' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
 #'
@@ -597,7 +616,7 @@ msprime <- function(model, sequence_length, recombination_rate, samples = NULL,
   if (!is.numeric(recombination_rate) | recombination_rate < 0)
     stop("Recombination rate must be a numeric value", call. = FALSE)
 
-  if (sum(model$splits$parent == "ancestor") > 1)
+  if (sum(model$splits$parent == "__pop_is_ancestor") > 1)
     stop("Multiple ancestral populations without a common ancestor would lead to\n",
          "an infinitely deep history without coalescence. Please make sure that all\n",
          "populations trace their ancestry to a single ancestral population.\n",
@@ -825,7 +844,7 @@ write_script <- function(script_target, script_source,
 compile_splits <- function(populations, generation_time, direction, end_time) {
   split_table <- lapply(populations, function(p) {
     parent <- attr(p, "parent")
-    if (is.character(parent) && parent == "ancestor") {
+    if (is.character(parent) && parent == "__pop_is_ancestor") {
       parent_name <- parent
     } else {
       parent_name <- unique(attr(p, "parent")$pop)
@@ -860,7 +879,7 @@ compile_splits <- function(populations, generation_time, direction, end_time) {
   split_table$parent_id <- lapply(
     split_table$parent,
     function(i) {
-      if (i == "ancestor") -1
+      if (i == "__pop_is_ancestor") -1
       else split_table[split_table$pop == i, ]$pop_id
     }
   ) %>% unlist()
@@ -869,7 +888,7 @@ compile_splits <- function(populations, generation_time, direction, end_time) {
   # simulation in generation 1 regardless of which "time of appearance" was
   # specified (to include it in the burnin)
   split_table %>%
-    dplyr::mutate(tsplit_gen = ifelse(parent == "ancestor", 1, tsplit_gen))
+    dplyr::mutate(tsplit_gen = ifelse(parent == "__pop_is_ancestor", 1, tsplit_gen))
 }
 
 # Process vectorized population boundaries into a table with
@@ -909,12 +928,13 @@ compile_maps <- function(populations, split_table, resolution, generation_time,
   map_table <- map_table[!duplicated(map_table[, c("pop", "time_gen")]), ]
   map_table$path <- seq_len(nrow(map_table)) %>% paste0(., ".png")
 
-  # maps of ancestral populations have to be set in the first generation,
-  # regardless of the specified split time
-  ancestral_pops <- split_table[split_table$parent == "ancestor", ]$pop
+  # maps of ancestral populations (that is, those that are spatial) have to
+  # be set in the first generation, regardless of the specified split time
+  ancestral_pops <- split_table[split_table$parent == "__pop_is_ancestor", ]$pop
   ancestral_maps <- purrr::map(ancestral_pops, ~ which(map_table$pop == .x)) %>%
     purrr::map_int(~ .x[1])
-  map_table[ancestral_maps, ]$time_gen <- 1
+  if (any(!is.na(ancestral_maps)))
+    map_table[ancestral_maps[!is.na(ancestral_maps)], ]$time_gen <- 1
 
   map_table
 }
@@ -1025,7 +1045,7 @@ compile_dispersals <- function(populations, generation_time, direction,
 
   # dispersals of ancestral populations have to be set in the first generation,
   # regardless of the specified split time
-  ancestral_pops <- split_table[split_table$parent == "ancestor", ]$pop
+  ancestral_pops <- split_table[split_table$parent == "__pop_is_ancestor", ]$pop
   indices <- purrr::map(ancestral_pops, ~ which(dispersal_table$pop == .x)) %>%
     purrr::map_int(~ .x[1])
   dispersal_table[indices, ]$tdispersal_gen <- 1
@@ -1038,7 +1058,10 @@ compile_dispersals <- function(populations, generation_time, direction,
 
 # Render population boundaries to black-and-white spatial maps
 render <- function(pops, resolution) {
-  raster_list <- lapply(pops, function(pop) {
+  # process only populations which have a map
+  spatial_pops <- Filter(has_map, pops)
+
+  raster_list <- lapply(spatial_pops, function(pop) {
     # iterate over temporal maps for the current population
     snapshots <- lapply(unique(pop$time), function(t) {
       snapshot <- pop[pop$time == t, ]
@@ -1068,6 +1091,11 @@ render <- function(pops, resolution) {
   rasters
 }
 
+on_cran_windows <- function() {
+  on_cran <- !identical(Sys.getenv("NOT_CRAN"), "true")
+  on_windows <- tolower(Sys.info()[["sysname"]]) == "windows"
+  on_cran && on_windows
+}
 
 # Rasterize the vector form of a population spatial boundary
 rasterize <- function(x, resolution) {
@@ -1083,7 +1111,20 @@ rasterize <- function(x, resolution) {
   template <- stars::st_as_stars(bbox, dx = resolution, dy = resolution)
 
   # perform the rasterization using the dummy single-value factor column
-  raster <- stars::st_rasterize(x["fill"], template)
+
+  # Windows CI machines have started giving mysterious errors, possibly due to
+  # some sf-starts-GDAL changes? The full warning is this:
+  # "GDAL Message 1: The definition of geographic CRS EPSG:4258 got from GeoTIFF keys is not the
+  # same as the one from the EPSG registry, which may cause issues during reprojection operations.
+  # Set GTIFF_SRS_SOURCE configuration option to EPSG to use official parameters (overriding the
+  # ones from GeoTIFF keys), or to GEOKEYS to use custom values from GeoTIFF keys and drop the
+  # EPSG code."
+  # Because spatial SLiM simulations on Windows are not yet supported, I will silence this
+  # call on Windows for the time being because these warnings are turned into errors on CRAN,
+  # making all tests failing -- including functionality used by users who have no intention of
+  # running spatial simulations.
+  wrapper <- if (on_cran_windows()) suppressWarnings else identity
+  raster <- wrapper(stars::st_rasterize(x["fill"], template))
 
   if (length(table(raster$ID)) == 1) {
     stop(sprintf("

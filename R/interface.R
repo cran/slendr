@@ -13,8 +13,8 @@
 #' @param name Name of the population
 #' @param time Time of the population's first appearance
 #' @param N Number of individuals at the time of first appearance
-#' @param parent Parent population object or "ancestor" (indicating that the
-#'   population does not have an ancestor, and that it is the first population
+#' @param parent Parent population object or \code{NULL} (which indicates that
+#'   the population does not have an ancestor, as it is the first population
 #'   in its "lineage")
 #' @param map Object of the type \code{slendr_map} which defines the world
 #'   context (created using the \code{world} function). If the value
@@ -47,21 +47,30 @@
 #' @export
 #'
 #' @example man/examples/model_definition.R
-population <- function(name, time, N, parent = "ancestor", map = FALSE,
+population <- function(name, time, N, parent = NULL, map = FALSE,
                        center = NULL, radius = NULL, polygon = NULL,
                        remove = NULL, intersect = TRUE,
                        competition = NA, mating = NA, dispersal = NA,
                        dispersal_fun = NULL, aquatic = FALSE) {
-  # is this the first population defined in the model?
-  if (is.character(parent) && parent == "ancestor") {
-    if (!is.logical(map) && !inherits(map, "slendr_map"))
-      stop("Ancestral population must specify its 'map'", call. = FALSE)
+  if (!is.character(name) || length(name) != 1)
+    stop("A population name must be a character scalar value", call. = FALSE)
+
+  # if this population splits from a parental population, check that the parent
+  # really exists and that the split time make sense given the time of appearance
+  # of the parental population
+  if (!is.null(parent)) {
+    if (!inherits(parent, "slendr_pop"))
+      stop("Only slendr_pop objects can represent parental populations", call. = FALSE)
     else
-      map <- map
-  } else {
-    check_split_time(time, parent)
-    map <- attr(parent, "map")
+      check_split_time(time, parent)
   }
+
+  if (!is.logical(map) && !inherits(map, "slendr_map"))
+    stop("A simulation landscape must be an object of the class slendr_map", call. = FALSE)
+
+  if (!is.null(parent) && is.logical(map) && map == FALSE)
+    map <- attr(parent, "map")
+
   time <- as.integer(time)
   if (time < 1) stop("Split time must be a non-negative integer number", call. = FALSE)
   N <- as.integer(N)
@@ -70,9 +79,7 @@ population <- function(name, time, N, parent = "ancestor", map = FALSE,
     # define the population range as a simple geometry object
     # and bind it with the annotation info into an sf object
     if (is.null(polygon) && is.null(center) && is.null(radius)) {
-      bbox <- sf::st_bbox(map)
-      poly <- list(c(bbox[1], bbox[3]), c(bbox[2], bbox[3]), c(bbox[2], bbox[4]), c(bbox[1], bbox[4]))
-      geometry <- define_boundary(map, center, radius, coords = poly)
+      geometry <- sf::st_geometry(map)
     } else if (!is.null(polygon) & inherits(polygon, "slendr_region"))
       geometry <- sf::st_geometry(polygon)
     else
@@ -94,8 +101,8 @@ population <- function(name, time, N, parent = "ancestor", map = FALSE,
   # keep a record of the parent population
   if (inherits(parent, "slendr_pop"))
     attr(pop, "parent") <- parent
-  else if (is.character(parent) & parent == "ancestor")
-    attr(pop, "parent") <- "ancestor"
+  else if (is.null(parent))
+    attr(pop, "parent") <- "__pop_is_ancestor"
   else
     stop("Suspicious parent population", call. = FALSE)
 
@@ -569,7 +576,15 @@ gene_flow <- function(from, to, rate, start, end, overlap = TRUE) {
   if ((has_map(from) && !has_map(to)) || (!has_map(from) && has_map(to)))
     stop("Both or neither populations must be spatial", call. = FALSE)
 
+  # make sure both participating populations are present at the start of the
+  # gene flow event (`check_present_time()` is reused from the sampling functionality)
+  # check_present_time(start, from, offset = 0)
+  # check_present_time(end, from, offset = 0)
+  # check_present_time(start, to, offset = 0)
+  # check_present_time(end, to, offset = 0)
+
   # make sure the population is not removed during the the admixture period
+  # (note that this will only be relevant for SLiM simulations at this moment)
   check_removal_time(start, from)
   check_removal_time(end, from)
   check_removal_time(start, to)
@@ -716,25 +731,31 @@ world <- function(xrange, yrange, landscape = "naturalearth", crs = NULL,
       )
       utils::unzip(path, exdir = ne_dir)
     }
-    map_raw <- rnaturalearth::ne_load(
-      scale = scale, type = "land", category = "physical",
-      returnclass = "sf", destdir = ne_dir
+
+    # TODO: this function uses internally rgdal, which is to be retired by 2023
+    # silence the deprecation warning for now, as it would only confuse the user
+    # and figure out a way to deal with this (either by providing a PR to the devs
+    # or hacking our own alternative)
+    suppressWarnings(
+      map_raw <- rnaturalearth::ne_load(
+        scale = scale, type = "land", category = "physical",
+        returnclass = "sf", destdir = ne_dir
+      )
     )
     sf::st_agr(map_raw) <- "constant"
 
-    ## transform the map (default geographic CRS) into the target CRS
-    map_transf <- tryCatch({
-      sf::st_transform(map_raw, crs) %>% sf::st_make_valid()
+    # define boundary coordinates in the target CRS
+    crop_bounds <- define_zoom(xrange, yrange, "EPSG:4326")
+
+    # crop the map to the boundary coordinates
+    map_cropped <- tryCatch({
+      sf::st_crop(sf::st_make_valid(map_raw), crop_bounds)
     }, error = function(cond) {
-      sf::st_transform(map_raw, crs)
+      sf::st_crop(map_raw, crop_bounds)
     })
 
-    ## define boundary coordinates in the target CRS
-    zoom_bounds <- define_zoom(xrange, yrange, "EPSG:4326")
-    zoom_transf <- sf::st_transform(zoom_bounds, crs) %>% sf::st_make_valid()
-
-    ## crop the map to the boundary coordinates
-    map <- sf::st_crop(map_transf, zoom_transf)
+    # transform the map into the target CRS if needed
+    map <- sf::st_transform(map_cropped, crs)
   } else {
     stop("Landscape has to be either 'blank', 'naturalearth' or an object of the class 'sf'",
          call. = FALSE)
@@ -1074,7 +1095,7 @@ area <- function(x) {
     stop("Input must be of the type 'slendr' or 'sf'", call. = FALSE)
 
   if (inherits(x, "slendr_pop")) {
-    areas <- purrr::map_dbl(seq_len(nrow(x)), ~ as.numeric(sum(sf::st_area(x[.x, ]))))
+    areas <- purrr::map_dbl(seq_len(nrow(x)), ~ as.numeric(sum(sf::st_area(sf::st_make_valid(x[.x, ])))))
     times <- x$time
     return(dplyr::tibble(time = times, area = areas))
   } else if (inherits(x, "slendr_map") || inherits(x, "slendr_region"))
@@ -1119,6 +1140,8 @@ area <- function(x) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
+#'
 #' # load an example model with an already simulated tree sequence
 #' path <- system.file("extdata/models/introgression", package = "slendr")
 #' model <- read_model(path)
@@ -1230,6 +1253,44 @@ schedule_sampling <- function(model, times, ..., locations = NULL, strict = FALS
   schedule
 }
 
+#' Activate slendr's own dedicated Python environment
+#'
+#' This function attempts to activate a dedicated slendr Miniconda Python
+#' environment previously set up via \code{setup_env}.
+#'
+#' @param quiet Should informative messages be printed to the console? Default
+#'   is \code{FALSE}.
+#'
+#' @return No return value, called for side effects
+#'
+#' @export
+init_env <- function(quiet = FALSE) {
+  if (!is_slendr_env_present())
+    stop("Could not activate slendr's Python environment because it is not\npresent ",
+         "on your system ('", PYTHON_ENV, "').\n\n",
+         "To set up a dedicated Python environment you first need to run setup_env().", call. = FALSE)
+  else {
+    reticulate::use_condaenv(PYTHON_ENV, required = TRUE)
+    if (!reticulate::py_module_available("msprime") ||
+        !reticulate::py_module_available("tskit") ||
+        !reticulate::py_module_available("pyslim")) {
+      stop("Python environment ", PYTHON_ENV, " has been found but it",
+           " does not appear to have msprime, tskit and pyslim modules all",
+           " installed. Perhaps the environment got corrupted somehow?",
+           " Running `clear_env()` and `setup_env()` to reset the slendr's Python",
+           " environment is recommended.", call. = FALSE)
+    } else {
+      # pylib <<- reticulate::import_from_path(
+      #   "pylib",
+      #   path = system.file("python", package = "slendr"),
+      #   delay_load = TRUE
+      # )
+      if (!quiet)
+        message("The interface to all required Python modules has been activated.")
+    }
+  }
+}
+
 #' Setup a dedicated Python virtual environment for slendr
 #'
 #' This function will automatically download a Python miniconda distribution
@@ -1251,18 +1312,9 @@ schedule_sampling <- function(model, times, ..., locations = NULL, strict = FALS
 #'
 #' @export
 setup_env <- function(quiet = FALSE, agree = FALSE, pip = NULL) {
-  if (check_env_present()) {
-    reticulate::use_condaenv(PYTHON_ENV, required = TRUE)
-    if (!reticulate::py_module_available("msprime") ||
-        !reticulate::py_module_available("tskit") ||
-        !reticulate::py_module_available("pyslim")) {
-      stop("Python environment ", PYTHON_ENV, " has been found but it",
-           " does not appear to have msprime, tskit and pyslim modules all",
-           " installed. Perhaps the environment got corrupted somehow?",
-           " Running `clear_env()` and `setup_env()` to reset the slendr's Python",
-           " environment is recommended.")
-    } else if (!quiet)
-      message("The interface to all required Python modules has been activated.")
+  if (is_slendr_env_present()) {
+    message("A required slendr Python environment is already present. You can activate\n",
+            "it by calling init_env().")
   } else {
     if (agree)
       answer <- 2
@@ -1270,37 +1322,34 @@ setup_env <- function(quiet = FALSE, agree = FALSE, pip = NULL) {
       answer <- utils::menu(
         c("No", "Yes"),
         title = paste0(
-          "No pre-configured Python environment for slendr has been found.\n\n",
-          "Do you wish to install a completely isolated Miniconda Python distribution\n",
-          "just for slendr and create an isolated environment with all required Python\n",
-          "modules automatically?\n",
-          "\nNo need to worry, everything will be installed into a completely\n",
-          "separate location into an isolated environment in an R library directory.\n",
-          "This won't affect your other Python installations at all, whatever those\n",
-          "might be (standard Python installations or conda setups). You can always\n",
-          "wipe out the automatically created environment by running `clear_env()`.\n\n",
+          "This function will install a completely isolated Miniconda Python distribution\n",
+          "just for slendr and create an environment with all required Python modules.\n",
+          "\nEverything will be installed into a completely separate location into an\n",
+          "isolated environment in an R library directory. This won't affect your other\n",
+          "Python installations at all. You can always wipe out the automatically created\n",
+          "environment by running clear_env().\n\n",
           "Do you wish to proceed with the automated Python environment setup?")
         )
     if (answer == 2) {
-      message("============================================================")
+      message("=======================================================================")
       message("Installing slendr's Python environment. Please wait until")
       message("the installation procedure finishes. Do NOT interrupt the")
       message("process while the installation is still running.")
-      message("============================================================\n")
+      message("======================================================================\n")
       Sys.sleep(10)
 
       if (!dir.exists(reticulate::miniconda_path()))
         reticulate::install_miniconda()
 
-      reticulate::conda_create(envname = PYTHON_ENV)
-      reticulate::use_condaenv(PYTHON_ENV, required = TRUE)
-
       # parse the Python env name back to the list of dependencies
       # (the environment is defined in .onAttach(), and this makes sure the
       # dependencies are defined all in one place)
-      version_deps <- PYTHON_ENV %>% gsub("-", "==", .) %>% strsplit("_") %>% .[[1]]
-      other_deps <- "pandas"
-      deps <- c(version_deps, other_deps)
+      versions <- PYTHON_ENV %>% gsub("-", "==", .) %>% strsplit("_") %>% .[[1]]
+      python_version <- gsub("Python==", "", versions[1])
+      package_versions <- c(versions[-1], "pandas")
+
+      reticulate::conda_create(envname = PYTHON_ENV, python_version = python_version)
+      reticulate::use_condaenv(PYTHON_ENV, required = TRUE)
 
       # msprime/tskit conda dependency is broken on M1 Mac architecture, fallback
       # to pip in cases like this (otherwise use conda to avoid any potential
@@ -1308,11 +1357,15 @@ setup_env <- function(quiet = FALSE, agree = FALSE, pip = NULL) {
       if (is.null(pip))
         pip <- all(Sys.info()[c("sysname", "machine")] == c("Darwin", "arm64"))
 
-      reticulate::conda_install(envname = PYTHON_ENV, packages = deps, pip = pip)
+      reticulate::conda_install(envname = PYTHON_ENV, packages = package_versions, pip = pip)
 
-      if (!quiet)
+      if (!quiet) {
+        message("======================================================================")
         message("Python environment for slendr has been successfuly created, and ",
-                "the R\ninterface to msprime, tskit, and pyslim modules has been activated.")
+                "the R\ninterface to msprime, tskit, and pyslim modules has been activated.\n")
+        message("In future sessions, activate this environment by calling init_env().")
+        message("=======================================================================")
+      }
     } else
       warning("Your Python environment is not set up correctly which means that the tree\n",
               "sequence functionality of slendr will not work.", call. = FALSE)
@@ -1327,7 +1380,7 @@ setup_env <- function(quiet = FALSE, agree = FALSE, pip = NULL) {
 #'
 #' @export
 clear_env <- function(force = FALSE) {
-  if (check_env_present()) {
+  if (is_slendr_env_present()) {
     path <- reticulate::conda_list() %>%
       dplyr::filter(grepl(PYTHON_ENV, name)) %>%
       { gsub("bin\\/python", "", .$python) }
@@ -1354,7 +1407,7 @@ clear_env <- function(force = FALSE) {
 #' reticulate package and prints the versions of all slendr Python dependencies
 #' to the console.
 #'
-#' @param quiet Should a log message be printed? If \code{FALSE}, only a logical
+#' @param verbose Should a log message be printed? If \code{FALSE}, only a logical
 #'   value is returned (invisibly).
 #'
 #' @return Either \code{TRUE} (slendr Python environment is present) or \code{FALSE}
@@ -1363,9 +1416,10 @@ clear_env <- function(force = FALSE) {
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
 #' }
+#' init_env()
 #' check_env()
 #' @export
-check_env <- function(quiet = FALSE) {
+check_env <- function(verbose = TRUE) {
   # if there is no Python available on user's system, don't immediately
   # jump to installing miniconda (let's deal with that in setup_env())
   orig_env <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
@@ -1399,7 +1453,7 @@ check_env <- function(quiet = FALSE) {
   # else
   #   pylib_status <- "NOT LOADED \u274C"
 
-  if (!quiet) {
+  if (verbose) {
     cat("Summary of the currently active Python environment:\n\n")
     cat("Python binary:", py$python, "\n")
     cat("Python version:", py$version_string, "\n")
@@ -1413,7 +1467,7 @@ check_env <- function(quiet = FALSE) {
 
   if (!all(c(has_tskit, has_pyslim, has_msprime))) {
     return_value <- FALSE
-    if (!quiet)
+    if (verbose)
       cat("\nNote that due to the technical limitations of embedded Python,",
           "if you\nwant to switch to another Python environment you will need",
           "to restart\nyour R session first.\n")
@@ -1421,5 +1475,8 @@ check_env <- function(quiet = FALSE) {
   } else
     return_value <- TRUE
 
-  return(invisible(return_value))
+  if (verbose)
+    return(invisible(return_value))
+  else
+    return(return_value)
 }

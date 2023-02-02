@@ -1,5 +1,5 @@
 ## ---- include = FALSE---------------------------------------------------------
-env_present <- slendr:::check_env_present()
+env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -17,6 +17,8 @@ library(dplyr)
 library(ggplot2)
 library(purrr)
 library(tidyr)
+
+init_env()
 
 seed <- 42
 set.seed(seed)
@@ -72,7 +74,7 @@ slim_nogf <-
   ts_recapitate(Ne = 10, recombination_rate = rec_rate, random_seed = seed) %>%
   ts_mutate(mut_rate, random_seed = seed)
 
-slim_gf <- 
+slim_gf <-
   slim_gf %>%
   ts_recapitate(Ne = 10, recombination_rate = rec_rate, random_seed = seed) %>%
   ts_mutate(mut_rate, random_seed = seed)
@@ -213,7 +215,7 @@ backward_exp_decr <- population("exp_decr", time = 5000, N = N) %>%
 compile_run_afs <- function(model_name, pop, seed = 42) {
   # maximum length of the simulation (necessary for forward models which start
   # in generation 1)
-  simulation_length <- 5000 
+  simulation_length <- 5000
 
   # define sampling times given the direction of time
   if (attr(pop, "history")[[1]]$time == 1) {
