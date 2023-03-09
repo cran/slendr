@@ -6,7 +6,9 @@
 
 <!-- badges: start -->
 
-[![CRAN-version](https://www.r-pkg.org/badges/version/slendr)](https://cran.r-project.org/package=slendr) [![CRAN-downloads](https://cranlogs.r-pkg.org/badges/grand-total/slendr)](https://cran.r-project.org/package=slendr) [![R-CMD-check](https://github.com/bodkan/slendr/workflows/R-CMD-check/badge.svg)](https://github.com/bodkan/slendr/actions) [![Coverage status](https://codecov.io/gh/bodkan/slendr/branch/main/graph/badge.svg)](https://codecov.io/github/bodkan/slendr?branch=main) [![Binder](http://mybinder.org/badge.svg)](http://beta.mybinder.org/v2/gh/bodkan/slendr/main?urlpath=rstudio)
+[![CRAN-version](https://www.r-pkg.org/badges/version/slendr)](https://cran.r-project.org/package=slendr) [![CRAN-downloads](https://cranlogs.r-pkg.org/badges/grand-total/slendr)](https://cran.r-project.org/package=slendr) [![R-CMD-check](https://github.com/bodkan/slendr/workflows/R-CMD-check/badge.svg)](https://github.com/bodkan/slendr/actions) [![Binder](http://mybinder.org/badge.svg)](http://beta.mybinder.org/v2/gh/bodkan/slendr/main?urlpath=rstudio)
+
+<!-- [![Coverage status](https://codecov.io/gh/bodkan/slendr/branch/main/graph/badge.svg)](https://codecov.io/github/bodkan/slendr?branch=main)  -->
 
 <!-- badges: end -->
 
@@ -66,7 +68,7 @@ If you would like to stay updated:
 
 1.  Click on the "Watch" button on the project's [GitHub website](https://github.com/bodkan/slendr/).
 
-2.  Follow me on [Twitter](https://twitter.com/dr_bodkan) where I will be posting progress updates.
+2.  Follow me on [Twitter](https://twitter.com/fleventy5) where I will be posting progress updates.
 
 3.  From time to time, take a look at the [changelog](https://www.slendr.net/news/index.html) where I will post updates on new features, breaking changes, etc.
 

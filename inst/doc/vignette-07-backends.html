@@ -833,8 +833,8 @@ to population genetics theory).</p>
 <span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># compute the AFS from the SLiM and msprime tree sequences and bind the</span></span>
 <span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># results (derived allele counts per frequency bin) in a data frame</span></span>
-<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>  msprime_afs <span class="ot">&lt;-</span> <span class="fu">ts_afs</span>(ts_msprime, <span class="at">polarised =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>  slim_afs <span class="ot">&lt;-</span> <span class="fu">ts_afs</span>(ts_slim, <span class="at">polarised =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>  msprime_afs <span class="ot">&lt;-</span> <span class="fu">ts_afs</span>(ts_msprime, <span class="at">polarised =</span> <span class="cn">TRUE</span>)[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>  slim_afs <span class="ot">&lt;-</span> <span class="fu">ts_afs</span>(ts_slim, <span class="at">polarised =</span> <span class="cn">TRUE</span>)[<span class="sc">-</span><span class="dv">1</span>]</span>
 <span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rbind</span>(</span>
 <span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">simulator =</span> <span class="st">&quot;msprime&quot;</span>, <span class="at">model =</span> model_name, <span class="at">f =</span> msprime_afs),</span>
