@@ -4,7 +4,7 @@ env_present <- slendr:::is_slendr_env_present()
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
-  eval = Sys.getenv("RUNNER_OS") != "macOS" && env_present
+  eval = Sys.getenv("RUNNER_OS") != "macOS" && env_present && Sys.getenv("RUNNER_OS") == ""
 )
 
 ## -----------------------------------------------------------------------------
@@ -41,8 +41,7 @@ gf <- list(
 ## -----------------------------------------------------------------------------
 model <- compile_model(
   populations = list(afr, ooa, ehg, eur, ana, yam),
-  gene_flow = gf, generation_time = 30,
-  path = paste0(tempfile(), "_non-spatial-model")
+  gene_flow = gf, generation_time = 30
 )
 
 ## ----non-spatial_graph, fig.width = 6, fig.height = 6, dpi = 80---------------

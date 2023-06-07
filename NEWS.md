@@ -1,8 +1,53 @@
+# slendr 0.6.0
+
+This is a relatively large update, which unfortunately had to be released in haste due to the [retirement of the _rgdal_ package](https://r-spatial.org/r/2023/05/15/evolution4.html) -- a significant dependency of the entire spatial R ecosystem which is being phased out in the effort to move towards modern low-level geospatial architecture. Although _slendr_ itself does not depend on _rgdal_, many of its dependencies used to (but won't in the short term, hence the push to remove the _rgdal_ dependency). The most significant update has been the addition of IBD functionality of _tskit_, as described below. However, large part of this functionality has not been extensively tested and should be considered extremely experimental at this stage. If you would like to use it, it might be safer to either wait for a later release in which the IBD functionality will be more stable, or use the underlying, battle-tested [Python implementation in _tskit_](https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.ibd_segments).
+
+- `ts_ibd()` now returns the ID number of a MRCA node of a pair of nodes sharing a given IBD segment, as well as the TMRCA of that node. ([#7e2825](https://github.com/bodkan/slendr/commit/7e2825))
+
+- Trivial parameter errors are caught during `population()` calls rather than during simulation (solving minor issues discovered via big simulation runs during the development of [_demografr_](https://github.com/bodkan/demografr)). ([#e33373](https://github.com/bodkan/slendr/commit/e33373))
+
+- Fix error in plotting exponential resizes which do not last until "the present". ([#4c49a4](https://github.com/bodkan/slendr/commit/4c49a4))
+
+- `ts_ibd()` no longer gives obscure error when `between =` is provided as a named list of individuals' names (instead of an expected unnamed list). The names of list elements are not used in any way, but the error happens somewhere deeply in the R->Python translation layer inside [_reticulate_](https://rstudio.github.io/reticulate/) and there's no need for the users to concern themselves with it. ([#7965e4](https://github.com/bodkan/slendr/commit/7965e4))
+
+- Population size parameters and times are now explicitly converted to integer numbers. This is more of an internal, formal change (the conversion has been happening implicitly inside the SLiM engine anyway) but is now explicitly stated, also in the documentation of each relevant function. ([#b7e89e](https://github.com/bodkan/slendr/commit/b7e89e))
+
+- Population names are now restricted to only those strings which are also valid Python identifiers. Although this restriction is only needed for the msprime back end of _slendr_ (not SLiM), it makes sense to keep things tidy and unified. This fixes msprime crashing with `ValueError: A population name must be a valid Python identifier`. ([#4ef518](https://github.com/bodkan/slendr/commit/4ef518))
+
+- The layout algorithm of `plot_model()` has been improved significantly. (PR [#135](https://github.com/bodkan/slendr/pull/135)).
+
+- A new optional argument `run =` has been added to `slim()` and `msprime()`. If set to `TRUE` (the default), the engines will operate the usual way. If set to `FALSE`, no simulation will be run and the functions will simply print a command-line command to execute the engine in question (returning the CLI command invisibly).  ([#2e5b85](https://github.com/bodkan/slendr/commit/2e5b85))
+
+- The following start-up note is no longer shown upon calling `library(slendr)`:
+
+```
+    NOTE: Due to Python setup issues on some systems which have been
+    causing trouble particularly for novice users, calling library(slendr)
+    no longer activates slendr's Python environment automatically.
+    In order to use slendr's msprime back end or its tree-sequence
+    functionality, users must now activate slendr's Python environment
+    manually by executing init_env() after calling library(slendr).
+    (This note will be removed in the next major version of slendr.)
+```
+
+Users have to call `init_env()` to manually activate the Python environment of slendr (see note under version 0.5.0 below for an extended explanation).
+
+- `ts_simplify()` now accepts optional arguments `keep_unary` and `keep_unary_in_individuals` (see the official [tskit docs](https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.simplify) for more detail) ([#1b2112](https://github.com/bodkan/slendr/commit/1b2112))
+
+- Fix for `ts_load()` failing to load _slendr_-produced tree sequences after they were simplified down to a smaller set of sampled individuals (reported [here](https://github.com/bodkan/slendr/issues/136)). The issue was caused by incompatible sizes of the sampling table (always in the same form as used during simulation) and the table of individuals stored in the tree sequence after simplification (potentially containing a smaller set of individuals than in the original sampling table). To fix this, _slendr_ tree sequence objects now track information about which individuals are regarded as "samples" (i.e. those with symbolic names) which is maintained through simplification, serialization and loading, and used by _slendr_'s internal machinery during join operations. (PR [#137](https://github.com/bodkan/slendr/pull/137))
+
+- Metadata summary of `ts_nodes()` results is no longer printed whenever typed into the R console. Instead, summary can be obtained by explicit call to `summary()` on the `ts_nodes()` tables.  ([#01af51](https://github.com/bodkan/slendr/commit/01af51)
+
+- `ts_tree()` and `ts_phylo()` now extract trees based on tskit's own zero-based indexing [#554e13](https://github.com/bodkan/slendr/commit/554e13).
+
+- `ts_simplify()` now accepts `filter_nodes = TRUE|FALSE`, with the same behavior to tskit's [own method](https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.simplify) [#f07ffed](https://github.com/bodkan/slendr/commit/f07ffed).
+
 # slendr 0.5.1
 
-- A new function `ts_ibd()` has been added, representing an R interface to the _tskit_ method `TreeSequence.ibd_segments()`. However, note that `ts_ibd()` returns IBD results as a data frame (optionally, a spatially annotated _sf_ data frame). The function does not operate around iteration, as does its Python counterpart in _tskit. (PR [#123](https://github.com/bodkan/slendr/pull/123))
+- This minor release implements an emergency fix for a CRAN warning which suddenly popped up in latest CRAN checks. ([#5600a4](https://github.com/bodkan/slendr/commit/5600a4))
 
-- Emergency fix for a CRAN warning which suddenly popped up in latest CRAN checks. ([#5600a4](https://github.com/bodkan/slendr/commit/5600a4))
+- A new function `ts_ibd()` has been added, representing an R interface to the _tskit_ method `TreeSequence.ibd_segments()`. However, note that `ts_ibd()` returns IBD results as a data frame (optionally, a spatially annotated _sf_ data frame). The function does not operate around iteration, as does its Python counterpart in _tskit_. Until the next major version of _slendr_, this function should be considered experimental. (PR [#123](https://github.com/bodkan/slendr/pull/123))
+
 
 # slendr 0.5.0
 

@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 80,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.which("qpDstat") != ""
+  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == "" && Sys.which("qpDstat") != ""
 )
 ```
 
@@ -224,7 +224,7 @@ Now we introduce a function `ts_phylo()` which can be used to extract one tree f
 
 ```{r}
 # extract the 42nd tree in the tree sequence
-tree <- ts_phylo(ts_small, 42)
+tree <- ts_phylo(ts_small, 42 - 1)
 ```
 
 When we type the tree object to an R console, we can verify that we got an ordinary `phylo` object:
@@ -245,7 +245,7 @@ ggtree(tree) +
 ```
 
 
-```{r, plot_apetree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE}
+```{r, plot_apetree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") == ""}
 library(ape)
 plot(tree)
 nodelabels()

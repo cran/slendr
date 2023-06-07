@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 80,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == ""
 )
 
 ## -----------------------------------------------------------------------------
@@ -173,7 +173,7 @@ read.table(file.path(model_dir, "geneflow.tsv"), header = TRUE)
 loaded_model <- read_model(model_dir)
 
 ## ----plot_model, fig.width = 8, fig.height = 7--------------------------------
-plot_model(model)
+plot_model(model, proportions = TRUE)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  explore_model(model)

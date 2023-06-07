@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 8,
   fig.height = 6,
   dpi = 80,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == ""
 )
 
 nonspatial_slim <- tempfile()
@@ -59,7 +59,7 @@ samples <- sample(data$node_id, 10)
 ts_small <- ts_simplify(ts, simplify_to = samples)
 
 # extract the 42nd tree in the genealogy to an R 'phylo' format
-tree <- ts_phylo(ts_small, 42)
+tree <- ts_phylo(ts_small, 42 - 1)
 tree
 
 ## ---- nonslendr_tree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") == TRUE----
@@ -70,7 +70,7 @@ tree
 #  ggtree(tree, branch.length = "none") %<+% labels +
 #    geom_label(aes(label = tskit_id))
 
-## ---- eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE----
+## ---- eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") == ""----
 library(ape)
 plot(tree, show.tip.label = FALSE)
 nodelabels()

@@ -1,6 +1,6 @@
 ## ---- include = FALSE---------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
-eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == ""
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -445,7 +445,8 @@ p_ex3
 ## ---- ex4, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
 ts_small <- ts_simplify(ts, simplify_to = c("EUR_578", "YAM_75", "ANA_163", "EHG_208"))
 
-tree <- ts_phylo(ts_small, i = 20 / scaling)
+# tskit uses zero-based indexing
+tree <- ts_phylo(ts_small, i = (20 - 1) / scaling)
 nodes <- ts_nodes(tree)
 edges <- ts_edges(tree)
 

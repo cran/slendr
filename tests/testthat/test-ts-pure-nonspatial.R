@@ -65,7 +65,7 @@ compare_ts_phylo <- function(ts, N) {
   ts2 <- ts_simplify(ts)
 
   tskit_tree <- ts2$at(0)
-  tree <- ts_phylo(ts2, i = 1, quiet = TRUE)
+  tree <- ts_phylo(ts2, i = 0, quiet = TRUE)
   tree_data <- ts_nodes(tree)
   # make sure that the converted phylo tree has the same number of edges and
   # nodes as the original tskit Tree object
@@ -131,7 +131,7 @@ test_that("non-slendr msprime simplification on its own gives warning", {
   N <- 5
   ts_file <- msprime_ts_sim_ancestry(N)
   suppressMessages(ts <- ts_load(ts_file))
-  expect_warning(compare_ts_nodes(ts, N), "If you want to simplify")
+  compare_ts_nodes(ts, N)
 })
 
 test_that("non-slendr SLiM simplified ts_nodes corresponds to the expected outcome", {
@@ -150,7 +150,7 @@ test_that("non-slendr msprime ts_phylo corresponds to the expected outcome", {
   N <- 5
   ts_file <- msprime_ts_sim_ancestry(N)
   suppressMessages(ts <- ts_load(ts_file))
-  expect_warning(compare_ts_phylo(ts, N), "If you want to simplify")
+  compare_ts_phylo(ts, N)
 })
 
 test_that("non-slendr msprime ts_phylo (simplified) corresponds to the expected outcome", {
@@ -159,7 +159,7 @@ test_that("non-slendr msprime ts_phylo (simplified) corresponds to the expected 
   suppressMessages(ts <- ts_load(ts_file))
   simplify_to <- ts_nodes(ts) %>% dplyr::filter(sampled) %>% dplyr::pull(node_id) %>% sample(3)
   ts2 <- ts_simplify(ts, simplify_to = simplify_to)
-  expect_warning(compare_ts_phylo(ts2, N), "If you want to simplify")
+  compare_ts_phylo(ts2, N)
 })
 
 test_that("non-slendr msprime ts_nodes carries correct population names", {
@@ -174,7 +174,7 @@ test_that("non-slendr msprime simplification on its own gives warning (simulate)
   N <- 5
   ts_file <- msprime_ts_simulate(N)
   suppressMessages(ts <- ts_load(ts_file))
-  expect_warning(compare_ts_nodes(ts, N), "If you want to simplify")
+  compare_ts_nodes(ts, N)
 })
 
 test_that("non-slendr SLiM simplified ts_nodes corresponds to the expected outcome (simulate)", {
@@ -193,7 +193,7 @@ test_that("non-slendr msprime ts_phylo corresponds to the expected outcome (simu
   N <- 5
   ts_file <- msprime_ts_simulate(N)
   suppressMessages(ts <- ts_load(ts_file))
-  expect_warning(compare_ts_phylo(ts, N), "If you want to simplify")
+  compare_ts_phylo(ts, N)
 })
 
 test_that("non-slendr msprime ts_phylo (simplified) corresponds to the expected outcome (simulate)", {
@@ -202,7 +202,7 @@ test_that("non-slendr msprime ts_phylo (simplified) corresponds to the expected 
   suppressMessages(ts <- ts_load(ts_file))
   simplify_to <- ts_nodes(ts) %>% dplyr::filter(sampled) %>% dplyr::pull(node_id) %>% sample(3)
   ts2 <- ts_simplify(ts, simplify_to = simplify_to)
-  expect_warning(compare_ts_phylo(ts2, N), "If you want to simplify")
+  compare_ts_phylo(ts2, N)
 })
 
 test_that("non-slendr msprime ts_nodes carries correct population names (simulate)", {
@@ -273,7 +273,7 @@ test_that("ts_ibd() on nonspatial SLiM tree sequences works with coordinates = (
   ibd_totals2 <-
     dplyr::group_by(ibd_fragments, node1, node2, node1_time, node2_time) %>%
     dplyr::summarise(count = dplyr::n(), total = sum(length), .groups = "keep") %>%
-    dplyr::select(count, total, dplyr::everything()) %>%
+    dplyr::select(node1, node2, count, total, node1_time, node2_time) %>%
     dplyr::ungroup()
 
   expect_equal(ibd_totals, ibd_totals2)
@@ -290,7 +290,7 @@ test_that("ts_ibd() on nonspatial msprime tree sequences works with coordinates 
   ibd_totals2 <-
     dplyr::group_by(ibd_fragments, node1, node2, node1_time, node2_time) %>%
     dplyr::summarise(count = dplyr::n(), total = sum(length), .groups = "keep") %>%
-    dplyr::select(count, total, dplyr::everything()) %>%
+    dplyr::select(node1, node2, count, total, node1_time, node2_time) %>%
     dplyr::ungroup()
 
   expect_equal(ibd_totals, ibd_totals2)
@@ -308,7 +308,5 @@ test_that("ts_ibd() on non-spatial msprime tree sequences gives a correct object
   expect_true(!inherits(ibd_nosf, "sf"))
 
   # except for the spatial columns, the IBD results are the same
-  expect_equal(as.data.frame(ibd_sf)[, c("count", "total", "node1", "node2",
-                                         "node1_time", "node2_time")],
-               as.data.frame(ibd_nosf))
+  expect_equal(ibd_sf, ibd_nosf)
 })

@@ -49,13 +49,6 @@ test_that("unnecessary recapitation is prevented (msprime)", {
   )
 })
 
-test_that("needless simplification of msprime output gives a warning", {
-  expect_warning(
-    ts_load(model, file = msprime_ts, simplify = TRUE),
-    "If you want to simplify an msprime tree sequence, you must specify"
-  )
-})
-
 test_that("ts_load generates an object of the correct type (msprime)", {
   ts <- ts_load(model, file = msprime_ts)
   expect_true(inherits(ts, "tskit.trees.TreeSequence"))
@@ -211,7 +204,10 @@ test_that("extracted individual, node, edge, and mutation counts match the tree 
   expect_true(ts4$num_mutations == nrow(ts_table(ts4, "mutations")))
 
   expect_true(ts1 == ts2)
-  expect_true(ts1 == ts3)
+
+  # the following is no longer true because simplification must remove potential unary nodes,
+  # at the very least
+  # expect_true(ts1 == ts3)
 })
 
 test_that("simplification works only for samples that are really present", {
@@ -356,7 +352,7 @@ test_that("ts_eigenstrat requires recapitated and mutated data (msprime)", {
   skip_if(Sys.which("qpDstat") == "")
   ts1 <- ts_load(model, file = msprime_ts)
   ts3 <- ts_load(model, file = msprime_ts, simplify = TRUE, simplify_to = c("pop1_1", "pop1_2", "pop2_7"))
-  suppressWarnings(ts4 <- ts_load(model, file = msprime_ts, simplify = TRUE))
+  ts4 <- ts_load(model, file = msprime_ts, simplify = TRUE)
   ts5 <- ts_mutate(ts4, mutation_rate = 1e-7)
   ts6 <- ts_load(model, file = msprime_ts, simplify = TRUE, simplify_to = c("pop1_1", "pop1_2", "pop2_7"),
                  mutate = TRUE, mutation_rate = 1e-7)
@@ -734,10 +730,9 @@ test_that("ts_ibd() on spatial SLiM/slendr tree sequences works properly (no CRS
   expect_true(nrow(sf::st_coordinates(within_ibd)) == 0)
 
   # except for the spatial columns, the IBD results are the same
-  expect_equal(as.data.frame(slim_ibd_sf)[, c("start", "end", "length", "node1", "node2",
-                                              "name1", "name2", "pop1", "pop2",
-                                              "node1_time", "node2_time")],
-               as.data.frame(slim_ibd_nosf))
+  expect_true(all(dplyr::select(as.data.frame(slim_ibd_sf),
+                            -node1_location, -node2_location, -connection) ==
+               as.data.frame(slim_ibd_nosf)))
 })
 
 test_that("ts_ibd() on msprime/slendr tree sequences works properly", {
@@ -751,9 +746,7 @@ test_that("ts_ibd() on msprime/slendr tree sequences works properly", {
   expect_true(!inherits(msprime_ibd_nosf, "sf"))
 
   # except for the spatial columns, the IBD results are the same
-  expect_equal(as.data.frame(msprime_ibd_sf)[, c("start", "end", "length", "node1", "node2",
-                                                 "name1", "name2", "pop1", "pop2",
-                                                 "node1_time", "node2_time")],
+  expect_equal(as.data.frame(msprime_ibd_sf),
                as.data.frame(msprime_ibd_nosf))
 })
 
@@ -784,8 +777,7 @@ test_that("ts_ibd() on spatial SLiM/slendr tree sequences works properly (with C
   expect_true(nrow(sf::st_coordinates(within_ibd)) == 0)
 
   # except for the spatial columns, the IBD results are the same
-  expect_equal(as.data.frame(ibd_sf)[, c("start", "end", "length", "node1", "node2",
-                                         "name1", "name2", "pop1", "pop2",
-                                         "node1_time", "node2_time")],
-               as.data.frame(ibd_nosf))
+  expect_true(all(dplyr::select(as.data.frame(ibd_sf),
+                            -node1_location, -node2_location, -connection) ==
+               as.data.frame(ibd_nosf)))
 })

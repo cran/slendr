@@ -98,17 +98,6 @@ ts_load <- function(file, model = NULL,
   else
     type <- "SLiM"
 
-  # this is an awful workaround around the reticulate/Python bug which prevents
-  # import_from_path (see zzz.R) from working properly -- I'm getting nonsensical
-  #   Error in py_call_impl(callable, dots$args, dots$keywords) :
-  #     TypeError: integer argument expected, got float
-  # in places with no integer/float conversion in sight
-  #
-  # at least it prevents having to do things like:
-  # reticulate::py_run_string("def get_pedigree_ids(ts): return [ind.metadata['pedigree_id']
-  #                                                              for ind in ts.individuals()]")
-  reticulate::source_python(file = system.file("pylib/pylib.py", package = "slendr"))
-
   attr(ts, "type") <- type
   attr(ts, "model") <- model
   attr(ts, "spatial") <- type == "SLiM" && ts$metadata$SLiM$spatial_dimensionality != ""
@@ -170,6 +159,27 @@ ts_load <- function(file, model = NULL,
 #' @export
 ts_save <- function(ts, file) {
   check_ts_class(ts)
+  type <- attr(ts, "type")
+  from_slendr <- !is.null(attr(ts, "model"))
+
+  # overwrite the original list of sample names (if the tree sequence was simplified
+  # down to a smaller number of individuals than originally sampled)
+  if (from_slendr && nrow(ts_samples(ts)) != nrow(attr(ts, "metadata")$sampling)) {
+    tables <- ts$dump_tables()
+    tables$metadata_schema = tskit$MetadataSchema(list("codec" = "json"))
+
+    sample_names <- attr(ts, "metadata")$sample_names
+    pedigree_ids <- attr(ts, "metadata")$sample_ids
+    if (type == "SLiM") {
+      tables$metadata$SLiM$user_metadata$slendr[[1]]$sample_names <- sample_names
+      tables$metadata$SLiM$user_metadata$slendr[[1]]$sample_ids <- pedigree_ids
+    } else
+      tables$metadata$slendr$sample_names <- sample_names
+
+    # put the tree sequence object back together
+    ts <- tables$tree_sequence()
+  }
+
   ts$dump(path.expand(file))
 }
 
@@ -259,6 +269,7 @@ ts_recapitate <- function(ts, recombination_rate, Ne = NULL, demography = NULL, 
     # inherit the information about which individuals should be marked as
     # explicitly "sampled" from the previous tree sequence object (if that
     # was specified) -- this is only necessary for a SLiM sequence
+    # TODO: no longer necessary
     old_individuals <- attr(ts, "raw_individuals")
     sampled_ids <- old_individuals[old_individuals$sampled, ]$pedigree_id
     attr(ts_new, "raw_individuals") <- attr(ts_new, "raw_individuals") %>%
@@ -299,6 +310,15 @@ ts_recapitate <- function(ts, recombination_rate, Ne = NULL, demography = NULL, 
 #'   after the simplification.
 #' @param keep_input_roots Should the history ancestral to the MRCA of all
 #'   samples be retained in the tree sequence? Default is \code{FALSE}.
+#' @param keep_unary Should unary nodes be preserved through simplification?
+#'   Default is \code{FALSE}.
+#' @param keep_unary_in_individuals Should unary nodes be preserved through
+#'   simplification if they are associated with an individual recorded in
+#'   the table of individuals? Default is \code{FALSE}. Cannot be set to
+#'   \code{TRUE} if \code{keep_unary} is also TRUE
+#' @param filter_nodes Should nodes be reindexed after simplification? Default is
+#'   \code{TRUE}. See tskit's documentation for the Python method \code{simplify()}
+#    for more detail.
 #'
 #' @return Tree-sequence object of the class \code{slendr_ts}, which serves as
 #'   an interface point for the Python module tskit using slendr functions with
@@ -332,7 +352,9 @@ ts_recapitate <- function(ts, recombination_rate, Ne = NULL, demography = NULL, 
 #'
 #' ts_small
 #' @export
-ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE) {
+ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE,
+                        keep_unary = FALSE, keep_unary_in_individuals = FALSE,
+                        filter_nodes = TRUE) {
   check_ts_class(ts)
 
   model <- attr(ts, "model")
@@ -346,13 +368,6 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE) {
             call. = FALSE)
 
   data <- attr(ts, "nodes")
-
-  if (is.null(simplify_to) && type == "generic") {
-    warning("If you want to simplify an msprime tree sequence, you must specify\n",
-            "the names of individuals to simplify to via the `simplify_to = `\n",
-            "function argument.", call. = FALSE)
-    return(ts)
-  }
 
   if (is.null(simplify_to)) { # no individuals/nodes were given to guide the simplification
     samples <- dplyr::filter(data, sampled)$node_id # simplify to all sampled nodes
@@ -376,7 +391,10 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE) {
 
   ts_new <- ts$simplify(as.integer(samples),
                         filter_populations = FALSE,
-                        keep_input_roots = keep_input_roots)
+                        filter_nodes = filter_nodes,
+                        keep_input_roots = keep_input_roots,
+                        keep_unary = keep_unary,
+                        keep_unary_in_individuals = keep_unary_in_individuals)
 
   # copy attributes over to the new tree-sequence object or generate updates
   # ones where necessary
@@ -440,6 +458,14 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE) {
                                          "retained", "alive", "pedigree_id", "ind_id", "pop_id")]
   } else
     attr(ts_new, "nodes") <- get_tskit_table_data(ts_new, simplify_to)
+
+  # replace the names of sampled individuals (if simplification led to subsetting)
+  if (from_slendr) {
+    sampled_nodes <- attr(ts_new, "nodes") %>% dplyr::filter(sampled)
+    attr(ts_new, "metadata")$sample_names <-  unique(sampled_nodes$name)
+    if (type == "SLiM")
+      attr(ts_new, "metadata")$sample_ids <- unique(sampled_nodes$pedigree_id)
+  }
 
   class(ts_new) <- c("slendr_ts", class(ts_new))
 
@@ -1142,9 +1168,8 @@ ts_samples <- function(ts) {
          "from a slendr model. To access information about times and\nlocations ",
          "of nodes and individuals from non-slendr tree sequences,\nuse the ",
          "function ts_nodes().\n", call. = FALSE)
-  data <- ts_nodes(ts) %>% dplyr::filter(sampled, !is.na(name))
   samples <- attr(ts, "metadata")$sampling %>%
-    dplyr::filter(name %in% data$name)
+    dplyr::filter(name %in% attr(ts, "metadata")$sample_names)
 
   samples
 }
@@ -1403,9 +1428,9 @@ ts_descendants <- function(ts, x, verbose = FALSE, complete = TRUE) {
 #'
 #' @param ts Tree sequence object of the class \code{slendr_ts}
 #' @param i Position of the tree in the tree sequence. If \code{mode = "index"},
-#'   an i-th tree will be returned (in one-based indexing), if \code{mode =
-#'   "position"}, a tree covering an i-th base of the simulated genome will be
-#'   returned.
+#'   an i-th tree will be returned (in zero-based indexing as in tskit), if
+#'   \code{mode = "position"}, a tree covering the i-th base of the simulated genome will be
+#'   returned (again, in tskit's indexing).
 #' @param mode How should the \code{i} argument be interpreted? Either "index"
 #'   as an i-th tree in the sequence of genealogies, or "position" along the
 #'   simulated genome.
@@ -1426,19 +1451,19 @@ ts_descendants <- function(ts, x, verbose = FALSE, complete = TRUE) {
 #' # load the tree-sequence object from disk
 #' ts <- ts_load(slendr_ts, model, simplify = TRUE)
 #'
-#' # extract the first tree in the tree sequence
-#' tree <- ts_tree(ts, i = 1)
+#' # extract the zero-th tree in the tree sequence
+#' tree <- ts_tree(ts, i = 0)
 #'
-#' # extract the tree at a position 100000bp in the tree sequence
+#' # extract the tree at a position in the tree sequence
 #' tree <- ts_tree(ts, i = 100000, mode = "position")
 #' @export
 ts_tree <- function(ts, i, mode = c("index", "position"), ...) {
   check_ts_class(ts)
   mode <- match.arg(mode)
   if (mode == "index")
-    tree <- ts$at_index(index = i - 1, ...)
+    tree <- ts$at_index(index = i, ...)
   else
-    tree <- ts$at(position = i - 1, ...)
+    tree <- ts$at(position = i, ...)
   attr(tree, "tree_sequence") <- ts
   tree
 }
@@ -1456,6 +1481,7 @@ ts_tree <- function(ts, i, mode = c("index", "position"), ...) {
 #' @param sampled_only Should only individuals explicitly sampled through
 #'   simplification be labeled? This is relevant in situations in which sampled
 #'   individuals can themselves be among the ancestral nodes.
+#' @param title Optional title for the figure
 #' @param ... Keyword arguments to the tskit \code{draw_svg} function.
 #'
 #' @return No return value, called for side effects
@@ -1478,10 +1504,11 @@ ts_tree <- function(ts, i, mode = c("index", "position"), ...) {
 #' # ts_draw accepts various optional arguments of tskit.Tree.draw_svg
 #' ts_draw(tree, time_scale = "rank")
 #' @export
-ts_draw <- function(x, width = 1500, height = 500, labels = FALSE,
-                    sampled_only = TRUE, ...) {
+ts_draw <- function(x, width = 1000, height = 1000, labels = FALSE,
+                    sampled_only = TRUE, title = NULL, ...) {
   # set margins to zero, save original settings
-  orig_par <- graphics::par(mar = c(0, 0, 0, 0))
+  top_margin <- if (is.null(title)) 0 else 5
+  orig_par <- graphics::par(mar = c(0, 0, top_margin, 0))
   # restore original settings
   on.exit(graphics::par(orig_par))
 
@@ -1512,8 +1539,10 @@ ts_draw <- function(x, width = 1500, height = 500, labels = FALSE,
   # plot the PNG image, filling the entire plotting window
   img <- png::readPNG(tmp_file)
   graphics::plot.new()
-  graphics::plot.window(0:1, 0:1)
-  graphics::rasterImage(img, 0, 0, 1, 1)
+  aspect_ratio <- dim(img)[1] / dim(img)[2]
+  graphics::plot.window(xlim = c(0, 1), ylim = c(0, 1), asp = aspect_ratio)
+  graphics::rasterImage(img, xleft = 0, ybottom = 0, xright = 1, ytop = 1)
+  graphics::title(title)
 }
 
 #' Check that all trees in the tree sequence are fully coalesced
@@ -1557,10 +1586,15 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
     return(FALSE)
 }
 
-#' Collect Identity-by-Descent (IBD) segments
+#' Collect Identity-by-Descent (IBD) segments (EXPERIMENTAL)
 #'
 #' This function iterates over a tree sequence and returns IBD tracts between
 #' pairs of individuals or nodes
+#'
+#' This function is considered experimental. For full control over IBD segment
+#' detection in tree-sequence data, users can (and perhaps, for the time being,
+#' should) rely on the tskit method \code{ibd_segments}
+#' (see <https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.ibd_segments>).
 #'
 #' Iternally, this function leverages the tskit \code{TreeSequence} method
 #' \code{ibd_segments}. However, note that the \code{ts_ibd} function always
@@ -1569,6 +1603,14 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
 #' at <https://tskit.dev/tskit/docs/stable/ibd.html>. In general, R handles
 #' heavy iteration poorly, and this function does not attempt to serve as
 #' a full wrapper to \code{ibd_segments}.
+#'
+#' Unfortunately, the distinction between "squashed IBD" (what many would consider
+#' to be the expected definition of IBD) and tskit’s IBD which is defined via
+#' distinct genealogical paths (see <https://github.com/tskit-dev/tskit/issues/2459>
+#' for a discussion of the topic), makes the meaning of the filtering parameter
+#' of the \code{ibd_segments()} method of tskit \code{minimum_length} somewhat
+#' unintuitive. As of this moment, this function argument filters on IBD segments
+#' on the tskit level, not the level of the squashed IBD segments!
 #'
 #' @param ts Tree sequence object of the class \code{slendr_ts}
 #' @param coordinates Should coordinates of all detected IBD tracts be reported?
@@ -1581,8 +1623,12 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
 #' @param between A list of lists of character vectors with individual names or
 #'   integer vectors with node IDs, indicating a set of nodes between which to
 #'   look for shared IBD segments.
+#' @param squash Should adjacent IBD segments for pairs of nodes be squashed if they
+#'   only differ by their 'genealogical paths' but not by their MRCA? Default is
+#'   \code{FALSE}. For more context, see <https://github.com/tskit-dev/tskit/issues/2459>.
+#'   This option is EXPERIMENTAL!
 #' @param minimum_length Minimum length of an IBD segment to return in results.
-#'   This is useful for reducing the total amount of IBD returned.
+#'   This is useful for reducing the total amount of IBD returned (but see Details).
 #' @param maximum_time Oldest MRCA of a node to be considered as an IBD ancestor
 #'   to return that IBD segment in results. This is useful for reducing the total
 #'   amount of IBD returned.
@@ -1613,11 +1659,19 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
 #'   minimum_length = 40000
 #' )
 #' @export
-ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL,
+ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL, squash = FALSE,
                    minimum_length = NULL, maximum_time = NULL, sf = TRUE) {
   # make sure warnings are reported immediately
   opts <- options(warn = 1)
   on.exit(options(opts))
+
+  if (squash && !is.null(minimum_length)) {
+    warning("Please note that when 'squashed' IBD segments are requested,\n",
+            "the minimum IBD length cut off involves the 'distinct genealogical path'\n",
+            "IBD segments at the tskit level, not the length of the squashed IBD\n",
+            "segments. See the documentation of `ts_ibd()` for more detail and\n",
+            "additional information.", call. = FALSE)
+  }
 
   model <- attr(ts, "model")
   spatial <- attr(ts, "spatial")
@@ -1630,63 +1684,47 @@ ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL,
   if (!is.null(within))
     within <- unlist(purrr::map(within, ~ get_node_ids(ts, .x)))
   else if (!is.null(between)) {
-    between <- purrr::map(between, ~ get_node_ids(ts, .x))
+    between <- unname(purrr::map(between, ~ get_node_ids(ts, .x)))
     # another bug in reticulate? if the list has names, Python gives us:
     #   Error in py_call_impl(callable, dots$args, dots$keywords):
     #     TypeError: '<' not supported between instances of 'numpy.ndarray' and 'int'
     # names(between) <- NULL
   }
 
-  ibd_segments <- reticulate::py$collect_ibd(
+  result <- reticulate::py$collect_ibd(
       ts,
       coordinates = coordinates,
       within = within,
       between = between,
       min_span = minimum_length,
-      max_time = maximum_time
+      max_time = maximum_time,
+      squash = squash
   )
 
-  if (coordinates) {
-    ncol <- 5
-    col_names <- c("start", "end", "length", "node1", "node2")
-    final_columns <- c(col_names, "name1", "name2", "pop1", "pop2")
-  } else {
-    ncol <- 4
-    col_names <- c("count", "total", "node1", "node2")
-    final_columns <- c(col_names, "name1", "name2", "pop1", "pop2")
-  }
+  # drop a useless internal attribute (not a loss of information -- *we* are the ones
+  # who created the pandas DataFrame in the first place)
+  attr(result, "pandas.index") <- NULL
 
-  # make sure symbolic columns are removed for non-slendr tree sequences
-  if (is.null(model))
-    final_columns <- setdiff(final_columns, c("name1", "name2", "pop1", "pop2"))
-
-  if (is.null(ibd_segments)) ibd_segments <- matrix(NA, nrow = 0, ncol = ncol)
-
-  colnames(ibd_segments) <- col_names
-
-  result <- dplyr::as_tibble(ibd_segments)
+  if (!nrow(result)) return(result)
 
   nodes <- ts_nodes(ts)
 
   # add node times to the IBD results table
   result <- result %>%
-    dplyr::inner_join(nodes[, c("node_id", "time")], by = c("node1" = "node_id")) %>%
+    dplyr::inner_join(as.data.frame(nodes)[, c("node_id", "time")], by = c("node1" = "node_id")) %>%
     dplyr::rename(node1_time = time) %>%
-    dplyr::inner_join(nodes[, c("node_id", "time")], by = c("node2" = "node_id")) %>%
-    dplyr::rename(node2_time = time)
-
-  final_columns <- c(final_columns, c("node1_time", "node2_time"))
+    dplyr::inner_join(as.data.frame(nodes)[, c("node_id", "time")], by = c("node2" = "node_id")) %>%
+    dplyr::rename(node2_time = time) %>%
+    dplyr::tibble()
 
   # perform further data processing if the model in question is spatial (and if there
   # are any IBD segments at all)
-  if (spatial && sf && nrow(result) > 0) {
+  if (spatial && sf) {
     result <- result %>%
       dplyr::inner_join(nodes[, c("node_id", "location")], by = c("node1" = "node_id")) %>%
       dplyr::rename(node1_location = location) %>%
       dplyr::inner_join(nodes[, c("node_id", "location")], by = c("node2" = "node_id")) %>%
       dplyr::rename(node2_location = location)
-
-    final_columns <- c(final_columns, c("connection", "node1_location", "node2_location"))
 
     result <- purrr::map2(
       result$node1_location, result$node2_location, ~
@@ -1712,7 +1750,14 @@ ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL,
     result[["pop2"]] <- sapply(result$node2, function(i) nodes[nodes$node_id == i, ]$pop)
   }
 
-  result[, final_columns, with = FALSE]
+  if (coordinates)
+    result <- dplyr::mutate(result, length = right - left) %>%
+      dplyr::select(node1, node2, length, mrca, node1_time, node2_time, tmrca, dplyr::everything())
+  else
+    result <- dplyr::select(result, node1, node2, count, total, node1_time, node2_time,
+                                    dplyr::everything())
+
+  result
 }
 
 # f-statistics ------------------------------------------------------------
@@ -1742,6 +1787,7 @@ ts_f2 <- function(ts, A, B, mode = c("site", "branch", "node"),
 }
 
 #' @rdname ts_f4ratio
+#'
 #' @export
 ts_f3 <- function(ts, A, B, C, mode = c("site", "branch", "node"),
                   span_normalise = TRUE, windows = NULL) {
@@ -1762,9 +1808,29 @@ ts_f4 <- function(ts, W, X, Y, Z, mode = c("site", "branch", "node"),
 
 #' Calculate the f2, f3, f4, and f4-ratio statistics
 #'
+#' These functions present an R interface to the corresponding f-statistics methods
+#' in tskit.
+#'
+#' Note that the order of populations f3 statistic implemented in tskit
+#' (<https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.f3>) is
+#' different from what you might expect from ADMIXTOOLS, as defined in
+#' Patterson 2012 (see <https://academic.oup.com/genetics/article/192/3/1065/5935193>
+#' under heading "The three-population test and introduction of f-statistics",
+#' as well as ADMIXTOOLS documentation at
+#' <https://github.com/DReichLab/AdmixTools/blob/master/README.3PopTest#L5>).
+#' Specifically, the widely used notation introduced by Patterson assumes the
+#' population triplet as f3(C; A, B), with C being the "focal" sample (i.e., either
+#' the outgroup or a sample tested for admixture). In contrast, tskit implements
+#' f3(A; B, C), with the "focal sample" being A.
+#'
+#' Although this is likely to confuse many ADMIXTOOLS users, slendr does not have
+#' much choice in this, because its \code{ts_*()} functions are designed to be
+#' broadly compatible with raw tskit methods.
+#'
 #' @param ts Tree sequence object of the class \code{slendr_ts}
-#' @param W,X,Y,Z,A,B,C,O Character vectors of individual names (following the
-#'   nomenclature of Patterson et al. 2021)
+#' @param W,X,Y,Z,A,B,C,O Character vectors of individual names (largely following
+#'   the nomenclature of Patterson 2021, but see crucial differences between
+#'   tskit and ADMIXTOOLS in Details)
 #' @param span_normalise Divide the result by the span of the window? Default
 #'   TRUE, see the tskit documentation for more detail.
 #' @param windows Coordinates of breakpoints between windows. The first
@@ -2140,9 +2206,9 @@ ts_tajima <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' @param windows Coordinates of breakpoints between windows. The first
 #'   coordinate (0) and the last coordinate (equal to \code{ts$sequence_length})
 #'   are added automatically)
-#' @param polarised When FALSE (the default) the allele frequency spectrum will
-#'   be folded (i.e. the counts will not depend on knowing which allele is
-#'   ancestral)
+#' @param polarised When TRUE (the default) the allele frequency spectrum will
+#'   not be folded (i.e. the counts will assume knowledge of which allele is ancestral,
+#'   and which is derived, which is known in a simulation)
 #' @param span_normalise Argument passed to tskit's \code{allele_frequency_spectrum}
 #'   method
 #'
@@ -2168,8 +2234,7 @@ ts_tajima <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' ts_afs(ts, sample_sets = list(samples$name))
 #' @export
 ts_afs <- function(ts, sample_sets = NULL, mode = c("site", "branch", "node"),
-                   windows = NULL, span_normalise = FALSE,
-                   polarised = FALSE) {
+                   windows = NULL, span_normalise = FALSE, polarised = TRUE) {
   mode <- match.arg(mode)
 
   if (is.null(sample_sets))
@@ -2264,11 +2329,11 @@ get_ts_raw_nodes <- function(ts) {
 
   # in case of slendr tree sequences, convert times to the model time units
   if (from_slendr)
-    node_table$time <- time_fun(ts)(table$time, model)
+    node_table$time <- as.numeric(time_fun(ts)(table$time, model))
   else
-    node_table$time <- table$time
+    node_table$time <- as.numeric(table$time)
 
-  node_table$time_tskit <- table$time
+  node_table$time_tskit <- as.numeric(table$time)
 
   # -1 as a missing value in tskit is not very R like, so let's replace it with
   # a proper NA
@@ -2307,7 +2372,11 @@ get_ts_raw_individuals <- function(ts) {
     if (from_slendr) {
       ind_table$time <- time_fun(ts)(ts$individual_times, model)
       # for slendr SLiM models, "sampled" nodes are those were explicitly scheduled for sampling
-      ind_table$sampled <- ind_table$remembered
+      # - for "original" SLiM/slendr tree sequences, sampled nodes are those that are remembered
+      if (is.null(attr(ts, "metadata")$sample_ids))
+        ind_table$sampled <- ind_table$remembered
+      else # - for previously simplified tree sequences, use information from pedigree IDs
+        ind_table$sampled <- ind_table$pedigree_id %in% attr(ts, "metadata")$sample_ids
     } else {
       ind_table$time <- ts$individual_times
       # for pure SLiM tree sequences, simply use the sampling information encoded in the data
@@ -2362,8 +2431,8 @@ get_ts_raw_mutations <- function(ts) {
     id = seq_len(table$num_rows) - 1,
     site = as.vector(table[["site"]]),
     node = as.vector(table[["node"]]),
-    time = time,
-    time_tskit = table[["time"]]
+    time = as.numeric(time),
+    time_tskit = as.numeric(table[["time"]])
   )
 }
 
@@ -2404,7 +2473,14 @@ get_pyslim_table_data <- function(ts, simplify_to = NULL) {
 
   # load information about samples at times and from populations of remembered individuals
   if (from_slendr) {
-    samples <- attr(ts, "metadata")$sampling %>% dplyr::arrange(-time, pop)
+    # when a tree sequence is being loaded from a file where it was saved in its
+    # simplified form, the metadata table saved along side it won't correspond to the
+    # subset of sampled nodes -- in these situations, subset the original sampling table
+    # using the names of sampled individuals that are propagated through serialization
+    # (this is achieved by the filter() step right below)
+    samples <- attr(ts, "metadata")$sampling %>%
+      dplyr::arrange(-time, pop) %>%
+      dplyr::filter(name %in% attr(ts, "metadata")$sample_names)
     if (!is.null(simplify_to))
       samples <- samples %>% dplyr::filter(name %in% simplify_to)
   } else
@@ -2495,7 +2571,12 @@ get_tskit_table_data <- function(ts, simplify_to = NULL) {
   # load information about samples at times and from populations of remembered
   # individuals
   if (from_slendr) {
-    samples <- attr(ts, "metadata")$sampling
+    # when a tree sequence is being loaded from a file where it was saved in its
+    # simplified form, the metadata table saved along side it won't correspond to the
+    # subset of sampled nodes -- in these situations, subset the original sampling table
+    # using the names of sampled individuals that are propagated through serialization
+    samples <- attr(ts, "metadata")$sampling %>%
+      dplyr::filter(name %in% attr(ts, "metadata")$sample_names)
     if (!is.null(simplify_to))
       samples <- dplyr::filter(samples, name %in% simplify_to)
     samples <- dplyr::arrange(samples, -time, pop)
@@ -2784,7 +2865,7 @@ get_sampling <- function(metadata) {
   } else
     sampling <- dplyr::as_tibble(metadata$sampling)
 
-  sampling %>%
+  df <- sampling %>%
     dplyr::select(-time_gen) %>%
     {
       rbind(
@@ -2798,6 +2879,10 @@ get_sampling <- function(metadata) {
     dplyr::arrange(-time_orig, pop) %>%
     dplyr::rename(time = time_orig) %>%
     dplyr::select(name, time, pop)
+
+  # if needed (i.e. after simplification to a smaller set of sampled individuals), subset
+  # the full original sampling schedule table to only individuals of interest
+  df %>% dplyr::filter(name %in% metadata$sample_names)
 }
 
 # Extract list with slendr metadata (created as Eidos Dictionaries by SLiM and Python
@@ -2820,6 +2905,8 @@ get_slendr_metadata <- function(ts) {
     version = metadata$version,
     description = metadata$description,
     sampling = get_sampling(metadata),
+    sample_names = metadata$sample_names,
+    sample_ids = metadata$sample_ids,
     map = metadata$map[[1]],
     arguments = arguments
   )

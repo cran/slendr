@@ -10,6 +10,10 @@
 #' \code{NULL} value), the population will be allowed to occupy the entire
 #' landscape.
 #'
+#' Note that because slendr models have to accomodate both SLiM and msprime
+#' back ends, population sizes and split times are rounded to the nearest
+#' integer value.
+#'
 #' @param name Name of the population
 #' @param time Time of the population's first appearance
 #' @param N Number of individuals at the time of first appearance
@@ -52,8 +56,18 @@ population <- function(name, time, N, parent = NULL, map = FALSE,
                        remove = NULL, intersect = TRUE,
                        competition = NA, mating = NA, dispersal = NA,
                        dispersal_fun = NULL, aquatic = FALSE) {
-  if (!is.character(name) || length(name) != 1)
-    stop("A population name must be a character scalar value", call. = FALSE)
+  if (!is.character(name) ||
+      length(name) != 1 ||
+      !grepl("^(?:[_\\p{L}\\p{Nl}])(?:[_\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}])*$",
+            name, perl = TRUE))
+    stop("A population name must be a character scalar value which must also be\n",
+         "valid Python identifiers (a restriction of the msprime simulation engine)", call. = FALSE)
+
+  N <- as.integer(round(N))
+  time <- as.integer(round(time))
+
+  if (time < 1) stop("Split time must be a non-negative number", call. = FALSE)
+  if (N < 1) stop("Population size must be a non-negative number", call. = FALSE)
 
   # if this population splits from a parental population, check that the parent
   # really exists and that the split time make sense given the time of appearance
@@ -70,10 +84,6 @@ population <- function(name, time, N, parent = NULL, map = FALSE,
 
   if (!is.null(parent) && is.logical(map) && map == FALSE)
     map <- attr(parent, "map")
-
-  time <- as.integer(time)
-  if (time < 1) stop("Split time must be a non-negative integer number", call. = FALSE)
-  N <- as.integer(N)
 
   if (inherits(map, "slendr_map")) {
     # define the population range as a simple geometry object
@@ -280,6 +290,10 @@ move <- function(pop, trajectory, end, start, overlap = 0.8, snapshots = NULL,
 #' Expands the spatial population range by a specified distance in a given
 #' time-window
 #'
+#' Note that because slendr models have to accomodate both SLiM and msprime
+#' back ends, population sizes and times of events are rounded to the nearest
+#' integer value.
+#'
 #' @param pop Object of the class \code{slendr_pop}
 #' @param by How many units of distance to expand by?
 #' @param start,end When does the expansion start/end?
@@ -306,6 +320,10 @@ move <- function(pop, trajectory, end, start, overlap = 0.8, snapshots = NULL,
 expand_range <- function(pop, by, end, start, overlap = 0.8, snapshots = NULL,
                          polygon = NULL, lock = FALSE, verbose = TRUE) {
   if (!has_map(pop)) stop("This operation is only allowed for spatial models", call. = FALSE)
+
+  start <- as.integer(round(start))
+  end <- as.integer(round(end))
+
   shrink_or_expand(pop, by, end, start, overlap, snapshots, polygon, lock, verbose)
 }
 
@@ -314,6 +332,10 @@ expand_range <- function(pop, by, end, start, overlap = 0.8, snapshots = NULL,
 #'
 #' Shrinks the spatial population range by a specified distance in a given
 #' time-window
+#'
+#' Note that because slendr models have to accomodate both SLiM and msprime
+#' back ends, population sizes and split times are rounded to the nearest
+#' integer value.
 #'
 #' @param pop Object of the class \code{slendr_pop}
 #' @param by How many units of distance to shrink by?
@@ -435,6 +457,10 @@ set_range <- function(pop, time, center = NULL, radius = NULL,
 #' specified time period until it reaches \code{N} individuals. If \code{N} is
 #' smaller, the population will shrink exponentially.
 #'
+#' Note that because slendr models have to accomodate both SLiM and msprime
+#' back ends, population sizes and split times are rounded to the nearest
+#' integer value.
+#'
 #' @param pop Object of the class \code{slendr_pop}
 #' @param N Population size after the change
 #' @param how How to change the population size (options are \code{"step"} or
@@ -453,6 +479,10 @@ set_range <- function(pop, time, center = NULL, radius = NULL,
 #' @example man/examples/model_definition.R
 resize <- function(pop, N, how, time, end = NULL) {
   if (N < 1) stop("resize(): Only positive, non-zero population sizes are allowed", call. = FALSE)
+
+  N <- as.integer(round(N))
+  time <- as.integer(round(time))
+  if (!is.null(end)) end <- as.integer(round(end))
 
   if (!how %in% c("step", "exponential"))
     stop("resize(): Only 'step' or 'exponential' are allowed as arguments for the 'how' parameter", call. = FALSE)
@@ -573,42 +603,55 @@ gene_flow <- function(from, to, rate, start, end, overlap = TRUE) {
     stop("Both 'from' and 'to' arguments must be slendr population objects",
          call. = FALSE)
 
+  # TODO: this needs some serious restructuring -- this function originated when slendr
+  # could only do spatial simulations and some consistency checks relied on spatial
+  # attributes; as a result, some checks are overlapping and/or redundant
+
   if ((has_map(from) && !has_map(to)) || (!has_map(from) && has_map(to)))
     stop("Both or neither populations must be spatial", call. = FALSE)
 
-  # make sure both participating populations are present at the start of the
-  # gene flow event (`check_present_time()` is reused from the sampling functionality)
-  # check_present_time(start, from, offset = 0)
-  # check_present_time(end, from, offset = 0)
-  # check_present_time(start, to, offset = 0)
-  # check_present_time(end, to, offset = 0)
-
-  # make sure the population is not removed during the the admixture period
-  # (note that this will only be relevant for SLiM simulations at this moment)
-  check_removal_time(start, from)
-  check_removal_time(end, from)
-  check_removal_time(start, to)
-  check_removal_time(end, to)
+  # make sure that gene flow has a sensible value between 0 and 1
+  if (rate < 0 || rate > 1)
+    stop("Gene-flow rate must be a numeric value between 0 and 1", call. = FALSE)
 
   from_name <- unique(from$pop)
   to_name <- unique(to$pop)
 
   if (start == end)
-    stop(sprintf("No time allowed for the %s -> %s gene flow at time %s to happen",
+    stop(sprintf("Start and end time for the %s -> %s gene flow is the same (%s)",
                  from_name, to_name, start), call. = FALSE)
 
-  if (from$time[1] <= start & from$time[1] <= end &
-      to$time[1] <= start & to$time[1] <= end)
-    comp <- `<=`
-  else if (from$time[1] >= start & from$time[1] >= end &
-           to$time[1] >= start & to$time[1] >= end)
-    comp <- `>=`
-  else
-    stop(sprintf("Specified times are not consistent with the assumed direction of
-time (gene flow %s -> %s in the time window %s-%s)",
-                 from_name, to_name, start, end), call. = FALSE)
+  gf_dir <- if (start < end) "forward" else "backward"
+  from_dir <- time_direction(from)
+  to_dir <- time_direction(to)
+  direction <- unique(setdiff(c(gf_dir, from_dir, to_dir), "unknown"))
+
+  if (length(direction) > 1)
+    stop("Inconsistent time direction implied by populations and the gene flow event", call. = FALSE)
+
+  # make sure both participating populations are present at the start of the
+  # gene flow event (`check_present_time()` is reused from the sampling functionality)
+  tryCatch(
+    {
+      check_present_time(start, from, offset = 0, direction = direction)
+      check_present_time(end, from, offset = 0, direction = direction)
+      check_present_time(start, to, offset = 0, direction = direction)
+      check_present_time(end, to, offset = 0, direction = direction)
+
+      check_removal_time(start, from)
+      check_removal_time(end, from)
+      check_removal_time(start, to)
+      check_removal_time(end, to)
+    },
+    error = function(e) {
+      stop(sprintf("Both %s and %s must be already present within the gene-flow window %s-%s",
+                   from_name, to_name, start, end), call. = FALSE)
+    }
+  )
 
   if (has_map(from) && has_map(to)) {
+    comp <- if (direction == "forward") `<=` else `>=`
+
     # get the last specified spatial maps before the geneflow time
     region_from <- intersect_features(from[comp(from$time, start), ] %>% .[nrow(.), ])
     region_to <- intersect_features(to[comp(to$time, start), ] %>% .[nrow(.), ])
@@ -1167,11 +1210,14 @@ schedule_sampling <- function(model, times, ..., locations = NULL, strict = FALS
   if (!inherits(model, "slendr_model"))
     stop("A slendr_model object must be specified", call. = FALSE)
 
-  times <- unique(as.integer(sort(times)))
+  times <- unique(as.integer(round(sort(times))))
 
   samples <- list(...)
   sample_pops <- purrr::map(samples, 1)
   sample_counts <- purrr::map(samples, 2)
+
+  if (is.null(model$world) && !is.null(locations))
+    stop("Sampling locations may only be specified for a spatial model", call. = FALSE)
 
   if (length(sample_pops) != length(sample_counts))
     stop("Samples must be represented by pairs of <slendr_pop>-<n>", call. = FALSE)
@@ -1271,6 +1317,19 @@ init_env <- function(quiet = FALSE) {
          "To set up a dedicated Python environment you first need to run setup_env().", call. = FALSE)
   else {
     reticulate::use_condaenv(PYTHON_ENV, required = TRUE)
+
+    # this is an awful workaround around the reticulate/Python bug which prevents
+    # import_from_path (see zzz.R) from working properly -- I'm getting nonsensical
+    #   Error in py_call_impl(callable, dots$args, dots$keywords) :
+    #     TypeError: integer argument expected, got float
+    # in places with no integer/float conversion in sight
+    #
+    # at least it prevents having to do things like:
+    # reticulate::py_run_string("def get_pedigree_ids(ts): return [ind.metadata['pedigree_id']
+    #                                                              for ind in ts.individuals()]")
+    # (moved from ts_load() here because this is a better place for loading our Python functions)
+    reticulate::source_python(file = system.file("pylib/pylib.py", package = "slendr"))
+
     if (!reticulate::py_module_available("msprime") ||
         !reticulate::py_module_available("tskit") ||
         !reticulate::py_module_available("pyslim")) {

@@ -3,7 +3,8 @@
 # It is distributed under the same conditions and license as the rest of the
 # slendr R package codebase.
 
-import numpy
+import numpy as np
+import pandas as pd
 import tskit
 
 def mult_roots(ts):
@@ -21,10 +22,13 @@ def get_pedigree_ids(ts):
   return [float(ind.metadata["pedigree_id"]) for ind in ts.individuals()]
 
 def collect_ibd(ts, coordinates = False, within=None, between=None,
-               min_span=None, max_time=None):
+               min_span=None, max_time=None, squash=False):
     """Extract IBD fragments (or the summary of pairwise IBD sharing) from
     a tree sequence.
     """
+    # ts = r.ts
+    # coordinates = False; within=None; between=None;
+    # min_span=3e6; max_time=None; squash=True
     ibd_segments = ts.ibd_segments(
         within=within,
         between=between,
@@ -33,20 +37,37 @@ def collect_ibd(ts, coordinates = False, within=None, between=None,
         min_span=min_span,
         max_time=max_time
     )
-
-    if ibd_segments.num_pairs == 0: return None
-
     result = []
     for pair, ibd in ibd_segments.items():
         if coordinates:
-            node1 = numpy.repeat(pair[0], len(ibd))
-            node2 = numpy.repeat(pair[1], len(ibd))
-            left = numpy.fromiter((i.left for i in ibd), dtype=int)
-            right = numpy.fromiter((i.right for i in ibd), dtype=int)
-            pair_result = numpy.column_stack((left, right, right - left, node1, node2)).astype(int)
+            # sort all IBD segments between a given pair of nodes based on their position
+            # along the chromosome
+            ibd = sorted(ibd, key=lambda segment: segment.left)
+            if squash:
+                curr_left = ibd[0].left
+                curr_right = ibd[0].right
+                curr_mrca = ibd[0].node
+                for segment in ibd:
+                    next_mrca = segment.node
+                    if next_mrca != curr_mrca:
+                        result.append((pair[0], pair[1],
+                                       curr_mrca, ts.node(curr_mrca).time, curr_left, curr_right))
+                        curr_left, curr_mrca = segment.left, next_mrca
+                    curr_right = segment.right
+                result.append((pair[0], pair[1],
+                               curr_mrca, ts.node(curr_mrca).time, curr_left, segment.right))
+            else:
+                for segment in ibd:
+                    mrca = segment.node
+                    tmrca = ts.node(mrca).time
+                    result.append((pair[0], pair[1],
+                                mrca, tmrca, segment.left, segment.right))
         else:
-            pair_result = numpy.asarray([len(ibd), ibd.total_span, pair[0], pair[1]], dtype=int)
-        result.append(pair_result)
-    result = numpy.vstack(result)
+            result.append((pair[0], pair[1], len(ibd), ibd.total_span))
 
-    return result
+    if coordinates:
+        columns = ["node1", "node2", "mrca", "tmrca", "left", "right"]
+    else:
+        columns = ["node1", "node2", "count", "total"]
+
+    return pd.DataFrame(result, columns=columns)

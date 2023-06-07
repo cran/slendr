@@ -117,7 +117,7 @@ seconds, but if you don't want to wait, you can set `snapshots = N` manually.")
   if (lock) {
     areas <- as.numeric(sapply(inter_regions, sf::st_area))
     area_changes <- areas[-1] / areas[-length(areas)]
-    new_N <- round(cumprod(area_changes) * prev_N)
+    new_N <- as.integer(round(cumprod(area_changes) * prev_N))
     prev_N <- c(prev_N, new_N[-length(new_N)])
     times <- sapply(inter_regions[-1], `[[`, "time")
     changes <- lapply(seq_len(length(new_N)), function(i) {
@@ -400,9 +400,9 @@ check_present_time <- function(time, pop, offset, direction = NULL) {
     direction <- time_direction(pop)
   split_time <- get_lineage_splits(pop)[1]
 
-  if (time == split_time |
-      (direction == "backward" & time > split_time - offset) |
-      (direction == "forward" & time < split_time + offset))
+  if (time == split_time ||
+      (direction == "backward" && time > split_time - offset) ||
+      (direction == "forward" && time < split_time + offset))
     stop("Population ", pop$pop[1], " is not present at a time ", time, call. = FALSE)
 }
 
@@ -553,6 +553,18 @@ process_sampling <- function(samples, model, verbose = FALSE) {
   df <- dplyr::group_by(samples, time, pop, x, y, x_orig, y_orig) %>%
     dplyr::summarise(n = sum(n), .groups = "drop") %>%
     dplyr::arrange(time)
+
+  # samples must either all have a sampling location defined, or none
+  pop_consistent <- split(df, df$pop) %>% vapply(function(pop) {
+    all(is.na(pop$x_orig) | is.na(pop$y_orig)) ||
+    all(!is.na(pop$x_orig) | !is.na(pop$y_orig))
+  }, logical(1))
+  if (!all(pop_consistent)) {
+    stop("For each population, samples must be all spatial or all non-spatial.\n",
+         "This is not true for the following populations: ",
+         paste(names(pop_consistent)[!pop_consistent], collapse = ", "),
+         call. = FALSE)
+  }
 
   # in case a backwards time model is not to be simulated all the way to the
   # present (i.e. time 0), the conversion of sampling times from absolute model
@@ -717,6 +729,6 @@ utils::globalVariables(
     "pop.y", "pop_id.y", "time_tskit", "time_tskit.x", "time_tskit.y",
     "N", "center", "child_node_id", "child_phylo_id", "geometry", "parent_node_id",
     "parent_phylo_id", "set_boundary", "xend", "xmax", "xmin", "yend",
-    "arc_degree"
+    "arc_degree", "node1", "node2", "mrca", "node1_time", "node2_time", "tmrca", "count", "total"
   ), package = "slendr"
 )
