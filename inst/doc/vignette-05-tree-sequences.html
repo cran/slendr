@@ -382,13 +382,13 @@ environment for us:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_env</span>()</span></code></pre></div>
 <pre><code>#&gt; Summary of the currently active Python environment:
 #&gt; 
-#&gt; Python binary: /Users/mp/Library/r-miniconda-arm64/envs/Python-3.11_msprime-1.2.0_tskit-0.5.4_pyslim-1.0.1/bin/python 
-#&gt; Python version: 3.11.0 | packaged by conda-forge | (main, Jan 14 2023, 12:26:40) [Clang 14.0.6 ] 
+#&gt; Python binary: /Users/mp/Library/r-miniconda-arm64/envs/Python-3.11_msprime-1.2.0_tskit-0.5.5_pyslim-1.0.3/bin/python 
+#&gt; Python version: 3.11.4 | packaged by conda-forge | (main, Jun 10 2023, 18:08:41) [Clang 15.0.7 ] 
 #&gt; 
 #&gt; slendr requirements:
-#&gt;  - tskit: version 0.5.4 ✓ 
+#&gt;  - tskit: version 0.5.5 ✓ 
 #&gt;  - msprime: version 1.2.0 ✓ 
-#&gt;  - pyslim: version 1.0.1 ✓</code></pre>
+#&gt;  - pyslim: version 1.0.3 ✓</code></pre>
 <p>Now we’re good to go and ready to simulate and analyse tree sequence
 outputs in R!</p>
 <div id="model-of-neanderthal-introgression-into-eurasians" class="section level3">
@@ -549,11 +549,11 @@ downstream analysis.</p>
 <pre><code>#&gt; --------------------------------------------------
 #&gt; msprime command:
 #&gt; 
-#&gt; /Users/mp/Library/r-miniconda-arm64/envs/Python-3.11_msprime-1.2.0_tskit-0.5.4_pyslim-1.0.1/bin/python /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpgfK0dc/file150b27d11fd45_introgression/script.py --seed 314159 --model /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpgfK0dc/file150b27d11fd45_introgression --output /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpgfK0dc/file150b24b619993.trees --sequence-length 100000000 --recombination-rate 1e-08 --sampling-schedule /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpgfK0dc/file150b217e53e5e --verbose  
+#&gt; /Users/mp/Library/r-miniconda-arm64/envs/Python-3.11_msprime-1.2.0_tskit-0.5.5_pyslim-1.0.3/bin/python /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpQ3koOM/file73b645c165a1_introgression/script.py --seed 314159 --model /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpQ3koOM/file73b645c165a1_introgression --output /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpQ3koOM/file73b630d54078.trees --sequence-length 100000000 --recombination-rate 1e-08 --sampling-schedule /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpQ3koOM/file73b666fa2601 --verbose  
 #&gt; --------------------------------------------------
 #&gt; 
 #&gt; Tree sequence was saved to:
-#&gt;  /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpgfK0dc/file150b24b619993.trees 
+#&gt;  /var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpQ3koOM/file73b630d54078.trees 
 #&gt; Loading the tree-sequence file...</code></pre>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>ts</span></code></pre></div>
 <pre><code>#&gt; ╔═══════════════════════════╗
@@ -636,7 +636,7 @@ to the tree-sequence file ourselves.</p>
 <span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>output_file</span></code></pre></div>
-<pre><code>#&gt; [1] &quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpgfK0dc/file150b22e793e78&quot;</code></pre>
+<pre><code>#&gt; [1] &quot;/var/folders/d_/hblb15pd3b94rg0v35920wd80000gn/T//RtmpQ3koOM/file73b63419440b&quot;</code></pre>
 <p>In case have the tree-sequence output saved in a custom location on
 disk, we can load the tree sequence using the <em>slendr</em> function
 <code>ts_load()</code>. If we’re dealing with a tree sequence produced
@@ -767,15 +767,9 @@ this:</p>
 <p>Similarly, <em>slendr</em> provides a function
 <code>ts_recapitate()</code> which performs [recapitation]<a href="https://tskit.dev/pyslim/docs/latest/tutorial.html#recapitation" class="uri">https://tskit.dev/pyslim/docs/latest/tutorial.html#recapitation</a>).
 Again, this is not needed for an <em>msprime</em> tree sequence, which
-is fully coalesced (and recapitated) by definition. Still, if we were
-dealing with a SLiM tree sequence, which is the case for some of our
-other vignetted, we could do this in one go, by specifying
-<code>recapitate = TRUE</code> in the call to <code>ts_load()</code>
-after specifying a couple of additional arguments required for
-recapitation (see the pyslim documentation in the <a href="https://tskit.dev/pyslim/docs/latest/tutorial.html#recapitation">recapitation</a>
-section for more detail). If we do this on our current tree sequence
-object, we simply get a warning informing us that we’re attempting to do
-something that has no effect:</p>
+is fully coalesced (and recapitated) by definition. If we do this on our
+current tree sequence object, we simply get a warning informing us that
+we’re attempting to do something that has no effect:</p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ts <span class="ot">&lt;-</span> <span class="fu">ts_recapitate</span>(ts, <span class="at">recombination_rate =</span> <span class="fl">1e-8</span>, <span class="at">Ne =</span> <span class="dv">10000</span>)</span></code></pre></div>
 <p>We can make sure that our tree sequence is fully coalesced by calling
 another <em>slendr</em> function <code>ts_coalesced()</code>. This is

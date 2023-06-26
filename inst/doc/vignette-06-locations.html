@@ -504,7 +504,7 @@ tree sequence (recapitate and simplify it):</p>
 <pre><code>#&gt; ╔═════════════════════════╗
 #&gt; ║TreeSequence             ║
 #&gt; ╠═══════════════╤═════════╣
-#&gt; ║Trees          │       93║
+#&gt; ║Trees          │       94║
 #&gt; ╟───────────────┼─────────╢
 #&gt; ║Sequence Length│   100000║
 #&gt; ╟───────────────┼─────────╢
@@ -512,12 +512,12 @@ tree sequence (recapitate and simplify it):</p>
 #&gt; ╟───────────────┼─────────╢
 #&gt; ║Sample Nodes   │      432║
 #&gt; ╟───────────────┼─────────╢
-#&gt; ║Total Size     │208.8 KiB║
+#&gt; ║Total Size     │208.9 KiB║
 #&gt; ╚═══════════════╧═════════╝
 #&gt; ╔═══════════╤════╤════════╤════════════╗
 #&gt; ║Table      │Rows│Size    │Has Metadata║
 #&gt; ╠═══════════╪════╪════════╪════════════╣
-#&gt; ║Edges      │1213│37.9 KiB│          No║
+#&gt; ║Edges      │1215│38.0 KiB│          No║
 #&gt; ╟───────────┼────┼────────┼────────────╢
 #&gt; ║Individuals│ 724│72.5 KiB│         Yes║
 #&gt; ╟───────────┼────┼────────┼────────────╢
@@ -525,7 +525,7 @@ tree sequence (recapitate and simplify it):</p>
 #&gt; ╟───────────┼────┼────────┼────────────╢
 #&gt; ║Mutations  │   0│ 1.2 KiB│          No║
 #&gt; ╟───────────┼────┼────────┼────────────╢
-#&gt; ║Nodes      │ 944│35.7 KiB│         Yes║
+#&gt; ║Nodes      │ 945│35.7 KiB│         Yes║
 #&gt; ╟───────────┼────┼────────┼────────────╢
 #&gt; ║Populations│   7│ 2.7 KiB│         Yes║
 #&gt; ╟───────────┼────┼────────┼────────────╢
@@ -566,12 +566,12 @@ data</em>:</p>
 <p>Typing the object into the R console presents a user-friendly summary
 of the spatio-temporal data extracted from the tree sequence:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data</span></code></pre></div>
-<pre><code>#&gt; Simple feature collection with 944 features and 12 fields (with 4 geometries empty)
+<pre><code>#&gt; Simple feature collection with 945 features and 12 fields (with 5 geometries empty)
 #&gt; Geometry type: POINT
 #&gt; Dimension:     XY
 #&gt; Bounding box:  xmin: 2721964 ymin: 315424 xmax: 8598650 ymax: 4914514
 #&gt; Projected CRS: ETRS89-extended / LAEA Europe
-#&gt; # A tibble: 944 × 13
+#&gt; # A tibble: 945 × 13
 #&gt;    name  pop   node_id  time time_tskit           location sampled
 #&gt;    &lt;chr&gt; &lt;fct&gt;   &lt;int&gt; &lt;dbl&gt;      &lt;dbl&gt;        &lt;POINT [m]&gt; &lt;lgl&gt;  
 #&gt;  1 AFR_1 AFR       362     0          0   (3072714 315424) TRUE   
@@ -584,7 +584,7 @@ of the spatio-temporal data extracted from the tree sequence:</p>
 #&gt;  8 AFR_4 AFR       369     0          0 (3030706 587947.3) TRUE   
 #&gt;  9 AFR_5 AFR       370     0          0   (4464229 538126) TRUE   
 #&gt; 10 AFR_5 AFR       371     0          0   (4464229 538126) TRUE   
-#&gt; # ℹ 934 more rows
+#&gt; # ℹ 935 more rows
 #&gt; # ℹ 6 more variables: remembered &lt;lgl&gt;, retained &lt;lgl&gt;, alive &lt;lgl&gt;,
 #&gt; #   pedigree_id &lt;dbl&gt;, ind_id &lt;dbl&gt;, pop_id &lt;int&gt;</code></pre>
 <p>In the first part of the summary, we see how many individuals

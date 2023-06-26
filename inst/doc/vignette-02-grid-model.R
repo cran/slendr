@@ -164,7 +164,7 @@ plot_map(map)
 
 ## -----------------------------------------------------------------------------
 # non-spatial ancestral population
-p_anc <- population("p_anc", N = 1000, time = 1, remove = 500)
+p_anc <- population("p_anc", N = 1000, time = 1)
 
 # spatial populations
 p1 <- population("p1", N = 1000, time = 500, parent = p_anc, map = map, center = c(-75, 0), radius = 200e3)
