@@ -1,26 +1,39 @@
-#' Check that all dependencies are available for slendr examples
+#' Check that the required dependencies are available for slendr to work
 #'
 #' @param python Is the slendr Python environment required?
 #' @param slim Is SLiM required?
+#' @param quit Should the R interpreter quit if required slendr dependencies are
+#'   missing? This option (which is not turned on by default, being set to
+#'   \code{FALSE}) is used mainly in avoiding running slendr man page examples on
+#'   machines which lack dependencies. If set to \code{TRUE}, a logical value
+#'   is returned.
 #'
-#' @return No return value. Called only to result in an error message if a
-#'   particular software dependency is missing for an example to run.
+#' @return If \code{quit = TRUE}, no values is returned, if \code{quit = FALSE},
+#'   a scalar logical value is returned indicating whether or not the dependencies
+#'   are present.
 #'
 #' @export
-#' @keywords internal
-check_dependencies <- function(python = FALSE, slim = FALSE) {
+check_dependencies <- function(python = FALSE, slim = FALSE, quit = FALSE) {
   # check whether SLiM and Python are present (only if needed!)
   missing_slim <- if (slim) !all(Sys.which("slim") != "") else FALSE
   missing_python <- if (python) !is_slendr_env_present() else FALSE
 
-  if (missing_slim | missing_python) {
+  fail <- missing_slim || missing_python
+
+  if (fail) {
     if (interactive()) {
       error_slim <- if (missing_slim) "SLiM" else ""
       error_python <- if (missing_python) "slendr Python environment" else ""
       stop(sprintf("Missing requirements for this example: %s",
                    paste(error_slim, error_python, sep = ", ")), call. = FALSE)
-    } else
-      q()
+    } else {
+      if (quit)
+        q()
+      else
+        return(FALSE)
+    }
+  } else {
+    return(invisible(TRUE))
   }
 }
 
@@ -700,6 +713,25 @@ order_pops <- function(populations, direction) {
     split_times <- sort(split_times)
   }
   names(split_times)
+}
+
+check_spatial_pkgs <- function(error = TRUE) {
+  missing <- !all(c(requireNamespace("sf", quietly = TRUE),
+                    requireNamespace("stars", quietly = TRUE),
+                    requireNamespace("rnaturalearth", quietly = TRUE)))
+  msg <- paste0(
+    "In order to use spatial features of slendr, packages 'sf', 'stars',\n",
+    "and 'rnaturalearth' are required but not all are present.\n\n",
+    "You can install all of them with\n",
+    "  `install.packages(\"sf\", \"stars\", \"rnaturalearth\")`."
+  )
+
+  if (missing) {
+    if (error)
+      stop(msg, call. = FALSE)
+    else
+      packageStartupMessage(paste0(msg, "\n--------------------"))
+  }
 }
 
 #' Pipe operator

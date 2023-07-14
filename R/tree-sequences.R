@@ -30,7 +30,7 @@
 #'   map
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -79,6 +79,7 @@ ts_load <- function(file, model = NULL) {
   attr(ts, "type") <- type
   attr(ts, "model") <- model
   attr(ts, "spatial") <- type == "SLiM" && ts$metadata$SLiM$spatial_dimensionality != ""
+  if (attr(ts, "spatial")) check_spatial_pkgs()
 
   attr(ts, "metadata") <- get_slendr_metadata(ts)
 
@@ -99,6 +100,9 @@ ts_load <- function(file, model = NULL) {
 
   attr(ts, "nodes") <- if (type == "SLiM") get_pyslim_table_data(ts) else get_tskit_table_data(ts)
 
+  # if the tree sequence was loaded from a file, save the path
+  if (is.character(file)) attr(ts, "path") <- normalizePath(file)
+
   ts
 }
 
@@ -110,7 +114,7 @@ ts_load <- function(file, model = NULL) {
 #' @return No return value, called for side effects
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -170,7 +174,7 @@ ts_save <- function(ts, file) {
 #'   map
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -231,6 +235,8 @@ ts_recapitate <- function(ts, recombination_rate, Ne = NULL, demography = NULL, 
 
   attr(ts_new, "raw_individuals") <- get_ts_raw_individuals(ts_new)
   attr(ts_new, "raw_mutations") <- get_ts_raw_mutations(ts_new)
+
+  attr(ts_new, "path") <- attr(ts, "path")
 
   if (type == "SLiM") {
     # inherit the information about which individuals should be marked as
@@ -296,7 +302,7 @@ ts_recapitate <- function(ts, recombination_rate, Ne = NULL, demography = NULL, 
 #'   map
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -423,6 +429,8 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE,
   } else
     attr(ts_new, "nodes") <- get_tskit_table_data(ts_new, simplify_to)
 
+  attr(ts_new, "path") <- attr(ts, "path")
+
   # replace the names of sampled individuals (if simplification led to subsetting)
   if (from_slendr) {
     sampled_nodes <- attr(ts_new, "nodes") %>% dplyr::filter(sampled)
@@ -456,7 +464,7 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE,
 #'   map
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -506,6 +514,8 @@ ts_mutate <- function(ts, mutation_rate, random_seed = NULL,
 
   attr(ts_new, "nodes") <- attr(ts, "nodes")
 
+  attr(ts_new, "path") <- attr(ts, "path")
+
   class(ts_new) <- c("slendr_ts", class(ts_new))
 
   ts_new
@@ -518,7 +528,7 @@ ts_mutate <- function(ts, mutation_rate, random_seed = NULL,
 #' @return List of metadata fields extracted from the tree-sequence object
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -547,7 +557,7 @@ ts_metadata <- function(ts) {
 #'   of simulated individuals in columns
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -605,7 +615,7 @@ ts_genotypes <- function(ts) {
 #' Convert genotypes to the EIGENSTRAT file format
 #'
 #' EIGENSTRAT data produced by this function can be used by the admixr R package
-#' (<https://www.bodkan.net/admixr/>).
+#' (<https://bodkan.net/admixr/>).
 #'
 #' In case an outgroup was not formally specified in a slendr model which
 #' generated the tree sequence data, it is possible to artificially create an
@@ -739,7 +749,7 @@ ts_vcf <- function(ts, path, chrom = NULL, individuals = NULL) {
 #' @return Standard phylogenetic tree object implemented by the R package ape
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -903,8 +913,10 @@ ts_phylo <- function(ts, i, mode = c("index", "position"),
       )
     )
   }
-  if (type == "SLiM" && spatial)
+  if (type == "SLiM" && spatial) {
+    check_spatial_pkgs()
     data <- sf::st_as_sf(data)
+  }
 
   class(data) <- set_class(data, "nodes")
 
@@ -976,7 +988,7 @@ ts_phylo <- function(ts, i, mode = c("index", "position"),
 #'   as a spatial object of the class \code{sf}.
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -996,6 +1008,8 @@ ts_nodes <- function(x, sf = TRUE) {
          "object or a phylo object created by the ts_phylo function", call. = FALSE)
 
   data <- attr(x, "nodes")
+
+  if (inherits(data, "sf")) check_spatial_pkgs()
 
   if (!sf && inherits(data, "sf")) {
     # unwrap the geometry column into separate x and y coordinates
@@ -1083,7 +1097,7 @@ ts_table <- function(ts, table = c("individuals", "edges", "nodes", "mutations")
 #'   start-end coordinates of edges across space
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1115,7 +1129,7 @@ ts_edges <- function(x) {
 #' @return Table of individuals scheduled for sampling across space and time
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1157,7 +1171,7 @@ ts_samples <- function(ts) {
 #'   way up to the root of the tree sequence
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1176,6 +1190,7 @@ ts_ancestors <- function(ts, x, verbose = FALSE, complete = TRUE) {
 
   model <- attr(ts, "model")
   spatial <- attr(ts, "spatial")
+  if (spatial) check_spatial_pkgs()
   from_slendr <- !is.null(model)
 
   edges <- ts_table(ts, "edges")
@@ -1285,7 +1300,7 @@ ts_ancestors <- function(ts, x, verbose = FALSE, complete = TRUE) {
 #'   way down to the leaves of the tree sequence
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1304,6 +1319,7 @@ ts_descendants <- function(ts, x, verbose = FALSE, complete = TRUE) {
 
   model <- attr(ts, "model")
   spatial <- attr(ts, "spatial")
+  if (spatial) check_spatial_pkgs()
   from_slendr <- !is.null(model)
 
   edges <- ts_table(ts, "edges")
@@ -1407,7 +1423,7 @@ ts_descendants <- function(ts, x, verbose = FALSE, complete = TRUE) {
 #' @return Python-reticulate-based object of the class tskit.trees.Tree
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1455,7 +1471,7 @@ ts_tree <- function(ts, i, mode = c("index", "position"), ...) {
 #' @return No return value, called for side effects
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1523,7 +1539,7 @@ ts_draw <- function(x, width = 1000, height = 1000, labels = FALSE,
 #'   (tskit Python 0-based) indices of trees which failed the coalescence test
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1608,7 +1624,7 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
 #'   for that pair)
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1809,7 +1825,7 @@ ts_f4 <- function(ts, W, X, Y, Z, mode = c("site", "branch", "node"),
 #' @return Data frame with statistics calculated for the given sets of individuals
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1932,7 +1948,7 @@ multiway_stat <- function(ts, stat = c("fst", "divergence"),
 #'   of Fst values (one for each window)
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -1963,7 +1979,7 @@ ts_fst <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #'   vector of divergence values (one for each window)
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -2045,7 +2061,7 @@ oneway_stat <- function(ts, stat, sample_sets, mode, windows, span_normalise = N
 #'   vector of diversity values (one for each window)
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -2081,7 +2097,7 @@ ts_segregating <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #'   vector of diversity values (one for each window)
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -2129,7 +2145,7 @@ ts_diversity <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #'   vector of Tajima's D values (one for each window)
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -2185,7 +2201,7 @@ ts_tajima <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #'   links in the description for more detail on how tskit handles things.
 #'
 #' @examples
-#' \dontshow{check_dependencies(python = TRUE) # make sure dependencies are present
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
 #' init_env()
 #'
@@ -2597,6 +2613,7 @@ get_annotated_edges <- function(x) {
   data <- ts_nodes(x) %>% dplyr::as_tibble()
   source <- if (inherits(x, "slendr_phylo")) "tree" else "tskit"
   spatial <- attr(x, "spatial")
+  if (spatial) check_spatial_pkgs()
   from_slendr <- !is.null(attr(x, "model"))
 
   if (spatial && any(sf::st_is_empty(data$location))) {

@@ -1,6 +1,6 @@
 Package: slendr
 Title: A Simulation Framework for Spatiotemporal Population Genetics
-Version: 0.7.0
+Version: 0.7.1
 Authors@R: 
     person(given = "Martin",
            family = "Petr",
@@ -35,18 +35,17 @@ SystemRequirements: 'SLiM' is a forward simulation software for
         further information. The 'Python' coalescent framework
         'msprime' and the 'tskit' module can by installed by following
         the instructions at <https://tskit.dev/>.
-Imports: sf, stars, ggplot2, dplyr, purrr, readr, magrittr, reticulate,
-        tidyr, rnaturalearth, gganimate, png, ijtiff, shinyWidgets,
-        shiny, ape, scales
-Suggests: testthat (>= 3.0.0), knitr, rmarkdown, admixr, units, magick,
-        cowplot, forcats, rsvg
+Imports: ggplot2, dplyr, purrr, readr, magrittr, reticulate, tidyr,
+        png, ijtiff, ape, shinyWidgets, shiny, scales
+Suggests: testthat (>= 3.0.0), sf, stars, rnaturalearth, gganimate,
+        knitr, rmarkdown, admixr, units, magick, cowplot, forcats, rsvg
 VignetteBuilder: knitr
 URL: https://github.com/bodkan/slendr
 BugReports: https://github.com/bodkan/slendr/issues
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2023-06-26 13:54:06 UTC; mp
+Packaged: 2023-07-14 11:25:04 UTC; mp
 Author: Martin Petr [aut, cre] (<https://orcid.org/0000-0003-4879-8421>)
 Maintainer: Martin Petr <contact@bodkan.net>
 Repository: CRAN
-Date/Publication: 2023-06-26 16:30:02 UTC
+Date/Publication: 2023-07-14 19:10:02 UTC
