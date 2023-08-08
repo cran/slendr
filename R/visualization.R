@@ -181,7 +181,7 @@ plot_map <- function(..., time = NULL, gene_flow = FALSE,
             data = migr_df,
             aes(x = from_x, y = from_y, xend = to_x, yend = to_y),
             arrow = arrow(length = unit(2, "mm"), type = "closed"),
-            lineend = "round", size = 0.5, arrow.fill = "black"
+            lineend = "round", linewidth = 0.5, arrow.fill = "black"
           ) +
           scale_color_discrete(drop = FALSE) +
           guides(color = "none")
@@ -260,6 +260,12 @@ sort_splits <- function(model) {
 #' @param gene_flow Should gene-flow arrows be visualized (default \code{TRUE}).
 #' @param log Should the y-axis be plotted on a log scale? Useful for models
 #'   over very long time-scales.
+#' @param order Order of the populations along the x-axis, given as a character
+#'   vector of population names. If \code{NULL} (the default), the default plotting
+#'   algorithm will be used, ordering populations from the most ancestral to the
+#'   most recent using an in-order tree traversal.
+#' @param file Output file for a figure saved via \code{ggsave}
+#' @param ... Optional argument which will be passed to \code{ggsave}
 #'
 #' @return A ggplot2 object with the visualized slendr model
 #'
@@ -277,13 +283,22 @@ sort_splits <- function(model) {
 #'   geom_polygon geom_label scale_y_continuous scale_color_discrete scale_fill_discrete
 #'   labs geom_segment arrow
 #' @export
-plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRUE, log = FALSE) {
+plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRUE, log = FALSE,
+                       order = NULL, file = NULL, ...) {
   populations <- model$populations
 
   log10_ydelta <- 0.001
 
   # layout populations along the x-axis according to an in-order population tree traversal
-  pop_names <- sort_splits(model)
+  if (is.null(order))
+    pop_names <- sort_splits(model)
+  else {
+    pop_names <- order
+    if (length(setdiff(vapply(populations, function(pop) pop$pop[1], FUN.VALUE = character(1)),
+                       pop_names)))
+      stop("If order is given manually, all population names must be specified", call. = FALSE)
+  }
+
   split_times <- vapply(pop_names, function(x) attr(populations[[x]], "history")[[1]]$time,
                         numeric(1))
 
@@ -459,7 +474,7 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
     p <- p + geom_segment(
       data = splits,
       aes(x = x, xend = xend, y = y, yend = yend, color = pop),
-      size = 1
+      linewidth = 1
     )
   }
 
@@ -506,7 +521,10 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
 
   p <- p + scale_y_continuous(trans = trans)
 
-  p
+  if (!is.null(file))
+    ggplot2::ggsave(file, plot = p, ...)
+  else
+    p
 }
 
 #' Animate the simulated population dynamics
