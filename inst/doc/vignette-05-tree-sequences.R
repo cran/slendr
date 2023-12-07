@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 80,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == "" && Sys.which("qpDstat") != ""
+  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.which("qpDstat") != ""
 )
 
 ## -----------------------------------------------------------------------------
@@ -129,7 +129,7 @@ tree
 #    geom_tiplab() + # sample labels for tips
 #    hexpand(0.1)    # make more space for the tip labels
 
-## ---- plot_apetree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") == ""----
+## ---- plot_apetree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE----
 library(ape)
 plot(tree)
 nodelabels()

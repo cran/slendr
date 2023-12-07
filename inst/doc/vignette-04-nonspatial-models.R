@@ -4,7 +4,7 @@ env_present <- slendr:::is_slendr_env_present()
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
-  eval = Sys.getenv("RUNNER_OS") != "macOS" && env_present && Sys.getenv("RUNNER_OS") == ""
+  eval = Sys.getenv("RUNNER_OS") != "macOS" && env_present
 )
 
 ## -----------------------------------------------------------------------------

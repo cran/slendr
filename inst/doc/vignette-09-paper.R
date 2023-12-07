@@ -1,6 +1,6 @@
 ## ---- include = FALSE---------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
-eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == ""
+eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
 
 knitr::opts_chunk$set(
   collapse = TRUE,

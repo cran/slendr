@@ -1,3 +1,13 @@
+# slendr 0.8.0
+
+- In order to support the new `ts_tracts()` function backed by the _tspop_ module (see the item below), a new _slendr_ Python environment is required. As such, users will have to run `setup_env()` to get all the required Python dependencies which will be now installed in the internal virtual environment named `Python-3.11_msprime-1.2.0_tskit-0.5.6_pyslim-1.0.4_tspop-0.0.2`. ([#b5330c](https://github.com/bodkan/slendr/commit/b5330c))
+
+- Experimental support for the [_tspop_](https://tspop.readthedocs.io/en/latest/) `link-ancestors` algorithm for detection of ancestry tracts in the form of a new _slendr_ function `ts_tracts()`. Only works on _slendr_-generated _msprime_ tree sequences and "pure" _msprime_ and SLiM tree sequences (not _slendr_-generated SLiM tree sequences), and has been only tested on a few toy models. **Note:** the _tspop_ Python module is not published on conda. In order to set up a new _slendr_ Python environment, you will have to run `setup_env(pip = TRUE)` to make sure that Python dependencies are installed with pip instead of conda. ([PR #145](https://github.com/bodkan/slendr/pull/145))
+
+- Updated Python dependencies (bugfix pyslim release [v1.0.4](https://github.com/tskit-dev/pyslim/releases/tag/1.0.4) and tskit [v0.5.6](https://github.com/tskit-dev/tskit/releases/tag/0.5.6), the latter due to a broken `jsonschema` dependency of tskit). ([#001ee5](https://github.com/bodkan/slendr/commit/001ee5))
+
+- Experimental support for [manually created](https://github.com/bodkan/slendr/pull/144) spatial tree sequences. ([PR #144](https://github.com/bodkan/slendr/pull/144))
+
 # slendr 0.7.2
 
 - A new function `ts_names()` has been added, avoiding the need for the extremely frequent (and, unfortunately, cumbersome) trick of getting named lists of individual symbolic names `ts_samples(ts) %>% split(., .[[split]]) %>% lapply(`[[`, "name")` which is very confusing for all but the more experienced R users. ([#7db6ea](https://github.com/bodkan/slendr/commit/7db6ea))

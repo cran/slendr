@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 80,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") == ""
+  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
 )
 
 ## -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ ts
 ## ----plot_gif_interactions, message = FALSE, eval = FALSE---------------------
 #  animate_model(model, locations_file, steps = 80, width = 500, height = 200)
 
-## ----plot_interactions, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("RUNNER_OS") == ""----
+## ----plot_interactions, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"----
 library(ggplot2)
 
 locations <- ts_nodes(ts) %>% dplyr::filter()
