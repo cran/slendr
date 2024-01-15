@@ -5,10 +5,10 @@ eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") 
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  dpi = 80,
-  eval = eval_chunk,
-  fig.width = 8,
-  fig.height = 6
+  dpi = 60,
+  fig.width = 6,
+  fig.height = 4,
+  eval = eval_chunk
 )
 
 set.seed(42)

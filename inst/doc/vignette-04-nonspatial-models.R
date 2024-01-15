@@ -44,7 +44,7 @@ model <- compile_model(
   gene_flow = gf, generation_time = 30
 )
 
-## ----non-spatial_graph, fig.width = 6, fig.height = 6, dpi = 80---------------
+## ----non-spatial_graph, fig.width = 6, fig.height = 6, dpi = 60---------------
 plot_model(model)
 
 ## ---- eval = FALSE------------------------------------------------------------
