@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 )
 
 ## -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ ts
 ## ----plot_gif_interactions, message = FALSE, eval = FALSE---------------------
 #  animate_model(model, locations_file, steps = 80, width = 500, height = 200)
 
-## ----plot_interactions, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"----
+## ----plot_interactions, eval = Sys.which("slim") != "" && env_present---------
 library(ggplot2)
 
 locations <- ts_nodes(ts) %>% dplyr::filter()

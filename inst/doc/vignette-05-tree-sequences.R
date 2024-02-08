@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
@@ -7,13 +7,13 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.which("qpDstat") != ""
+  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present && Sys.which("qpDstat") != ""
 )
 
 ## -----------------------------------------------------------------------------
 library(slendr)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  setup_env()
 
 ## -----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ model <- compile_model(
   path = paste0(tempfile(), "_introgression")
 )
 
-## ---- introgression_graph, fig.width = 8, fig.height = 4----------------------
+## ----introgression_graph, fig.width = 8, fig.height = 4-----------------------
 cowplot::plot_grid(
   plot_model(model, sizes = FALSE),
   plot_model(model, sizes = FALSE, log = TRUE),
@@ -68,7 +68,7 @@ present_samples
 emh_samples <- schedule_sampling(model, times = runif(n = 40, min = 10000, max = 40000), list(eur, 1))
 emh_samples
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  # this attempts to sample a Neanderthal individual at a point when Neanderthals
 #  # are already extinct, resulting in an error
 #  schedule_sampling(model, times = 10000, list(nea, 1), strict = TRUE)
@@ -104,7 +104,7 @@ ts_simplify(ts)
 ts_small <- ts_simplify(ts, simplify_to = c("CH_1", "NEA_1", "NEA_2", "AFR_1", "AFR_2", "EUR_20", "EUR_50"))
 ts_small
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  ts <- ts_recapitate(ts, recombination_rate = 1e-8, Ne = 10000)
 
 ## -----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ tree <- ts_phylo(ts_small, 42 - 1)
 ## -----------------------------------------------------------------------------
 tree
 
-## ---- plot_ggtree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") == TRUE----
+## ----plot_ggtree, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.which("qpDstat") != ""----
 #  library(ggtree)
 #  
 #  ggtree(tree) +
@@ -129,12 +129,12 @@ tree
 #    geom_tiplab() + # sample labels for tips
 #    hexpand(0.1)    # make more space for the tip labels
 
-## ---- plot_apetree, eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS" && Sys.getenv("R_HAS_GGTREE") != TRUE----
+## ----plot_apetree, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.which("qpDstat") != ""----
 library(ape)
 plot(tree)
 nodelabels()
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  # iterate over all trees in the tree-sequence and check if each
 #  # has only one root (i.e. is fully coalesced) - note that Python
 #  # lists are 0-based, which is something we need to take care of
@@ -169,7 +169,7 @@ inds <- ts_samples(ts) %>% dplyr::filter(pop %in% c("AFR", "EUR"))
 # these values to the table
 inds$ancestry <- ts_f4ratio(ts, X = inds$name, "NEA_1", "NEA_2", "AFR_1", "CH_1")$alpha
 
-## ---- ts_nea_distributions----------------------------------------------------
+## ----ts_nea_distributions-----------------------------------------------------
 ggplot(inds, aes(pop, ancestry, fill = pop)) +
   geom_boxplot() +
   geom_jitter() +
@@ -177,7 +177,7 @@ ggplot(inds, aes(pop, ancestry, fill = pop)) +
   theme(legend.position = "none") +
   coord_cartesian(ylim = c(0, 0.1))
 
-## ---- ts_nea_trajectory-------------------------------------------------------
+## ----ts_nea_trajectory--------------------------------------------------------
 dplyr::filter(inds, pop == "EUR") %>%
   ggplot(aes(time, ancestry)) +
   geom_point() +
@@ -188,13 +188,13 @@ dplyr::filter(inds, pop == "EUR") %>%
 ## -----------------------------------------------------------------------------
 snps <- ts_eigenstrat(ts, prefix = file.path(tempdir(), "eigenstrat", "data"))
 
-## ---- eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
+## ----eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
 #  library(admixr)
 #  
 #  f4ratio(data = snps, X = c("EUR_1", "EUR_2", "AFR_2"),
 #          A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1")
 
-## ---- ts_vs_admixr, eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
+## ----ts_vs_admixr, eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
 #  europeans <- inds[inds$pop == "EUR", ]$name
 #  
 #  # tskit result

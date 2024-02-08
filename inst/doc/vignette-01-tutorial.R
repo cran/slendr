@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 )
 
 ## -----------------------------------------------------------------------------
@@ -17,7 +17,7 @@ library(slendr)
 # tree-sequence processing
 init_env()
 
-## ---- world_zoom, results = FALSE---------------------------------------------
+## ----world_zoom, results = FALSE----------------------------------------------
 map <- world(
   xrange = c(-13, 70), # min-max longitude
   yrange = c(18, 65),  # min-max latitude
@@ -64,7 +64,7 @@ afr <- population("AFR", time = 52000, N = 3000, map = map, polygon = africa)
 
 plot_map(afr)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 ooa <- population(
   "OOA", parent = afr, time = 51000, N = 500, remove = 25000,
   center = c(33, 30), radius = 400e3
@@ -73,7 +73,7 @@ ooa <- population(
 ## ----plot_ooa-----------------------------------------------------------------
 plot_map(ooa, intersect = TRUE, title = "'Intersected' population range")
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 ooa <- ooa %>% move(
   trajectory = list(c(40, 30), c(50, 30), c(60, 40)),
   start = 50000, end = 40000
@@ -99,7 +99,7 @@ eur <- population( # European population
   polygon = europe
 )
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 ana <- population( # Anatolian farmers
   name = "ANA", time = 28000, N = 3000, parent = ooa, remove = 4000,
   center = c(34, 38), radius = 500e3, polygon = anatolia

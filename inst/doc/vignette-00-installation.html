@@ -29,13 +29,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 </script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
 
@@ -259,11 +259,12 @@ are available</strong>. If they are not, the R package will provide a
 brief helpful guide on how to resolve potential issues. The rest of this
 vignette talks about the necessary software dependencies in a bit more
 detail.</p>
-<p><strong>Please note that <em>slendr</em> is fully supported only on
-macOS and Linux at the moment.</strong> That said, there is an
-experimental support on Windows for running coalescent simulation via
-<em>slendr</em>’s Python backend <code>msprime()</code> and for
-analyzing tree-sequence outputs using its <em>tskit</em> interface.</p>
+<p><strong>Please note that <em>slendr</em> has been extensively tested
+only on macOS and Linux at the moment.</strong> However, there is an
+experimental support for runnig both SLiM and <em>msprime</em>
+simulations on Windows and for analyzing tree-sequence outputs using its
+<em>tskit</em> interface on this platform as well. Feedback on issues
+with using <em>slendr</em> on Windows is highly appreciated.</p>
 </div>
 <div id="software-dependencies" class="section level2">
 <h2>Software dependencies</h2>
@@ -286,7 +287,11 @@ information on how to troubleshoot potential problems).</p>
 dependencies will be necessarily needed.</strong> If you’re not going to
 be running forward spatial simulations, you don’t need SLiM or
 geospatial R packages <em>sf</em>, <em>stars</em>, and
-<em>rnaturalearth</em>.</p>
+<em>rnaturalearth</em>. This applies also to the animation of spatial
+models using the <em>gganimate</em> R package. <strong>This is why
+<em>slendr</em> does not install those as dependencies. If you need this
+functionality, you will have to install the respective R packages
+manually.</strong></p>
 <p>In this vignette, I will briefly explain how to get all
 <em>slendr’</em>s software dependencies installed. That said, note that
 under normal circumstances (with the exception of SLiM), no manual
@@ -340,21 +345,102 @@ need other packages on non-Debian distributions), but this is what got
 <em>slendr</em> and all of its dependencies running on a completely
 clean system. Might be a good start in case you have trouble on your
 Linux machine.</p>
+<p><strong>Windows</strong></p>
+<p>No special treatment should be necessary to get <em>slendr</em>
+running. If you install <em>slendr</em> via
+<code>install.packages(&quot;slendr&quot;)</code>, you will get the binary version
+of the package and all its dependencies without any need for compiling
+sources.</p>
 </div>
 </div>
 <div id="slim" class="section level3">
 <h3>SLiM</h3>
 <p>The forward population genetic software SLiM is available on all
 major software platforms. Its complete installation instructions can be
-found <a href="https://messerlab.org/slim/">here</a>. On a Mac, I
-recommend installing SLiM via the <code>pkg</code> installer available
-for direct download from its <a href="https://messerlab.org/slim/">website</a>. On Linux, you can either
-install SLiM via the appropriate package manager for your Linux
-distribution (see SLiM manual <a href="https://messerlab.org/slim/">here</a> for more information), or
-you can easily compile your own.</p>
+found <a href="https://messerlab.org/slim/">here</a>. <strong>On a
+Mac</strong>, I recommend installing SLiM via the <code>pkg</code>
+installer available for direct download from its <a href="https://messerlab.org/slim/">website</a>. <strong>On
+Linux</strong>, you can either install SLiM via the appropriate package
+manager for your Linux distribution (see SLiM manual <a href="https://messerlab.org/slim/">here</a> for more information), or
+you can easily compile your own. To install SLiM <strong>on
+Windows</strong>, please follow the instructions in section 2.3.1 of the
+SLiM manual. Note that although SLiM is also available on conda, it
+comes without SLiMgui!</p>
 <p>Note that <em>slendr</em> requires SLiM 4.0 and will not work with an
 earlier version. Again, running <code>library(slendr)</code> will inform
 you of any potential issues with your SLiM installation.</p>
+<div id="adding-slim-to-the-path" class="section level4">
+<h4>Adding SLiM to the <code>$PATH</code></h4>
+<p>In order for <em>slendr</em> to be able to find your SLiM
+installation, R must be able to find the <code>slim</code> binary (or
+<code>slim.exe</code> in case of Windows) in the so called <a href="https://en.wikipedia.org/wiki/PATH_(variable)"><code>$PATH</code>
+variable</a>. The easiest way to verify that this is true is to call
+<code>Sys.which(&quot;slim&quot;)</code> (or <code>Sys.which(&quot;slim.exe&quot;)</code> on
+Windows) in your R session. For instance, on my own Mac, I get this:</p>
+<pre><code>&gt; Sys.which(&quot;slim&quot;)
+                 slim 
+&quot;/usr/local/bin/slim&quot; </code></pre>
+<p>On Windows, I get this (I followed the section 2.3.1 of the SLiM
+manual describing the most “official” way to install SLiM and I
+recommend you follow this as well):</p>
+<pre><code>&gt; Sys.which(&quot;slim.exe&quot;)
+                            slim.exe 
+&quot;C:\\msys64\\mingw64\\bin\\slim.exe&quot; </code></pre>
+<p>If, on the other hand, you might get something like this — an empty
+string:</p>
+<pre><code>&gt; Sys.which(&quot;slim&quot;)
+slim 
+  &quot;&quot; </code></pre>
+<p><strong>This means that your <code>$PATH</code> R is not configured
+properly and R (and <em>slendr</em>) won’t be able to find SLiM in the
+<code>$PATH</code>.</strong></p>
+<p>How to add SLiM to the <code>$PATH</code> then? Probably the most
+convenient way to do this is by editing the <code>.Renviron</code> file.
+The precise location of this file depends on your operation system but
+you can automatically get it open in a text editor by using this command
+(you might have to do <code>install.packages(&quot;usethis&quot;)</code>
+first):</p>
+<pre><code>usethis::edit_r_environ()</code></pre>
+<p>Then, you can either add the following (note that there’s no
+<code>$</code> in this line!):</p>
+<pre><code>PATH=&quot;&lt;path to directory with SLiM binaries&gt;&quot;</code></pre>
+<p>Alternatively, should you already have some <code>$PATH</code>
+contents specified for your R session, you can get it by calling
+<code>Sys.getenv(&quot;PATH&quot;)</code> in your R console, grab the entire
+string you get in this way, and append the path where you installed SLiM
+using an appropriate delimiter (<code>:</code> on Linux/macOS,
+<code>;</code> on Windows) to this string. In this case, the edit might
+look something like this:</p>
+<pre><code>PATH=&quot;&lt;original Sys.getenv(&quot;PATH&quot;) content&gt;&lt;delimiter&gt;&lt;path to directory with SLiM binaries&gt;&quot;</code></pre>
+<p>For instance, on my Mac, the <code>.Renviron</code> file contains
+this line (note the last item <code>/usr/local/bin</code> matches the
+path to <code>slim</code> I showed above):</p>
+<pre><code>PATH=&quot;/opt/homebrew/bin:/opt/homebrew/sbin:/Users/mp/.my_local/bin:/Users/mp/.my_local/AdmixTools/bin:/Library/TeX/texbin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/bin&quot;</code></pre>
+<p>On my testing Windows machine, I have this in the
+<code>.Renviron</code> file (again, look for the path
+<code>C:/msys64/mingw64/bin;$PATH&quot;</code> which matches the
+<code>slim.exe</code> binary shown above):</p>
+<pre><code>PATH=&quot;C:\\msys64\\usr\\bin;C:\\rtools43\\x86_64-w64-mingw32.static.posix\\bin;C:\\rtools43\\usr\\bin;C:\\Program Files (x86)\\R\\R-4.3.2\\bin\\x64;C:/msys64/mingw64/bin&quot;</code></pre>
+<p><strong>The most important check that your R can find SLiM is using
+the <code>Sys.which()</code> command described above. Before this gives
+you a positive result, you won’t be able to use <em>slendr</em>’s
+spatial SLiM simulations<em>.</em> If you’re struggling with this,
+search for advice related to <code>.Renviron</code> and
+<code>$PATH</code> online.</strong></p>
+<div id="fallback-options" class="section level5">
+<h5>Fallback options</h5>
+<p>If you don’t want to deal with editing the <code>.Renviron</code>
+file, you should be able to set the path to SLiM using the command
+<code>Sys.setenv(PATH = &quot;&lt;path to directory with SLiM binaries&gt;&quot;)</code>.
+You will have to do this at the beginning of each of your slendr R
+scripts though.</p>
+<p>Alternatively, the <code>slim()</code> function has an argument
+<code>slim_path=</code> where you can specify the full path to the
+<code>slim</code> or <code>slim.exe</code> binaries directly (not the
+directory as it’s the case with the <code>$PATH</code>! the full path to
+the <code>slim</code>/<code>slim.exe</code> binary itself).</p>
+</div>
+</div>
 </div>
 <div id="python" class="section level3">
 <h3>Python</h3>
@@ -366,7 +452,7 @@ tree-sequence files, <em>slendr</em> needs Python modules
 Python packages (which is very important to avoid clashes among
 different Python programs needed by your system) can be a <a href="https://xkcd.com/1987/">bit of a hassle</a> for some users. This
 is especially true for R users who might not use Python in their daily
-work, such as yours truly.</p>
+work.</p>
 <p>In order to make sure that the R package has the most appropriate
 version of Python available, with the correct versions of all of its
 Python module dependencies, <em>slendr</em> provides a dedicated
@@ -396,7 +482,9 @@ which completely trips up <code>setup_env()</code>. If you run into this
 issue, <strong>there is a fallback option to install Python dependencies
 <em>msprime</em>, <em>tskit</em>, <em>pyslim</em>, and <em>pandas</em>
 via <code>pip</code></strong> which, unlike conda, works practically
-every time. You can do this <strong>by calling
+every time. If your <code>setup_env()</code> fails for some
+conda-related reason, first clear the broken environment by calling
+<code>clear_env()</code>, restart your R session, and then <strong>call
 <code>setup_env(pip = TRUE)</code></strong> instead of the default
 <code>setup_env()</code>. Note that <strong>this might require you to
 install the <a href="https://www.gnu.org/software/gsl/">GSL</a>
@@ -409,7 +497,7 @@ numerical library, but that’s a trivial issue on macOS
 <p>In case you are wondering how does <em>slendr</em> accomplish the
 above: <em>slendr</em>’s Python interface is implemented using the R
 package <a href="https://rstudio.github.io/reticulate/"><em>reticulate</em></a><em>.</em>
-This embeds a Python session within an R session, enabling
+This embeds a Python interpreter <em>inside</em> an R session, enabling
 high-performance interoperability between both languages without any
 need for user intervention.</p>
 </div>
@@ -418,18 +506,12 @@ need for user intervention.</p>
 <div id="docker" class="section level2">
 <h2>Docker</h2>
 <p>There is currently no official Docker image for <em>slendr</em> but
-there will be once the R package finally lands on the official CRAN
-repository. The current plan is to use the geospatial image published by
-the <a href="https://rocker-project.org/">Rocker project</a> (which
-already contains pre-compiled R, RStudio, and all necessary R package
-dependencies such as <em>sf</em> ) and extend it with <em>slendr</em>
-and SLiM.</p>
+there will be one soon. The current plan is to use the geospatial image
+published by the <a href="https://rocker-project.org/">Rocker
+project</a> (which already contains pre-compiled R, RStudio, and all
+necessary R package dependencies such as <em>sf</em> ) and extend it
+with <em>slendr</em> and SLiM.</p>
 <p>Stay tuned!</p>
-</div>
-<div id="renv" class="section level2">
-<h2>renv</h2>
-<p>TODO: Advertise the <a href="https://rstudio.github.io/renv/articles/renv.html">renv</a>
-solution for managing reproducible environments for R packages.</p>
 </div>
 
 

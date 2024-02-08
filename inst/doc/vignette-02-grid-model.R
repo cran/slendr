@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 )
 
 ## -----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ model <- compile_model(
 ts <- slim(model, sequence_length = 10000, recombination_rate = 0) # simulate a single 10kb locus
 ts
 
-## ---- results = FALSE, warning = FALSE----------------------------------------
+## ----results = FALSE, warning = FALSE-----------------------------------------
 map <- world(
   xrange = c(-25, 55),
   yrange = c(-32, 35),
@@ -152,10 +152,10 @@ check_area <- function(pop, map, continent) {
 filtered <- lapply(populations, check_area, map, continent) %>%
   Filter(Negate(is.null), .)
 
-## ---- demes_africa------------------------------------------------------------
+## ----demes_africa-------------------------------------------------------------
 do.call(plot_map, filtered) + ggplot2::theme(legend.position = "none")
 
-## ---- map_america-------------------------------------------------------------
+## ----map_america--------------------------------------------------------------
 xrange <- c(-90, -20)
 yrange <- c(-58, 15)
 
@@ -221,10 +221,10 @@ model <- compile_model(
   serialize = FALSE
 )
 
-## ---- model_america-----------------------------------------------------------
+## ----model_america------------------------------------------------------------
 plot_model(model)
 
-## ---- model_map_america-------------------------------------------------------
+## ----model_map_america--------------------------------------------------------
 plot_map(model, gene_flow = TRUE)
 
 ## -----------------------------------------------------------------------------

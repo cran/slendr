@@ -1,10 +1,10 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
-  eval = Sys.getenv("RUNNER_OS") != "macOS" && env_present
+  eval = env_present
 )
 
 ## -----------------------------------------------------------------------------
@@ -47,9 +47,9 @@ model <- compile_model(
 ## ----non-spatial_graph, fig.width = 6, fig.height = 6, dpi = 60---------------
 plot_model(model)
 
-## ---- eval = FALSE------------------------------------------------------------
-#  ts_slim <- slim(model, sequence_length = 10, recombination_rate = 0)
+## ----eval = FALSE-------------------------------------------------------------
+#  ts_slim <- slim(model, sequence_length = 100000, recombination_rate = 0)
 
-## ---- eval = FALSE------------------------------------------------------------
-#  ts_msprime <- msprime(model, sequence_length = 100, recombination_rate = 0)
+## ----eval = FALSE-------------------------------------------------------------
+#  ts_msprime <- msprime(model, sequence_length = 100000, recombination_rate = 0)
 

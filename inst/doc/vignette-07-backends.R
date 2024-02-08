@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
@@ -7,10 +7,10 @@ knitr::opts_chunk$set(
   fig.width = 8,
   fig.height = 6,
   dpi = 60,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 )
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 library(slendr)
 
 library(dplyr)
@@ -133,7 +133,7 @@ df_msprime_f4ratio <- rbind(
   mutate(simulator = "msprime backend")
 
 
-## ---- msprime_slim_f4_distributions-------------------------------------------
+## ----msprime_slim_f4_distributions--------------------------------------------
 df_f4 <- rbind(df_slim_f4, df_msprime_f4) %>%
   mutate(population = ifelse(grepl("x1_", X),
                              "x1 (received gene flow)",
@@ -148,7 +148,7 @@ ggplot(df_f4, aes(f4, fill = population)) +
        subtitle = "f4 ~0 is consistent with no gene flow, negative value indicates gene flow with 'b'") +
   theme(legend.position = "bottom")
 
-## ---- msprime_slim_f4ratio_distributions--------------------------------------
+## ----msprime_slim_f4ratio_distributions---------------------------------------
 df_f4ratio <- rbind(df_slim_f4ratio, df_msprime_f4ratio) %>%
   mutate(population = ifelse(grepl("x1_", X),
                              "x1 (received gene flow)",
@@ -278,7 +278,7 @@ afs <- bind_rows(
                       "exponential decrease", "exponential increase"))
   )
 
-## ---- msprime_slim_afs--------------------------------------------------------
+## ----msprime_slim_afs---------------------------------------------------------
 ggplot(afs, aes(n, f, color = direction, linetype = simulator)) +
   geom_line(stat = "identity") +
   facet_wrap(~ model) +

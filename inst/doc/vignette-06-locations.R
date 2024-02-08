@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
 knitr::opts_chunk$set(
@@ -7,10 +7,10 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 )
 
-## ---- collapse = TRUE, message = FALSE----------------------------------------
+## ----collapse = TRUE, message = FALSE-----------------------------------------
 library(slendr)
 
 library(dplyr)
@@ -21,7 +21,7 @@ init_env()
 seed <- 314159
 set.seed(seed)
 
-## ---- results = FALSE---------------------------------------------------------
+## ----results = FALSE----------------------------------------------------------
 # simulated world map
 map <- world(
   xrange = c(-13, 70), # min-max longitude
@@ -110,10 +110,10 @@ model <- compile_model(
   competition = 150e3, mating = 120e3, dispersal = 90e3
 )
 
-## ---- demographic_model-------------------------------------------------------
+## ----demographic_model--------------------------------------------------------
 plot_model(model)
 
-## ---- spatial_maps------------------------------------------------------------
+## ----spatial_maps-------------------------------------------------------------
 plot_map(afr, ooa, ehg, eur, ana, yam)
 
 ## -----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ data
 ## -----------------------------------------------------------------------------
 map
 
-## ---- slendr_map_ts-----------------------------------------------------------
+## ----slendr_map_ts------------------------------------------------------------
 sampled_data <- ts_nodes(ts) %>% filter(sampled)
 
 ggplot() +
@@ -167,7 +167,7 @@ epochs <- sampled_data %>%
          epoch = factor(epoch, labels = c("present", "(present, 4 ky]", "(4 ky, 10 ky]",
                                           "(10 ky, 30 y]", "(30 ky, 40 ky]")))
 
-## ---- map_epochs--------------------------------------------------------------
+## ----map_epochs---------------------------------------------------------------
 ggplot() +
   geom_sf(data = map, fill = "lightgray", color = NA) +
   geom_sf(data = epochs, aes(shape = pop, color = pop)) +
@@ -186,7 +186,7 @@ lineages
 ## -----------------------------------------------------------------------------
 filter(lineages, level == 1)
 
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 counts <- filter(lineages, name == ind, level == 1) %>% as.data.frame() %>% count(node_id)
 
 ## ----level1_branches----------------------------------------------------------
@@ -203,7 +203,7 @@ ggplot() +
 ## -----------------------------------------------------------------------------
 as_tibble(level1_branches)[, c("name", "node_id", "child_id", "parent_id", "left_pos", "right_pos")]
 
-## ---- eval = FALSE, echo = FALSE----------------------------------------------
+## ----eval = FALSE, echo = FALSE-----------------------------------------------
 #  # pdf("~/Desktop/x.pdf")
 #  # for (i in ts_samples(ts) %>% filter(pop == "EUR") %>% pull(name)) {
 #  
@@ -237,13 +237,13 @@ ggplot() +
   facet_grid(. ~ node_id) +
   ggtitle("Ancestry encoded by two nodes (chromosomes) of EUR_67")
 
-## ---- include = F-------------------------------------------------------------
+## ----include = F--------------------------------------------------------------
 nodes <- unique(lineages[!is.na(lineages$name), ]$node_id)
 
 ## -----------------------------------------------------------------------------
 ts_samples(ts) %>% filter(pop == "ANA")
 
-## ---- eval = FALSE, echo = FALSE----------------------------------------------
+## ----eval = FALSE, echo = FALSE-----------------------------------------------
 #  # pdf("~/Desktop/z.pdf")
 #  # for (i in ts_samples(ts) %>% filter(pop == "ANA") %>% pull(name)) {
 #  
@@ -264,10 +264,10 @@ ts_samples(ts) %>% filter(pop == "ANA")
 #  # }
 #  # dev.off()
 
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 ana_ind <- ts_samples(ts) %>% filter(name == "ANA_45")
 
-## ---- plot_ancestors_levels_ana-----------------------------------------------
+## ----plot_ancestors_levels_ana------------------------------------------------
 lineages <- ts_ancestors(ts, "ANA_45")
 
 ggplot() +
@@ -310,7 +310,7 @@ distances_long <- distances %>%
     stat == "distance" ~ "absolute distance of a node from parent",
     stat == "speed" ~ "distance traveled by a node per generation"))
 
-## ---- smooth_distance_fits----------------------------------------------------
+## ----smooth_distance_fits-----------------------------------------------------
 distances_long %>%
   ggplot(aes(child_time, value, color = child_pop)) +
   geom_smooth(method = "loess", aes(group = child_pop)) +

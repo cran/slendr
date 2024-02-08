@@ -1,6 +1,6 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
-eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+eval_chunk <- (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -56,7 +56,7 @@ p_code <- ggplot() +
   geom_text(aes(x = 1, y = 1), label = "code will be here") +
   theme_void()
 
-## ---- ex1, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
+## ----ex1, time_it = TRUE, eval = eval_chunk, fig.keep='none'------------------
 o <- population("o", time = 1, N = 100)
 c <- population("c", time = 2500, N = 100, parent = o)
 a <- population("a", time = 2800, N = 100, parent = c)
@@ -87,11 +87,11 @@ f4ratio <- ts_f4ratio(
   A = "a_1", B = "b_1", C = "c_1", O = "o_1"
 )
 
-## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+## ----echo = FALSE, eval = eval_chunk && record_snapshot-----------------------
 #  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex1"))
 #  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex1.trees")
 
-## ---- figure_ex1, fig.height=6, fig.width=9-----------------------------------
+## ----figure_ex1, fig.height=6, fig.width=9------------------------------------
 divergence <- divergence %>% mutate(pair = paste(x, "-", y))
 
 f4ratio <- f4ratio %>% mutate(population = gsub("^(.*)_.*$", "\\1", X), alpha = alpha * 100)
@@ -142,10 +142,10 @@ p_ex1 <- plot_grid(
 
 p_ex1
 
-## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+## ----include = FALSE, eval = eval_chunk && record_snapshot--------------------
 #  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex1.pdf", p_ex1, width = 9, height = 6, units = "in")
 
-## ---- ex2, time_it = TRUE, eval = eval_chunk----------------------------------
+## ----ex2, time_it = TRUE, eval = eval_chunk-----------------------------------
 map <- world(xrange = c(0, 10), yrange = c(0, 10),
              landscape = region(center = c(5, 5), radius = 5))
 
@@ -176,11 +176,11 @@ heterozygosity <- ts_samples(ts) %>%
   sample_n(100) %>%
   mutate(pi = ts_diversity(ts, name)$diversity)
 
-## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+## ----echo = FALSE, eval = eval_chunk && record_snapshot-----------------------
 #  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex2"))
 #  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex2.trees")
 
-## ---- figure_ex2, fig.height=9, fig.width=6-----------------------------------
+## ----figure_ex2, fig.height=9, fig.width=6------------------------------------
 p_ex2_clustering <- ggplot() +
   geom_sf(data = map) +
   geom_sf(data = locations, aes(color = pop), size = 0.05, alpha = 0.25) +
@@ -221,10 +221,10 @@ p_ex2 <- plot_grid(
 
 p_ex2
 
-## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+## ----include = FALSE, eval = eval_chunk && record_snapshot--------------------
 #  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex2.pdf", p_ex2, width = 6, height = 9, units = "in")
 
-## ---- fig.keep='none'---------------------------------------------------------
+## ----fig.keep='none'----------------------------------------------------------
 map <- world(xrange = c(-13, 70), yrange = c(18, 65), crs = 3035)
 
 R1 <- region(
@@ -253,7 +253,7 @@ R5 <- region(
 
 ooa_trajectory <- list(c(40, 30), c(50, 30), c(60, 40), c(45, 55))
 
-## ---- ex3, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
+## ----ex3, time_it = TRUE, eval = eval_chunk, fig.keep='none'------------------
 map <- world(xrange = c(-13, 70), yrange = c(18, 65), crs = 3035)
 
 ooa <- population(
@@ -310,11 +310,11 @@ ts <- slim(
   sequence_length = 200000, recombination_rate = 1e-8
 )
 
-## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+## ----echo = FALSE, eval = eval_chunk && record_snapshot-----------------------
 #  system(sprintf("cp -r %s %s", model$path, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3"))
 #  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3.trees")
 
-## ---- include=FALSE, eval=FALSE-----------------------------------------------
+## ----include=FALSE, eval=FALSE------------------------------------------------
 #  devtools::load_all()
 #  init_env()
 #  model <- read_model("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3")
@@ -341,7 +341,7 @@ ts <- slim(
 #  
 #  e <- "EUR_578"
 
-## ---- figure_ex3, fig.height=5, fig.width=7, eval = eval_chunk----------------
+## ----figure_ex3, fig.height=5, fig.width=7, eval = eval_chunk-----------------
 p_map <- plot_map(model) +
   theme(legend.position = "bottom") +
   guides(alpha = "none")
@@ -358,10 +358,10 @@ p_ex3 <- plot_grid(
 
 p_ex3
 
-## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+## ----include = FALSE, eval = eval_chunk && record_snapshot--------------------
 #  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3.pdf", p_ex3, width = 9, height = 6, units = "in")
 
-## ---- include = FALSE, eval = FALSE-------------------------------------------
+## ----include = FALSE, eval = FALSE--------------------------------------------
 #  # eurs <- ts_samples(ts) %>% filter(pop == "EUR") %>% pull(name)
 #  # # eurs <- c("EUR_542", "EUR_549", "EUR_567", "EUR_581", "EUR_582")
 #  # eurs <- e <- c("EUR_578")
@@ -442,20 +442,20 @@ p_ex3
 #  
 #  # names <- c("EUR_578", ts_yam_anc$name, ts_ana_anc$name, ts_ehg_anc$name)
 
-## ---- ex4, time_it = TRUE, eval = eval_chunk, fig.keep='none'-----------------
+## ----ex4, time_it = TRUE, eval = eval_chunk, fig.keep='none'------------------
 ts_small <- ts_simplify(ts, simplify_to = c("EUR_578", "YAM_75", "ANA_163", "EHG_208"))
 
 # tskit uses zero-based indexing
-tree <- ts_phylo(ts_small, i = (20 - 1) / scaling)
+tree <- ts_phylo(ts_small, i = 15 / scaling)
 nodes <- ts_nodes(tree)
 edges <- ts_edges(tree)
 
 ancestors <- ts_ancestors(ts, "EUR_578")
 
-## ---- echo = FALSE, eval = eval_chunk && record_snapshot----------------------
+## ----echo = FALSE, eval = eval_chunk && record_snapshot-----------------------
 #  ts_save(ts, "/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex3_small.trees")
 
-## ---- figure_ex4, eval = Sys.getenv("R_HAS_GGTREE") == TRUE && eval_chunk, fig.height=9, fig.width=8.5, class.source = "fold-hide"----
+## ----figure_ex4, eval = Sys.getenv("R_HAS_GGTREE") == TRUE && eval_chunk, fig.height=9, fig.width=8.5, class.source = "fold-hide"----
 #  library(ggtree)
 #  
 #  # prepare annotation table for ggtree linking R phylo node ID (not tskit integer
@@ -543,10 +543,10 @@ ancestors <- ts_ancestors(ts, "EUR_578")
 #  
 #  p_ex4
 
-## ---- include = FALSE, eval = eval_chunk && record_snapshot-------------------
+## ----include = FALSE, eval = eval_chunk && record_snapshot--------------------
 #  ggsave("/Users/mp/Documents/postdoc/slendr-paper/preprint_models_v0.5/ex4.pdf", p_ex4, width = 8.5, height = 9, units = "in")
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 data.frame(
   example = as.vector(names(all_times)),
   time = as.numeric(all_times),

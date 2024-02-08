@@ -1,20 +1,30 @@
+# slendr 0.9.0
+
+- A full support for running SLiM and _msprime_ simulations with _slendr_ and for analyzing tree sequences using its [_tskit_](https://tskit.dev) interface has been implemented. Please note that the Windows support is still rather experimental -- the internal _slendr_ test suite currently assumes that SLiM has been installed using the _msys2_ system as described in the section 2.3.1 of the SLiM manual and other means of installing SLiM (such as via conda) might require additional adjustments. A fallback option in the form of the `slim_path=` argument of the `slim()` function can be used in non-standard SLiM installation circumstances. For most convenience, please add the path to the directory containing the `slim.exe` binary to the `PATH` variable by editing the `C:/Users/<username>/Documents/.Renviron` file accordingly. See the relevant section on Windows installation in the [_slendr_ documentation](https://www.slendr.net/articles/vignette-00-installation.html) for additional information. Feedback on the Windows functionality and bug reports are highly appreciated via [GitHub](https://github.com/bodkan/slendr/issues) issues! **Many thanks to @GKresearch and @rdinnager for their huge help in making the Windows port happen!** (PR #149)
+
+- A trivial change has been made to _slendr_'s SLiM back-end script fixing the issue introduced in a SLiM 4.1 upgrade (see changelog for version 0.8.1 below). This is not expected to lead to different simulation outputs between the two versions of slendr (0.8.2 vs 0.8.1) or SLiM (4.1 vs 4.0.1) used. (PR #148)
+
+- The _msprime_ internal dependency of _slendr_ was updated to 1.3.0, and Python to 3.12. As a result, after loading _slendr_, users will be prompted to re-run `setup_env()` to make sure that the dedicated _slendr_ Python environment is fully updated. At the same time, this prevents a failing installation on (at the very least) M1 macOS using `pip`. ([#5ce212](https://github.com/bodkan/slendr/commit/5ce212), [#a210d4](https://github.com/bodkan/slendr/commit/a210d4))
+
 # slendr 0.8.1
 
-- **WARNING**: SLiM 4.1 which has just been released includes [backwards incompatible changes](https://github.com/MesserLab/SLiM/releases/tag/v4.1) which prevent the current version of _slendr_'s `slim()` function from working correctly. If you rely on the functionality provided by the `slim()` function, you will have to use SLiM 4.0. (Note that if you want to have multiple versions of SLiM on your system, you can either use the `slim_path =` argument of `slim()` or specify the `$PATH` to the required version of SLiM in your `~/.Renviron` file). Porting _slendr_ for SLiM 4.1 is being worked on.
-
-- Fixed an [issue](https://github.com/bodkan/slendr/issues/143) of apparent contradiction in time direction in models where range expansion was scheduled within some time interval together with associated "locked-in" changes in population size over that time interval. ([#cbe960](https://github.com/bodkan/slendr/commit/cbe960))
+- Fixed an [issue](https://github.com/bodkan/slendr/issues/143) of apparent contradiction in time direction in models where range expansion was scheduled within some time interval together with associated "locked-in" changes in population size over that time interval. ([#d2a29e](https://github.com/bodkan/slendr/commit/d2a29e))
 
 - The introduction of _tspop_ which is only installable via pip (see changelog for the previous version) caused GLIBCXX-related errors between conda and pip dependencies related to the pandas Python package. To work around this issue, `setup_env()` no longer installs _pandas_ from conda regardless of the setting of the `pip = TRUE|FALSE` parameter. Instead, _pandas_ is installed via pip in a single step when _tspop_ is being installed. ([#cbe960](https://github.com/bodkan/slendr/commit/cbe960))
+
+---
+
+**WARNING**: SLiM 4.1 which has just been released includes a couple of [backwards incompatible changes](https://github.com/MesserLab/SLiM/releases/tag/v4.1) related to the implementation of spatial maps which prevent the current version of _slendr_'s `slim()` function from working correctly. If you rely on the functionality provided by the `slim()` function, you will have to use SLiM 4.0. (Note that if you want to have multiple versions of SLiM on your system, you can either use the `slim_path =` argument of `slim()` or specify the `$PATH` to the required version of SLiM in your `~/.Renviron` file just like you do under normal circumstances). Porting _slendr_ for SLiM 4.1 is being worked on.
 
 # slendr 0.8.0
 
 - In order to support the new `ts_tracts()` function backed by the _tspop_ module (see the item below), a new _slendr_ Python environment is required. As such, users will have to run `setup_env()` to get all the required Python dependencies which will be now installed in the internal virtual environment named `Python-3.11_msprime-1.2.0_tskit-0.5.6_pyslim-1.0.4_tspop-0.0.2`. ([#b5330c](https://github.com/bodkan/slendr/commit/b5330c))
 
-- Experimental support for the [_tspop_](https://tspop.readthedocs.io/en/latest/) `link-ancestors` algorithm for detection of ancestry tracts in the form of a new _slendr_ function `ts_tracts()`. Only works on _slendr_-generated _msprime_ tree sequences and "pure" _msprime_ and SLiM tree sequences (not _slendr_-generated SLiM tree sequences), and has been only tested on a few toy models. **Note:** the _tspop_ Python module is not published on conda. In order to set up a new _slendr_ Python environment, you will have to run `setup_env(pip = TRUE)` to make sure that Python dependencies are installed with pip instead of conda. ([PR #145](https://github.com/bodkan/slendr/pull/145))
+- Experimental support for the [_tspop_](https://tspop.readthedocs.io/en/latest/) `link-ancestors` algorithm for detection of ancestry tracts in the form of a new _slendr_ function `ts_tracts()`. Only works on _slendr_-generated _msprime_ tree sequences and "pure" _msprime_ and SLiM tree sequences (not _slendr_-generated SLiM tree sequences), and has been only tested on a few toy models. **Note:** the _tspop_ Python module is not published on conda. In order to set up a new _slendr_ Python environment, you will have to run `setup_env(pip = TRUE)` to make sure that Python dependencies are installed with pip instead of conda. (PR #145)
 
 - Updated Python dependencies (bugfix pyslim release [v1.0.4](https://github.com/tskit-dev/pyslim/releases/tag/1.0.4) and tskit [v0.5.6](https://github.com/tskit-dev/tskit/releases/tag/0.5.6), the latter due to a broken `jsonschema` dependency of tskit). ([#001ee5](https://github.com/bodkan/slendr/commit/001ee5))
 
-- Experimental support for [manually created](https://github.com/bodkan/slendr/pull/144) spatial tree sequences. ([PR #144](https://github.com/bodkan/slendr/pull/144))
+- Experimental support for [manually created](https://github.com/bodkan/slendr/pull/144) spatial tree sequences. (PR #144)
 
 # slendr 0.7.2
 

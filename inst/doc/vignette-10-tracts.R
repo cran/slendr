@@ -1,6 +1,6 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
-eval_chunk <- Sys.which("slim") != "" && env_present && Sys.getenv("RUNNER_OS") != "macOS"
+eval_chunk <- (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 
 set.seed(42)
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(ggplot2)
 library(dplyr)
 
@@ -68,7 +68,7 @@ summary <- tracts %>%
 
 summary %>% group_by(pop, source_pop) %>% summarise(mean(prop)) %>% arrange(source_pop, pop)
 
-## ---- anc_prop_summary--------------------------------------------------------
+## ----anc_prop_summary---------------------------------------------------------
 summary %>%
 ggplot(aes(source_pop, prop, color = source_pop, fill = source_pop)) +
   geom_jitter() +
@@ -79,7 +79,7 @@ ggplot(aes(source_pop, prop, color = source_pop, fill = source_pop)) +
   ggtitle("Ancestry proportions in each individual",
           "(vertical lines represent 3% and 7% baseline expectations")
 
-## ----chrom_painting, fig.width=12, fig.height=10------------------------------
+## ----chrom_painting, fig.width=8, fig.height=6--------------------------------
 tracts %>%
 mutate(chrom = paste(name, " (node", node_id, ")")) %>%
 ggplot(aes(x = left, xend = right, y = chrom, yend = chrom, color = source_pop)) +
@@ -130,7 +130,7 @@ ggplot(aes(length, color = source_pop)) +
 cowplot::plot_grid(p_densities, p_densities + scale_x_log10(), nrow = 2)
 
 ## -----------------------------------------------------------------------------
-sim_ts <- ts_load("/tmp/sim.trees")
+sim_ts <- ts_load(reticulate::py$path)
 
 squashed_tracts <- ts_tracts(sim_ts, census = 100.01, squashed = TRUE)
 
