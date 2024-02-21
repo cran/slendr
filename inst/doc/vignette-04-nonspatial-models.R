@@ -47,6 +47,16 @@ model <- compile_model(
 ## ----non-spatial_graph, fig.width = 6, fig.height = 6, dpi = 60---------------
 plot_model(model)
 
+## -----------------------------------------------------------------------------
+samples <- schedule_sampling(
+  model,
+  times = c(0, 5000, 12000, 20000, 35000, 39000, 43000),
+  list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
+)
+
+## ----non-spatial-graph_sampling, fig.width=7, fig.height=4--------------------
+plot_model(model, samples = samples, gene_flow = FALSE)
+
 ## ----eval = FALSE-------------------------------------------------------------
 #  ts_slim <- slim(model, sequence_length = 100000, recombination_rate = 0)
 
