@@ -1,9 +1,11 @@
 # Note that this script pre-dates automatic loading of tree-sequence outputs by slim() and msprime()
-# functions. This is why it loads simulated outputs via the original ts_load() method (which is still
+# functions. This is why it loads simulated outputs via the original ts_read() method (which is still
 # valid, so it actually makes sense to test things this way).
 
 skip_if(!is_slendr_env_present())
 init_env(quiet = TRUE)
+
+RERUN <- FALSE
 
 # Let's start by defining a couple of parameters for our simulations
 seed <- 42 # random seed
@@ -37,8 +39,8 @@ samples <- schedule_sampling(model_nogf, times = 2200, list(a, 1), list(b, 1), l
 ts_slim_nogf <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 ts_msprime_nogf <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 
-slim(model_nogf, output = ts_slim_nogf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
-msprime(model_nogf, output = ts_msprime_nogf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
+slim(model_nogf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed) %>% ts_write(ts_slim_nogf)
+msprime(model_nogf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed) %>% ts_write(ts_msprime_nogf)
 
 # model with gene flow
 gf <- gene_flow(from = b, to = x1, start = 2010, end = 2200, rate = 0.1)
@@ -50,16 +52,16 @@ samples <- schedule_sampling(model_gf, times = 2200, list(a, 1), list(b, 1), lis
 ts_slim_gf <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 ts_msprime_gf <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 
-slim(model_gf, output = ts_slim_gf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
-msprime(model_gf, output = ts_msprime_gf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
+slim(model_gf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed) %>% ts_write(ts_slim_gf)
+msprime(model_gf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed) %>% ts_write(ts_msprime_gf)
 
 # Load tree sequence files saved by the SLiM backend script from the two models:
-slim_nogf <- ts_load(model = model_nogf, file = ts_slim_nogf) %>%
+slim_nogf <- ts_read(model = model_nogf, file = ts_slim_nogf) %>%
   ts_recapitate(Ne = 10, recombination_rate = rec_rate, random_seed = seed) %>%
   ts_simplify() %>%
   ts_mutate(mutation_rate = mut_rate, random_seed = seed)
 
-slim_gf <- ts_load(model = model_gf, file = ts_slim_gf) %>%
+slim_gf <- ts_read(model = model_gf, file = ts_slim_gf) %>%
   ts_recapitate(Ne = 10, recombination_rate = rec_rate, random_seed = seed) %>%
   ts_simplify() %>%
   ts_mutate(mutation_rate = mut_rate, random_seed = seed)
@@ -92,10 +94,10 @@ df_slim_f4ratio <- rbind(
 
 
 # Load tree sequence files saved by the SLiM backend script from the two models:
-msprime_nogf <- ts_load(model = model_nogf, file = ts_msprime_nogf) %>%
+msprime_nogf <- ts_read(model = model_nogf, file = ts_msprime_nogf) %>%
   ts_mutate(mutation_rate = mut_rate, random_seed = seed)
 
-msprime_gf <- ts_load(model = model_gf, file = ts_msprime_gf) %>%
+msprime_gf <- ts_read(model = model_gf, file = ts_msprime_gf) %>%
   ts_mutate(mutation_rate = mut_rate, random_seed = seed)
 
 # Extract vector of names of the "test individuals" in populations `x1` and `x2`:
@@ -137,24 +139,30 @@ df_f4 <- rbind(df_slim_f4, df_msprime_f4) %>%
                                     "x2 (no gene flow)")) %>%
   as.data.frame()
 
-# current_f4_tsv <- paste0(tempfile(), ".tsv.gz")
-# readr::write_tsv(df_f4, current_f4_tsv, progress = FALSE)
+if (RERUN) {
+current_f4_tsv <- paste0(tempfile(), ".tsv.gz")
+readr::write_tsv(df_f4, current_f4_tsv, progress = FALSE)
+}
 original_f4_tsv <- sprintf("f4_%s.tsv.gz", Sys.info()["sysname"])
-# readr::write_tsv(df_f4, original_f4_tsv, progress = FALSE)
+if (RERUN) {
+readr::write_tsv(df_f4, original_f4_tsv, progress = FALSE)
+}
 orig_df_f4 <- readr::read_tsv(original_f4_tsv, show_col_types = FALSE, progress = FALSE) %>%
   as.data.frame()
 
-# library(ggplot2)
-# p_f4 <- ggplot(df_f4, aes(f4, fill = population)) +
-#   geom_histogram(bins = 50) +
-#   facet_grid(simulator ~ model) +
-#   geom_vline(xintercept = 0, linetype = 2) +
-#   labs(y = "number of individuals", x = "f4 statistic",
-#        title = "f4 statistics calculated on simulated data",
-#        subtitle = "Note that for f4 values ~0, the hypothesis of no gene flow can't be rejected") +
-#   theme(legend.position = "bottom")
-# png_file <- sprintf("f4_%s.png", Sys.info()["sysname"])
-# ggsave(png_file, p_f4, width = 8, height = 5)
+if (RERUN) {
+library(ggplot2)
+p_f4 <- ggplot(df_f4, aes(f4, fill = population)) +
+  geom_histogram(bins = 50) +
+  facet_grid(simulator ~ model) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  labs(y = "number of individuals", x = "f4 statistic",
+       title = "f4 statistics calculated on simulated data",
+       subtitle = "Note that for f4 values ~0, the hypothesis of no gene flow can't be rejected") +
+  theme(legend.position = "bottom")
+png_file <- sprintf("f4_%s.png", Sys.info()["sysname"])
+ggsave(png_file, p_f4, width = 8, height = 5)
+}
 
 test_that("f4 distributions from SLiM and msprime simulations match", {
   expect_equal(df_f4, orig_df_f4, tolerance = 1e-8)
@@ -166,25 +174,31 @@ df_f4ratio <- rbind(df_slim_f4ratio, df_msprime_f4ratio) %>%
                                     "x2 (no gene flow)")) %>%
   as.data.frame()
 
-# current_f4r_tsv <- paste0(tempfile(), ".tsv.gz")
-# readr::write_tsv(df_f4ratio, current_f4r_tsv, progress = FALSE)
+if (RERUN) {
+current_f4r_tsv <- paste0(tempfile(), ".tsv.gz")
+readr::write_tsv(df_f4ratio, current_f4r_tsv, progress = FALSE)
+}
 original_f4r_tsv <- sprintf("f4ratio_%s.tsv.gz", Sys.info()["sysname"])
-# readr::write_tsv(df_f4ratio, original_f4r_tsv, progress = FALSE)
+if (RERUN) {
+readr::write_tsv(df_f4ratio, original_f4r_tsv, progress = FALSE)
+}
 orig_df_f4ratio <- readr::read_tsv(original_f4r_tsv, show_col_types = FALSE, progress = FALSE) %>%
   as.data.frame()
 
-# library(ggplot2)
-# p_f4ratio <- ggplot(df_f4ratio, aes(alpha, fill = population)) +
-#   geom_histogram(bins = 30) +
-#   facet_grid(simulator ~ model) +
-#   geom_vline(xintercept = 0.1, linetype = 2) +
-#   labs(y = "number of individuals", x = "ancestry proportion (f4-ratio statistic)",
-#        title = "f4-ratio estimate of 'b' ancestry calculated from simulated data",
-#        subtitle = "Population 'x1' receives 10% gene flow (vertical dotted line)
-# from 'b' in gene flow models, 'x2' never does") +
-#   theme(legend.position = "bottom")
-# png_file <- sprintf("f4ratio_%s.png", Sys.info()["sysname"])
-# ggsave(png_file, p_f4ratio, width = 8, height = 5)
+if (RERUN) {
+library(ggplot2)
+p_f4ratio <- ggplot(df_f4ratio, aes(alpha, fill = population)) +
+  geom_histogram(bins = 30) +
+  facet_grid(simulator ~ model) +
+  geom_vline(xintercept = 0.1, linetype = 2) +
+  labs(y = "number of individuals", x = "ancestry proportion (f4-ratio statistic)",
+       title = "f4-ratio estimate of 'b' ancestry calculated from simulated data",
+       subtitle = "Population 'x1' receives 10% gene flow (vertical dotted line)
+from 'b' in gene flow models, 'x2' never does") +
+  theme(legend.position = "bottom")
+png_file <- sprintf("f4ratio_%s.png", Sys.info()["sysname"])
+ggsave(png_file, p_f4ratio, width = 8, height = 5)
+}
 
 test_that("f4-ratio distributions from SLiM and msprime simulations match", {
   expect_equal(df_f4ratio, orig_df_f4ratio, tolerance = 1e-8)

@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
+  eval = slendr:::is_slim_present() && env_present
 )
 
 ## -----------------------------------------------------------------------------
@@ -172,7 +172,7 @@ read.table(file.path(model_dir, "geneflow.tsv"), header = TRUE)
 ## -----------------------------------------------------------------------------
 loaded_model <- read_model(model_dir)
 
-## ----plot_model, fig.width = 8, fig.height = 7--------------------------------
+## ----plot_model---------------------------------------------------------------
 plot_model(model, proportions = TRUE)
 
 ## ----eval = FALSE-------------------------------------------------------------

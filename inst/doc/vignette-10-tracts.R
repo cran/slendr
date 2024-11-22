@@ -1,6 +1,6 @@
 ## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
-eval_chunk <- (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
+eval_chunk <- slendr:::is_slim_present() && env_present
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -130,7 +130,7 @@ ggplot(aes(length, color = source_pop)) +
 cowplot::plot_grid(p_densities, p_densities + scale_x_log10(), nrow = 2)
 
 ## -----------------------------------------------------------------------------
-sim_ts <- ts_load(reticulate::py$path)
+sim_ts <- ts_read(reticulate::py$path)
 
 squashed_tracts <- ts_tracts(sim_ts, census = 100.01, squashed = TRUE)
 

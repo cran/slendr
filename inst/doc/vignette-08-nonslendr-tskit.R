@@ -1,11 +1,11 @@
 ## ----include = FALSE----------------------------------------------------------
 env_present <- slendr:::is_slendr_env_present()
 
-if (Sys.getenv("RUNNER_OS") == "Windows") {
-  bash_path <- "D:/a/_temp/msys64/usr/bin/bash.exe"
-} else {
-  bash_path <- NULL
-}
+#if (Sys.getenv("RUNNER_OS") == "Windows") {
+#  bash_path <- "D:/a/_temp/msys64/usr/bin/bash.exe"
+#} else {
+#  bash_path <- NULL
+#}
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -13,8 +13,8 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 5,
   dpi = 60,
-  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present,
-  engine.path = list(bash = bash_path)
+  eval = slendr:::is_slim_present() && env_present && Sys.getenv("RUNNER_OS") != "Windows"#,
+  #engine.path = list(bash = bash_path)
 )
 
 nonspatial_slim <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
@@ -46,7 +46,7 @@ SEED <- 42
 set.seed(SEED)
 
 ## -----------------------------------------------------------------------------
-ts <- ts_load(nonspatial_trees_file) %>%
+ts <- ts_read(nonspatial_trees_file) %>%
   ts_simplify() %>%
   ts_mutate(mutation_rate = 1e-7, random_seed = SEED)
 
@@ -69,7 +69,7 @@ ts_small <- ts_simplify(ts, simplify_to = samples)
 tree <- ts_phylo(ts_small, 42 - 1)
 tree
 
-## ----nonslendr_tree, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
+## ----nonslendr_tree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.getenv("RUNNER_OS") != "Windows"----
 #  library(ggtree)
 #  
 #  labels <- ts_nodes(tree) %>% select(node = phylo_id, tskit_id = node_id)
@@ -77,7 +77,7 @@ tree
 #  ggtree(tree, branch.length = "none") %<+% labels +
 #    geom_label(aes(label = tskit_id))
 
-## ----eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE----
+## ----eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") != "Windows"----
 library(ape)
 plot(tree, show.tip.label = FALSE)
 nodelabels()
@@ -87,12 +87,12 @@ tiplabels()
 reticulate::py_run_string(sprintf("import msprime; msprime.simulate(100).dump('%s')", msprime_trees_file))
 
 ## -----------------------------------------------------------------------------
-ts <- ts_load(msprime_trees_file)
+ts <- ts_read(msprime_trees_file)
 
 ts_nodes(ts)
 
 ## -----------------------------------------------------------------------------
-ts <- ts_load(spatial_trees_file) %>% ts_simplify()
+ts <- ts_read(spatial_trees_file) %>% ts_simplify()
 
 ## -----------------------------------------------------------------------------
 data <- ts_nodes(ts)

@@ -1,10 +1,10 @@
-skip_if(!is_slendr_env_present())
+skip_if(!is_slendr_env_present() || !is_slim_present())
 
 init_env(quiet = TRUE)
 
 set.seed(42)
 
-script_file <- tempfile()
+script_file <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 ts_file <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 loc_file <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 
@@ -40,10 +40,11 @@ modifyChild() {
 }
 ', ts_file, loc_file), script_file)
 
-system2("slim", script_file, stdout = FALSE)
+binary <- get_binary("batch")
+system2(binary, script_file, stdout = FALSE)
 
 suppressMessages(
-  ts <- ts_load(ts_file) %>%
+  ts <- ts_read(ts_file) %>%
     ts_recapitate(Ne = 100, recombination_rate = 1e-8) %>%
     ts_simplify()
 )

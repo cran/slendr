@@ -75,7 +75,7 @@ in tskit.
 Note that the order of populations f3 statistic implemented in tskit
 (\url{https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.f3}) is
 different from what you might expect from ADMIXTOOLS, as defined in
-Patterson 2012 (see \url{https://academic.oup.com/genetics/article/192/3/1065/5935193}
+Patterson 2012 (see \doi{10.1534/genetics.112.145037}
 under heading "The three-population test and introduction of f-statistics",
 as well as ADMIXTOOLS documentation at
 \url{https://github.com/DReichLab/AdmixTools/blob/master/README.3PopTest#L5}).
@@ -98,7 +98,7 @@ slendr_ts <- system.file("extdata/models/introgression_slim.trees", package = "s
 model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
 
 # load the tree-sequence object from disk and add mutations to it
-ts <- ts_load(slendr_ts, model) \%>\% ts_mutate(mutation_rate = 1e-8, random_seed = 42)
+ts <- ts_read(slendr_ts, model) \%>\% ts_mutate(mutation_rate = 1e-8, random_seed = 42)
 
 # calculate f2 for two individuals in a previously loaded tree sequence
 ts_f2(ts, A = "AFR_1", B = "EUR_1")

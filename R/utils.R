@@ -21,7 +21,7 @@ set_random_seed <- function(seed) {
 #' @export
 check_dependencies <- function(python = FALSE, slim = FALSE, quit = FALSE) {
   # check whether SLiM and Python are present (only if needed!)
-  missing_slim <- if (slim) !all(Sys.which("slim") != "") else FALSE
+  missing_slim <- if (slim) !is_slim_present() else FALSE
   missing_python <- if (python) !is_slendr_env_present() else FALSE
 
   fail <- missing_slim || missing_python
@@ -197,7 +197,7 @@ check_resolution <- function(map, val) {
   yrange <- sf::st_bbox(map)[c("ymin", "ymax")]
   if (diff(xrange) < val | diff(yrange) < val)
     stop(sprintf("Value of %s = %s larger than the overall world size",
-                 deparse(substitute(val)), val),
+                 deparse(base::substitute(val)), val),
          call. = FALSE)
 }
 
@@ -623,7 +623,6 @@ process_sampling <- function(samples, model, verbose = FALSE) {
   } else if (model$direction == "forward" && oldest_time > 1) {
     # same for forward models starting not in generation 1
     time_orig <- df$time
-    df$time <- df$time - oldest_time + model$generation_time
     end_time <- model$orig_length
   } else
     end_time <- model$orig_length
@@ -633,6 +632,7 @@ process_sampling <- function(samples, model, verbose = FALSE) {
       direction = model$direction,
       columns = "time",
       generation_time = model$generation_time,
+      start_time = oldest_time,
       end_time = end_time
     ) %>%
     dplyr::arrange(time_gen) %>%
@@ -673,8 +673,7 @@ convert_slim_time <- function(times, model) {
   if (model$direction == "backward") {
     oldest_time <- max(ancestors[, ]$tsplit_orig)
 
-    result <- times * model$generation_time +
-      (max(ancestors[, ]$tsplit_orig) - model$orig_length)
+    result <- times * model$generation_time + (oldest_time - model$orig_length)
 
     # does the backward simulation model terminate sooner than "present-day"? if
     # so, shift the times to start at the original time specified by user (also
@@ -735,6 +734,14 @@ is_slendr_env_present <- function() {
   )
 }
 
+is_slim_present <- function() {
+  if (Sys.info()["sysname"] == "Windows")
+    binary <- "slim.exe"
+  else
+    binary <- "slim"
+  Sys.which(binary) != ""
+}
+
 order_pops <- function(populations, direction) {
   pop_names <- purrr::map_chr(populations, ~ .x$pop[1])
   split_times <- purrr::map_int(populations, ~ attr(.x, "history")[[1]]$time)
@@ -793,6 +800,7 @@ utils::globalVariables(
     "pop.y", "pop_id.y", "time_tskit", "time_tskit.x", "time_tskit.y",
     "N", "center", "child_node_id", "child_phylo_id", "geometry", "parent_node_id",
     "parent_phylo_id", "set_boundary", "xend", "xmax", "xmin", "yend",
-    "arc_degree", "node1", "node2", "mrca", "node1_time", "node2_time", "tmrca", "count", "total"
+    "arc_degree", "node1", "node2", "mrca", "node1_time", "node2_time", "tmrca",
+    "count", "total", "tsplit_orig", "tremove_orig", "tresize_orig", "how", "end"
   ), package = "slendr"
 )

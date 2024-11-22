@@ -50,7 +50,7 @@ This function implements an R-friendly interface to an algorithm for
 extracting ancestry tracts provided by the Python module tspop
 \url{https://tspop.readthedocs.io/en/latest/} and developed by Georgia Tsambos.
 Please make sure to cite the paper which describes the algorithm in
-detail: \url{https://academic.oup.com/bioinformaticsadvances/article/3/1/vbad163/7429395}.
+detail: \doi{10.1093/bioadv/vbad163}.
 For more technical details, see also the tutorial at:
 \url{https://tspop.readthedocs.io/en/latest/basicusage.html}.
 
@@ -89,7 +89,7 @@ slendr_ts <- system.file("extdata/models/introgression_msprime.trees", package =
 model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
 
 # load the tree-sequence object from disk
-ts <- ts_load(file = slendr_ts, model = model)
+ts <- ts_read(file = slendr_ts, model = model)
 
 # extract Neanderthal ancestry tracts (i.e. those corresponding to the
 # census event at the gene-flow time at 55000 kya as scheduled by

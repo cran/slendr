@@ -1,12 +1,12 @@
 ---
-title: "Simulating data with SLiM and msprime backends"
+title: "Simulations using SLiM and msprime engines"
 output: rmarkdown::html_vignette
 resource_files:
   - images/f4_tree.jpg
   - images/demographic_models.jpg
 vignette: >
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{Simulating data with SLiM and msprime backends}
+  %\VignetteIndexEntry{Simulations using SLiM and msprime engines}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
   fig.width = 8,
   fig.height = 6,
   dpi = 60,
-  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present
+  eval = slendr:::is_slim_present() && env_present
 )
 ```
 
@@ -53,7 +53,7 @@ set.seed(seed)
 
 We now define up a simple *non-spatial* model of gene flow between populations (also known as population admixture or introgression). This will involve essentially the same procedure which we have shown in another vignette introducing [non-spatial *slendr* models](vignette-04-nonspatial-models.html). Note that this is no different from how we would normally specify a spatial model, except that we left out the `map` argument in making the `population()` calls.
 
-To demonstrate additional features of the *slendr* interface to the [*tskit*](https://tskit.dev/tskit/docs/stable/introduction.html) Python library, we will perform gene flow detection test using the so-called $f_4$ and $f_4$-ratio statistics (very briefly introduces in [this vignette](vignette-05-tree-sequences.html)). To make things a little more interesting, we will define two population models: one model without any gene flow, and another which includes gene flow. In defining this model and expressing the $f$-statistics we will use the same nomenclature used in the first study by [Patterson _et al._](https://academic.oup.com/genetics/article/192/3/1065/5935193) that described $f_4-ratio$ statistic in the first place. if you're not familiar with these statistical tests of gene flow, we recommend that you take a look at the relevant sections of the linked paper.
+To demonstrate additional features of the *slendr* interface to the [*tskit*](https://tskit.dev/tskit/docs/stable/introduction.html) Python library, we will perform gene flow detection test using the so-called $f_4$ and $f_4$-ratio statistics (very briefly introduces in [this vignette](vignette-05-tree-sequences.html)). To make things a little more interesting, we will define two population models: one model without any gene flow, and another which includes gene flow. In defining this model and expressing the $f$-statistics we will use the same nomenclature used in the first study by [Patterson _et al._](https://doi.org/10.1534/genetics.112.145037) that described $f_4-ratio$ statistic in the first place. if you're not familiar with these statistical tests of gene flow, we recommend that you take a look at the relevant sections of the linked paper.
 shiny_graph
 ![](images/f4_tree.jpg){width="90%"}
 
@@ -144,7 +144,7 @@ msprime_nogf <- ts_mutate(msprime_nogf, mut_rate, random_seed = seed)
 msprime_gf <- ts_mutate(msprime_gf, mut_rate, random_seed = seed)
 ```
 
-As we can see below, the tree sequence summary of the data loaded and processed by *slendr*'s `ts_load()` function (data produced by the SLiM backend) is very similar to what we got "manually" for the msprime-produced tree sequence using the custom defined functions. This is somehow obvious but it is a nice and cheap sanity check indicating that the tree sequence data structure produced by the two backends from the same demographic model is almost the same.
+As we can see below, the tree sequence summary of the data loaded and processed by *slendr*'s `ts_read()` function (data produced by the SLiM backend) is very similar to what we got "manually" for the msprime-produced tree sequence using the custom defined functions. This is somehow obvious but it is a nice and cheap sanity check indicating that the tree sequence data structure produced by the two backends from the same demographic model is almost the same.
 
 ```{r}
 slim_nogf

@@ -306,7 +306,11 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
   pop_factors <- order_pops(model$populations, model$direction)
 
   # extract times at which each population will be removed from the simulation
-  default_end <- if (model$direction == "backward") log10_ydelta else model$orig_length
+  if (model$direction == "backward")
+    default_end <- log10_ydelta
+  else
+    default_end <- get_oldest_time(model$populations, model$direction) + model$orig_length
+
   end_times <- purrr::map_int(populations, function(pop) {
     remove <- attr(pop, "remove")
     if (remove == -1)
@@ -444,10 +448,8 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
   } else
     gene_flow <- NULL
 
-  if (model$direction == "forward")
-    ylabel <- "time since the start"
-  else
-    ylabel <- "time before present"
+  ylabel <- "time"
+  if (model$time_units != "") ylabel <- sprintf("%s (%s)", ylabel, model$time_units)
 
   if (log) ylabel <- paste(ylabel, "(log scale)")
 
@@ -521,12 +523,29 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
   else
     trans <- scales::identity_trans()
 
-  p <- p + scale_y_continuous(trans = trans)
+  # make sure that the y-axis of a model is truncated exactly at the start and end time
+  # (it seems that the first rectangle that is drawn is plotted even "earlier" than a
+  # model start but this takes care of things for now -- if more plotting issues pop up,
+  # they can be fixed later)
+  oldest_time <- get_oldest_time(model$populations, model$direction)
+  if (model$direction == "forward") {
+    ylim_low <- get_oldest_time(model$populations, model$direction)
+    ylim_high <- oldest_time + model$orig_length
+    ylim <- c(ylim_high, ylim_low)
+  } else {
+    ylim_high <- get_oldest_time(model$populations, model$direction)
+    ylim_low <- oldest_time - model$orig_length
+    ylim <- c(ylim_low, ylim_high)
+  }
+  ylim[ylim == 0] <- log10_ydelta
+
+  p <- p + scale_y_continuous(limits = ylim, trans = trans)
 
   # if specified, overlay sampling points over the model
   if (!is.null(samples)) {
     sampling_points <- dplyr::select(centers, pop, center) %>%
-      dplyr::inner_join(samples, by = "pop")
+      dplyr::inner_join(samples, by = "pop") %>%
+      dplyr::mutate(time = ifelse(time == 0, log10_ydelta, time))
     p <- p + geom_label(data = sampling_points, aes(label = n, x = center, y = time),
                    fontface = "bold", alpha = 0.5)
   }

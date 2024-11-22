@@ -10,11 +10,11 @@ vignette: >
 ```{r, include = FALSE}
 env_present <- slendr:::is_slendr_env_present()
 
-if (Sys.getenv("RUNNER_OS") == "Windows") {
-  bash_path <- "D:/a/_temp/msys64/usr/bin/bash.exe"
-} else {
-  bash_path <- NULL
-}
+#if (Sys.getenv("RUNNER_OS") == "Windows") {
+#  bash_path <- "D:/a/_temp/msys64/usr/bin/bash.exe"
+#} else {
+#  bash_path <- NULL
+#}
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -22,8 +22,8 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 5,
   dpi = 60,
-  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present,
-  engine.path = list(bash = bash_path)
+  eval = slendr:::is_slim_present() && env_present && Sys.getenv("RUNNER_OS") != "Windows"#,
+  #engine.path = list(bash = bash_path)
 )
 
 nonspatial_slim <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
@@ -110,10 +110,10 @@ less ${NONSPATIAL_SLIM}
 slim ${NONSPATIAL_SLIM}
 ```
 
-After we run this script in SLiM, we can use *slendr* to load the output tree sequence (saved to `/tmp/nonspatial-slim.trees`), simplify it, and overlay mutations on it using the [standard functionality](vignette-05-tree-sequences.html#loading-and-processing-tree-sequence-output-files) originally developed for *slendr* tree sequences. Note that this is the same command we would use for loading *slendr* tree sequences, except we direct the `ts_load()` function straight to the tree-sequence output file rather than using the `ts_load(<model-object>)` format used when working with standard *slendr* simulations. This way, *slendr*
+After we run this script in SLiM, we can use *slendr* to load the output tree sequence (saved to `/tmp/nonspatial-slim.trees`), simplify it, and overlay mutations on it using the [standard functionality](vignette-05-tree-sequences.html#loading-and-processing-tree-sequence-output-files) originally developed for *slendr* tree sequences. Note that this is the same command we would use for loading *slendr* tree sequences, except we direct the `ts_read()` function straight to the tree-sequence output file rather than using the `ts_read(<model-object>)` format used when working with standard *slendr* simulations. This way, *slendr*
 
 ```{r}
-ts <- ts_load(nonspatial_trees_file) %>%
+ts <- ts_read(nonspatial_trees_file) %>%
   ts_simplify() %>%
   ts_mutate(mutation_rate = 1e-7, random_seed = SEED)
 ```
@@ -135,7 +135,7 @@ sample_sets <- split(data$node_id, data$pop)
 ts_diversity(ts, sample_sets)
 ```
 
-Just as with *slendr* tree sequences (as demonstrated in our [paper](vignette-09-paper.html#example-4-figure-5)) we can get a individual trees too, extracted in the in the phylogenetic format provided by the [ape](https://CRAN.R-project.org/package=ape) R package. Here we first simplify the tree sequence even further to just 10 nodes to make things manageable:
+Just as with *slendr* tree sequences (as demonstrated in our [paper](https://www.slendr.net/articles/vignette-09-paper.html#example-4-figure-5)) we can get a individual trees too, extracted in the in the phylogenetic format provided by the [ape](https://CRAN.R-project.org/package=ape) R package. Here we first simplify the tree sequence even further to just 10 nodes to make things manageable:
 
 ```{r}
 samples <- sample(data$node_id, 10)
@@ -148,7 +148,7 @@ tree
 
 Once we have that R tree object, we can use packages like [ggtree](https://yulab-smu.top/treedata-book/) to visualize the tree (any other phylogenetic package would work too). Note that because nodes of 'ape phylo' trees must conform to a strict format (they must be labelled `1...N`), we will extract the information about the node IDs in the tskit tree-sequence data to be able to plot them in the tree.
 
-```{r, nonslendr_tree, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE }
+```{r, nonslendr_tree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.getenv("RUNNER_OS") != "Windows"}
 library(ggtree)
 
 labels <- ts_nodes(tree) %>% select(node = phylo_id, tskit_id = node_id)
@@ -157,7 +157,7 @@ ggtree(tree, branch.length = "none") %<+% labels +
   geom_label(aes(label = tskit_id))
 ```
 
-```{r, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE}
+```{r, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") != "Windows"}
 library(ape)
 plot(tree, show.tip.label = FALSE)
 nodelabels()
@@ -183,14 +183,14 @@ reticulate::py_run_string(sprintf("import msprime; msprime.simulate(100).dump('%
 And then we can proceed with loading the msprime tree sequence into R and analyze it with the slendr functionality:
 
 ```{r}
-ts <- ts_load(msprime_trees_file)
+ts <- ts_read(msprime_trees_file)
 
 ts_nodes(ts)
 ```
 
 #### Spatial SLiM (non-slendr) tree sequences
 
-Furthermore, the generalized interface also supports *slendr*'s [spatial tree-sequence features](vignette-06-locations.html), with all the [bells and whistles](vignette-09-paper.html#example-4-figure-5).
+Furthermore, the generalized interface also supports *slendr*'s [spatial tree-sequence features](https://www.slendr.net/articles/vignette-06-locations.html), with all the [bells and whistles](https://www.slendr.net/articles/vignette-09-paper.html#example-4-figure-5).
 
 For instance, lets take the following spatial SLiM script (modified from the SLiM manual) and execute it with SLiM the usual way:
 
@@ -244,7 +244,7 @@ slim ${SPATIAL_SLIM}
 We can then load and simplify the output tree sequence in just as we did above in this vignette (or anywhere in the *slendr* documentation):
 
 ```{r}
-ts <- ts_load(spatial_trees_file) %>% ts_simplify()
+ts <- ts_read(spatial_trees_file) %>% ts_simplify()
 ```
 
 Finally, we can access the spatio-temporal data embedded in the output tree sequence in the standard *slendr* way (note the spatial [*sf*](https://r-spatial.github.io/sf/) column `location` with the `POINT` data type):
@@ -262,7 +262,7 @@ To briefly demonstrate what this means, we can trivially plot the location of ea
 ggplot() + geom_sf(data = data, aes(color = time), alpha = 0.5)
 ```
 
-We can also collect spatio-temporal ancestry information of a particular node (i.e. the times and locations of all of its ancestors all the way to the root, with each "link" in the plot signifying parent-child edge somewhere along the tree sequence) and plot it on a 2D surface (x and y dimensions [0, 1]). The plot is a little chaotic, but hopefully conveys the idea (the "focal node" 0 is highlighted in red). This is essentially the same plot we have in [the last figure of our paper](vignette-09-paper.html#example-4-figure-5).
+We can also collect spatio-temporal ancestry information of a particular node (i.e. the times and locations of all of its ancestors all the way to the root, with each "link" in the plot signifying parent-child edge somewhere along the tree sequence) and plot it on a 2D surface (x and y dimensions [0, 1]). The plot is a little chaotic, but hopefully conveys the idea (the "focal node" 0 is highlighted in red). This is essentially the same plot we have in [the last figure of our paper](https://www.slendr.net/articles/vignette-09-paper.html#example-4-figure-5).
 
 ```{r, nonslendr_ancestries}
 ancestral_links <- ts_ancestors(ts, 0)

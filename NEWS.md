@@ -1,3 +1,33 @@
+# slendr 1.0.0
+
+- **A massive update introducing the possibility of simulating non-neutral models with `slim()` has been introduced. This update is too big to describe in the changelog -- for more information and motivation, see the [description in the associated PR](https://github.com/bodkan/slendr/pull/155), or [the new extensive vignette](https://www.slendr.net/articles/vignette-11-extensions.html) on the topic. Feedback on this functionality, missing features, and bug reports are highly appreciated!** ([PR #155](https://github.com/bodkan/slendr/pull/155))
+
+- The behavior previously implemented via the `output =` and `ts =` arguments of `slim()` (and `msprime()`) has been changed to facilitate more straightforward handling of output paths in user-defined SLiM extensions and other packages leveraging _slendr_ for inference. The `slim()` and `msprime()` function interfaces are now simplified in the following way:
+
+  - `slim()`: the `ts` argument is now logical. `TRUE` switches on tree-sequence recording, `FALSE` switches it off. If tree-sequence recording is on (the default setting), the function automatically returns a tree-sequence R object. If users want to save it to a custom location, they should use the function `ts_write()` on the returned tree-sequence object. If customized output files are to be produced via user-defined extension scripts, those scripts can use a _slendr_/SLiM constant `PATH`, which is always available in the built-in SLiM script and which can be set from R via `slim(..., path = <path to a directory>)`. In that case, the `slim()` function always returns that path back. Crucially, in this case `slim()` will not return a tree sequence object, but that object can be loaded by `ts_read("<path to a directory>/slim.trees")`. In other words, nothing changes for the usual SLiM-based _slendr_ workflow, but for models generating custom output files, a small amount of work is needed to load the tree sequence -- the tree-sequence file outputs are therefore treated exactly the same way as non-tree-sequence user-defined output files. As a result of these changes, `slim()` no longer accepts a `load = TRUE|FALSE` argument.
+
+The above is implemented in PR [#157](https://github.com/bodkan/slendr/pull/157).
+
+- `ts_genotypes()` now works even for non-_slendr_ tree sequences, which do not have _slendr_ individual names of samples in the `ts_nodes()` output. ([#d348ec](https://github.com/bodkan/slendr/commit/d348ec))
+
+- Due to frequent issues with installation of Python dependencies of _slendr_ in a completely platform independent way (in the latest instance this being conda installation of pyslim crashing on M-architecture Macs), `setup_env()` now only uses conda to install _msprime_ and _tskit_ -- _pyslim_ and _tspop_ are always installed via pip regardless of whether `setup_env(pip = FALSE)` (the default) or `setup_env(pip = TRUE)` is used. ([#408948](https://github.com/bodkan/slendr/commit/408948))
+
+- A new function `extract_parameters()` can extract parameters of either a compiled _slendr_ model object or a tree sequence simulated from a _slendr_ model. This can be useful particularly for simulation-based inferences where model parameters are often drawn from random distributions and there's a need to know which parameters of a model (split times, gene-flow rates, etc.) have been drawn. ([#3632bd0](https://github.com/bodkan/slendr/commit/3632bd0))
+
+- `compile_model()` now allows to specify a description of time units used while scheduling _slendr_ model events. This has purely descriptive purpose -- in particular, these units are used in model plotting functions, etc. ([#9b5b7ea0](https://github.com/bodkan/slendr/commit/9b5b7ea0))
+
+- The `slim_script` argument of `compile_model()` has been replaced by `extension` argument, which allows users to provide their custom-designed SLiM snippets for extending the behavior of _slendr_'s SLiM simulation engine. ([#d11ac7](https://github.com/bodkan/slendr/commit/d11ac7))
+
+- The `sim_length` argument of `compile_model()` has been removed following a long period of deprecatiaon. ([#12da50](https://github.com/bodkan/slendr/commit/12da50))
+
+- When a named list of samples is used as `X` input to `ts_f4ratio()`, the name of the element is used in the `X` column of the resulting data frame. ([#0571a6](https://github.com/bodkan/slendr/commit/0571a6))
+
+- `ts_table()` can now extract the "sites" _tskit_ table as `ts_table(ts, "sites")`. ([#e708f2](https://github.com/bodkan/slendr/commit/e708f2))
+
+- When applied to _slendr_ tree sequences, `ts_recapitate()` no longer issues the warning: `TimeUnitsMismatchWarning: The initial_state has time_units=ticks but time is measured in generations in msprime. This may lead to significant discrepancies between the timescales. If you wish to suppress this warning, you can use, e.g., warnings.simplefilter('ignore', msprime.TimeUnitsMismatchWarning)`. For _slendr_ tree sequences, ticks are the same thing as generations anyway. ([#43c45083](https://github.com/bodkan/slendr/commit/43c45083))
+
+- Running `slim(..., method = "gui")` was broken due to recent changes to make _slendr_ work on Windows. A path to a generated SLiM script executed in SLiMgui was incorrectly normalized. Non-SLiMgui runs were not affected. ([#ccae1df](https://github.com/bodkan/slendr/commit/ccae1df))
+
 # slendr 0.9.1
 
 - A new helper function `get_env()` now returns the name of the built-in _slendr_ Python environment (without activating it). ([#162ccc](https://github.com/bodkan/slendr/commit/162ccc))
@@ -74,7 +104,7 @@ If spatial dependencies are not present but a spatial _slendr_ function is calle
 
 - The function `plot_model()` has a new argument `gene_flow=<TRUE|FALSE>` which determines whether gene-flow arrows will be visualized or not. ([#104aa6](https://github.com/bodkan/slendr/commit/104aa6))
 
-- The possibility to perform recapitation, simplification, or mutation of a tree sequence right inside a call to `ts_load()` (by providing `recapitate = TRUE`, `simplify = TRUE`, and `mutate = TRUE`, together with their own arguments) has now been removed. The motivation for this change is the realization that there is no benefit of  doing things like `ts_load("<path>", recapitate = TRUE, Ne = ..., recombination_rate = ...)` over `ts_load("<path>") %>% ts_recapitate(Ne = ..., recombination_rate = ...)`, and the frequent confusion when `recapitate = TRUE` or other switches are forgotten by the user. All _slendr_ teaching material and most actively used research codebases I know of use the latter, more explicit, pipeline approach anyway, and this has been the one example where reduncancy does more harm than good. ([#ad82ee](https://github.com/bodkan/slendr/commit/ad82ee))
+- The possibility to perform recapitation, simplification, or mutation of a tree sequence right inside a call to `ts_read()` (by providing `recapitate = TRUE`, `simplify = TRUE`, and `mutate = TRUE`, together with their own arguments) has now been removed. The motivation for this change is the realization that there is no benefit of  doing things like `ts_read("<path>", recapitate = TRUE, Ne = ..., recombination_rate = ...)` over `ts_read("<path>") %>% ts_recapitate(Ne = ..., recombination_rate = ...)`, and the frequent confusion when `recapitate = TRUE` or other switches are forgotten by the user. All _slendr_ teaching material and most actively used research codebases I know of use the latter, more explicit, pipeline approach anyway, and this has been the one example where reduncancy does more harm than good. ([#ad82ee](https://github.com/bodkan/slendr/commit/ad82ee))
 
 **Note:** Loading `library(slendr)` will prompt a message _"The legacy packages maptools, rgdal, and rgeos, underpinning the sp package, which was just loaded, will retire in October 2023. [...]."_ This is an internal business of packages used by _slendr_ which unfortunately cannot be silenced from _slendr_'s side. There's no reason to panic, you can safely ignore them. Apologies for the unnecessary noise.
 
@@ -114,7 +144,7 @@ Users have to call `init_env()` to manually activate the Python environment of s
 
 - `ts_simplify()` now accepts optional arguments `keep_unary` and `keep_unary_in_individuals` (see the official [tskit docs](https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.simplify) for more detail) ([#1b2112](https://github.com/bodkan/slendr/commit/1b2112))
 
-- Fix for `ts_load()` failing to load _slendr_-produced tree sequences after they were simplified down to a smaller set of sampled individuals (reported [here](https://github.com/bodkan/slendr/issues/136)). The issue was caused by incompatible sizes of the sampling table (always in the same form as used during simulation) and the table of individuals stored in the tree sequence after simplification (potentially containing a smaller set of individuals than in the original sampling table). To fix this, _slendr_ tree sequence objects now track information about which individuals are regarded as "samples" (i.e. those with symbolic names) which is maintained through simplification, serialization and loading, and used by _slendr_'s internal machinery during join operations. (PR [#137](https://github.com/bodkan/slendr/pull/137))
+- Fix for `ts_read()` failing to load _slendr_-produced tree sequences after they were simplified down to a smaller set of sampled individuals (reported [here](https://github.com/bodkan/slendr/issues/136)). The issue was caused by incompatible sizes of the sampling table (always in the same form as used during simulation) and the table of individuals stored in the tree sequence after simplification (potentially containing a smaller set of individuals than in the original sampling table). To fix this, _slendr_ tree sequence objects now track information about which individuals are regarded as "samples" (i.e. those with symbolic names) which is maintained through simplification, serialization and loading, and used by _slendr_'s internal machinery during join operations. (PR [#137](https://github.com/bodkan/slendr/pull/137))
 
 - Metadata summary of `ts_nodes()` results is no longer printed whenever typed into the R console. Instead, summary can be obtained by explicit call to `summary()` on the `ts_nodes()` tables.  ([#01af51](https://github.com/bodkan/slendr/commit/01af51)
 
@@ -188,7 +218,7 @@ This is more readable and in line with some other _tskit_-interface functions of
 
 - The `-1` value as a missing value indicator used in tskit is now replaced with the more R-like `NA` in various tree-sequence tables (annotated by _slendr_ or original through tskit itself) ([#79adf14](https://github.com/bodkan/slendr/commit/79adf14)).
 
-- Relative paths are now expanded in `ts_save()` ([#382e0b7](https://github.com/bodkan/slendr/commit/382e0b7)).
+- Relative paths are now expanded in `ts_write()` ([#382e0b7](https://github.com/bodkan/slendr/commit/382e0b7)).
 
 - _slendr_ models can now be optionally compiled without serialization to disk. This only works with the `msprime()` coalescent back end but will be much faster in cases where a huge number of simulations needs to be run because for non-serialized models, `msprime()` now calls the back end engine directly through the R-Python interface (rather than on the command line) and output tree sequences are not saved to disk, rather than passed through the Python-R interface directly in memory  (PR [#112](https://github.com/bodkan/slendr/pull/112)).
 
@@ -212,7 +242,7 @@ This is more readable and in line with some other _tskit_-interface functions of
 
 -   _slendr_ is now [on CRAN](https://CRAN.R-project.org/package=slendr)!
 
--   Big changes to the way tree-sequence outputs are handled by *slendr* by default. See [this comment](https://github.com/bodkan/slendr/pull/100#issue-1310869866) for an extended description and examples of the change. (PR [#100](https://github.com/bodkan/slendr/pull/100)). Briefly, simulation functions `slim()` and `msprime()` now return a tree-sequence object by default (can be switched off by setting `load = FALSE`), avoiding the need to always run `ts <- ts_load(model)` as previously. At the same time, a parameter `output = ` can be now used in `slim()` and `msprime()` to specify the location where a tree-sequence file should be saved (temporary file by default).
+-   Big changes to the way tree-sequence outputs are handled by *slendr* by default. See [this comment](https://github.com/bodkan/slendr/pull/100#issue-1310869866) for an extended description and examples of the change. (PR [#100](https://github.com/bodkan/slendr/pull/100)). Briefly, simulation functions `slim()` and `msprime()` now return a tree-sequence object by default (can be switched off by setting `load = FALSE`), avoiding the need to always run `ts <- ts_read(model)` as previously. At the same time, a parameter `output = ` can be now used in `slim()` and `msprime()` to specify the location where a tree-sequence file should be saved (temporary file by default).
 
 -   ***slendr*****'s tree-sequence R interface to the [tskit](https://tskit.dev/tskit/docs/stable/introduction.html) Python module has been generalized to load, process, and analyze tree sequences from non-*slendr* models!** This means that users can use the *slendr* R package even for analyzing tree sequences coming from standard msprime and SLiM scripts, including all spatial capabilities that have been only available for *slendr* tree sequences so far. Please note that this generalization is still rather experimental and there might be corner cases where a tree sequence from your msprime or SLiM script does not load properly or leads to other errors. If this happens, please open a GitHub issue with the script in question attached. (PR [#91](https://github.com/bodkan/slendr/pull/91))
 

@@ -7,13 +7,13 @@ import numpy as np
 import pandas as pd
 import tskit
 
-def mult_roots(ts):
+def __slendr_mult_roots(ts):
   """Check how many trees in the tree sequence have multiple roots (i.e. how
   many are not fully coalesced.
   """
   return [not tree.has_multiple_roots for tree in ts.trees()]
 
-def get_pedigree_ids(ts):
+def __slendr_get_pedigree_ids(ts):
   """Extract pedigree IDs of all individuals in a SLiM tree sequence.
   """
   # float conversion is an unfortunate hack around Python long int -> R int
@@ -21,7 +21,15 @@ def get_pedigree_ids(ts):
   # https://github.com/rstudio/reticulate/issues/323)
   return [float(ind.metadata["pedigree_id"]) for ind in ts.individuals()]
 
-def collect_ibd(ts, coordinates = False, within=None, between=None,
+def __slendr_get_ancestral_states(ts):
+  """Extract ancestral states of all mutations in a tree sequence.
+  """
+  # float conversion is an unfortunate hack around Python long int -> R int
+  # overflow (fix appears to be a work in progress in reticulate, see here:
+  # https://github.com/rstudio/reticulate/issues/323)
+  return [site.ancestral_state for site in ts.sites()]
+
+def __slendr_collect_ibd(ts, coordinates = False, within=None, between=None,
                min_span=None, max_time=None, squash=False):
     """Extract IBD fragments (or the summary of pairwise IBD sharing) from
     a tree sequence.

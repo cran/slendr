@@ -10,7 +10,7 @@ tspop <- NULL
 # define slendr's required Python dependencies and compose an environment name
 # that will be used specifically for them
 PYTHON_ENV <-
-  c("msprime==1.3.1", "tskit==0.5.6", "pyslim==1.0.4", "tspop==0.0.2") %>%
+  c("msprime==1.3.3", "tskit==0.5.8", "pyslim==1.0.4", "tspop==0.0.2") %>%
   gsub("==", "-", .) %>%
   paste(collapse = "_") %>%
   paste0("Python-3.12_", .)
@@ -19,7 +19,7 @@ PYTHON_ENV <-
   if (Sys.info()[["sysname"]] == "Windows") {
     slim_binary <- "slim.exe"
     renviron_dir <- "C:\\Users\\<your username>\\Documents\\"
-    path_dir <- "C:\\path\\to\\directory\\with\\slim.exe\\"
+    path_dir <- "C:\\path\\to\\directory\\with\\slim.exe"
   } else {
     slim_binary <- "slim"
     renviron_dir <- "~/"
@@ -28,7 +28,7 @@ PYTHON_ENV <-
 
   # check for presence of the slim binary in user's PATH and display
   # a warning if it's not present
-  path_check <- all(Sys.which(slim_binary) != "")
+  path_check <- is_slim_present()
   if (!path_check) {
     packageStartupMessage(
       "The '", slim_binary, "' binary could not be found in your $PATH. Most of\n",
@@ -42,7 +42,7 @@ PYTHON_ENV <-
       "Alternatively, use the `slim_path` argument",
       " of the `slim()` function.\n--------------------")
   } else {
-    required_version <- "4.0"
+    required_version <- "4.2"
     slim_version <- system(paste(slim_binary, "-v"), intern = TRUE) %>%
       gsub("SLiM version (.*),.*$", "\\1", .) %>% .[1]
     if (utils::compareVersion(slim_version, required_version) < 0)

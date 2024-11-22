@@ -41,7 +41,7 @@ edges <- io$StringIO("left right parent child
 0 2 5 0
 0 2 5 4"
 )
-tmp <- tempfile()
+tmp <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 tskit$load_text(nodes = nodes, edges = edges, strict = FALSE)$dump(tmp)
 
 manual_squash <- function(df) {
@@ -63,7 +63,7 @@ manual_squash <- function(df) {
   dplyr::distinct()
 }
 
-ts_full <- ts_load(tmp)
+ts_full <- ts_read(tmp)
 
 # ts_draw(ts_full)
 

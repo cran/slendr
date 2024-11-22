@@ -9,7 +9,7 @@ run_sim <- function(pop, direction, simulation_length = NULL, method = "batch", 
     path = model_dir, direction = direction, simulation_length = simulation_length, overwrite = TRUE, force = TRUE
   )
 
-  locations_file <- tempfile(fileext = ".gz")
+  locations_file <- normalizePath(tempfile(fileext = ".gz"), winslash = "/", mustWork = FALSE)
   slim(model, sequence_length = 1, recombination_rate = 0,,
        method = method, verbose = verbose, locations = locations_file)
 
@@ -31,24 +31,24 @@ run_sim <- function(pop, direction, simulation_length = NULL, method = "batch", 
 run_slim_msprime <- function(forward_model, backward_model,
                              forward_samples, backward_samples,
                              seq_len, rec_rate, seed, verbose) {
-  ts_slim_forward <- tempfile()
-  ts_msprime_forward <- tempfile()
+  ts_slim_forward <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
+  ts_msprime_forward <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 
-  slim(forward_model, output = ts_slim_forward, sequence_length = seq_len, recombination_rate = rec_rate,
-       samples = forward_samples, random_seed = seed, verbose = verbose)
+  slim(forward_model, sequence_length = seq_len, recombination_rate = rec_rate,
+       samples = forward_samples, random_seed = seed, verbose = verbose) %>% ts_write(ts_slim_forward)
   suppressWarnings({
-    msprime(forward_model, output = ts_msprime_forward, sequence_length = seq_len, recombination_rate = rec_rate,
-          samples = forward_samples, random_seed = seed, verbose = verbose)
+    msprime(forward_model, sequence_length = seq_len, recombination_rate = rec_rate,
+          samples = forward_samples, random_seed = seed, verbose = verbose) %>% ts_write(ts_msprime_forward)
   })
 
-  ts_slim_backward <- tempfile()
-  ts_msprime_backward <- tempfile()
+  ts_slim_backward <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
+  ts_msprime_backward <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 
-  slim(backward_model, output = ts_slim_backward, sequence_length = seq_len, recombination_rate = rec_rate,
-       samples = backward_samples, random_seed = seed, verbose = verbose)
+  slim(backward_model, sequence_length = seq_len, recombination_rate = rec_rate,
+       samples = backward_samples, random_seed = seed, verbose = verbose) %>% ts_write(ts_slim_backward)
   suppressWarnings({
-  msprime(backward_model, output = ts_msprime_backward, sequence_length = seq_len, recombination_rate = rec_rate,
-          samples = backward_samples, random_seed = seed, verbose = verbose)
+  msprime(backward_model, sequence_length = seq_len, recombination_rate = rec_rate,
+          samples = backward_samples, random_seed = seed, verbose = verbose) %>% ts_write(ts_msprime_backward)
   })
 
   list(
@@ -62,11 +62,11 @@ run_slim_msprime <- function(forward_model, backward_model,
 load_tree_sequence <- function(backend, direction, ts_list, model, N, rec_rate, mut_rate, seed) {
   ts_file <- ts_list[[paste(tolower(backend), direction, sep = "_")]]
   if (backend == tolower("SLiM"))
-    ts_load(model = model, file = ts_file) %>%
+    ts_read(model = model, file = ts_file) %>%
       ts_recapitate(Ne = N, recombination_rate = rec_rate, random_seed = seed) %>%
       ts_simplify() %>%
       ts_mutate(mutation_rate = mut_rate, random_seed = seed)
   else
-    ts_load(model = model, file = ts_file) %>%
+    ts_read(model = model, file = ts_file) %>%
       ts_mutate(mutation_rate = mut_rate, random_seed = seed)
 }

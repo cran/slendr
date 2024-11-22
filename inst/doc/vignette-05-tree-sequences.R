@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "" ) && env_present && Sys.which("qpDstat") != ""
+  eval = slendr:::is_slim_present() && env_present && Sys.which("qpDstat") != ""
 )
 
 ## -----------------------------------------------------------------------------
@@ -88,13 +88,15 @@ output_file <- tempfile()
 ts <- msprime(
   model, sequence_length = 100e6, recombination_rate = 1e-8,
   samples = rbind(nea_samples, present_samples, emh_samples),
-  output = output_file, random_seed = 314159
+  random_seed = 314159
 )
+
+ts_write(ts, output_file)
 
 output_file
 
 ## -----------------------------------------------------------------------------
-ts <- ts_load(output_file, model)
+ts <- ts_read(output_file, model)
 ts
 
 ## -----------------------------------------------------------------------------
@@ -121,7 +123,7 @@ tree <- ts_phylo(ts_small, 42 - 1)
 ## -----------------------------------------------------------------------------
 tree
 
-## ----plot_ggtree, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.which("qpDstat") != ""----
+## ----plot_ggtree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.which("qpDstat") != ""----
 #  library(ggtree)
 #  
 #  ggtree(tree) +
@@ -129,7 +131,7 @@ tree
 #    geom_tiplab() + # sample labels for tips
 #    hexpand(0.1)    # make more space for the tip labels
 
-## ----plot_apetree, eval = (Sys.which("slim") != "" || Sys.which("slim.exe") != "") && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.which("qpDstat") != ""----
+## ----plot_apetree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.which("qpDstat") != ""----
 library(ape)
 plot(tree)
 nodelabels()

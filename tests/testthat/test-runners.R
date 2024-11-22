@@ -11,27 +11,39 @@ test_that("slim() returns a tree-sequence object by default", {
 })
 
 test_that("msprime() returns a tree-sequence object by default", {
-  result <- msprime(model, sequence_length = 1, recombination_rate = 0)
+  result <- msprime(model, sequence_length = 1, recombination_rate = 0, random_seed = 123)
   expect_s3_class(result, "slendr_ts")
   expect_s3_class(result, "tskit.trees.TreeSequence")
 })
 
-test_that("slim() does not return a tree sequence when this is not requested", {
-  ts_file <- tempfile()
-  expect_silent(slim(model, output = ts_file, sequence_length = 1, recombination_rate = 0, load = FALSE))
+test_that("if `path =` is given, msprime returns it back and saves a tree-sequence file", {
+  path <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
+  result1 <- msprime(model, sequence_length = 1, recombination_rate = 0, path = path, random_seed = 123)
+  ts_path <- file.path(path, "msprime.trees")
+  expect_true(file.exists(ts_path))
+
+  result2 <- msprime(model, sequence_length = 1, recombination_rate = 0, random_seed = 123)
+  ts <- ts_read(file = ts_path, model)
+  expect_equal(ts_nodes(ts), ts_nodes(result2))
 })
 
-test_that("msprime() does not return a tree sequence when this is not requested", {
-  ts_file <- tempfile()
-  expect_silent(msprime(model, output = ts_file, sequence_length = 1, recombination_rate = 0, load = FALSE))
+test_that("SLiMgui does not start in an interactive session", {
+  skip_if(!interactive())
+  expect_error(slim(model, sequence_length = 1, recombination_rate = 0),
+               "SLiMgui can only be run from an interactive R session")
 })
 
-test_that("slim() gives a warning when no output path is given and no tree sequence is to be loaded", {
-  expect_warning(slim(model, sequence_length = 1, recombination_rate = 0, load = FALSE),
-                 "No custom tree-sequence output path is given")
+test_that("slendr model directory must be present", {
+  broken_model <- model
+  broken_model$path <- "nope"
+  expect_error(slim(broken_model, sequence_length = 1, recombination_rate = 0),
+               "Model directory 'nope' does not exist")
 })
 
-test_that("msprime() gives a warning when no output path is given and no tree sequence is to be loaded", {
-  expect_warning(msprime(model, sequence_length = 1, recombination_rate = 0, load = FALSE),
-                 "No custom tree-sequence output path is given")
+test_that("slendr model directory must be present", {
+  broken_path <- "nope"
+  expect_error(
+    slim(model, sequence_length = 1, recombination_rate = 0, slim_path = broken_path),
+    paste0("SLiM binary not found at ", broken_path)
+  )
 })

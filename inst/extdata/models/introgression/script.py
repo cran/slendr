@@ -20,28 +20,39 @@ import pandas
 import numpy
 import math
 
-VERSION = "slendr_0.8.1.9000"
+VERSION = "slendr_0.9.1.9000"
 
 
 def simulate(
   sequence_length, recombination_rate, seed,
-  populations, resizes, geneflows, length, direction, description,
-  samples, debug
+  populations, resizes, geneflows, length, orig_length,
+  direction, description, samples, debug
 ):
   """Run a slendr simulation and return a tree sequence."""
 
   logging.info("Setting up populations")
 
+  if direction == "backward":
+      oldest_time = max(populations.tsplit_orig)
+  else:
+      oldest_time = min(populations.tsplit_orig)
+
   # set up demographic history
   demography = msprime.Demography()
   for pop in populations.itertuples():
+      if skip_event(pop.tsplit_orig, oldest_time, orig_length, direction): continue
+
       # get the initial population size (in backwards direction) -- this is
       # either the last (in forward direction) resize event recorded for the
       # population, or its size after split
       name = pop.pop
       if len(resizes) and name in set(resizes["pop"]):
-          resize_events = resizes.query(f"pop == '{name}'")
-          initial_size = resize_events.tail(1).N.values[0]
+          mask = resizes["tresize_orig"].apply(lambda t: not skip_event(t, oldest_time, orig_length, direction))
+          resize_events = resizes[(resizes["pop"] == name) & mask]
+          if len(resize_events):
+            initial_size = resize_events.tail(1).N.values[0]
+          else:
+            initial_size = pop.N
       else:
           initial_size = pop.N
 
@@ -61,12 +72,15 @@ def simulate(
               ancestral=pop.parent
           )
 
-
   if len(samples) == 0:
       logging.info("No sampling schedule given, generating one automatically")
+      if direction == "forward":
+          end_time = oldest_time + orig_length
+      else:
+          end_time = oldest_time - orig_length
       samples = pandas.DataFrame(
           [
-            (pop.initial_size, pop.name, length + 1, -1, -1, 0, -1, -1)
+            (pop.initial_size, pop.name, length + 1, -1, -1, end_time, -1, -1)
             for pop in demography.populations
           ],
           columns=["n", "pop", "time_gen", "x", "y", "time_orig", "x_orig", "y_orig"]
@@ -83,8 +97,10 @@ def simulate(
 
   # schedule population size changes
   for event in resizes.itertuples(index=False):
+      if skip_event(event.tresize_orig, oldest_time, orig_length, direction): continue
+
       if event.how == "step":
-          time = length - event.tresize_gen
+          time = length - event.tresize_gen + 1
           logging.info(f"Step resize of population {pop.pop} to {event.prev_N} from {event.N} at time {time}")
           demography.add_population_parameters_change(
               time=time,
@@ -113,8 +129,10 @@ def simulate(
 
   census_times = []
 
-  # schedule gene flow events
+  # schedule gene-flow events
   for event in geneflows.itertuples():
+      if skip_event(event.tend_orig, oldest_time, orig_length, direction): continue
+
       tstart = length - event.tend_gen + 1
       tend = length - event.tstart_gen + 1
       logging.info(f"Gene flow from {event._1} to {event.to} between {tstart} and {tend}")
@@ -171,7 +189,7 @@ def simulate(
   # compile a set of slendr metadata to be stored in the tree sequence
   slendr_metadata = {
       "slendr": {
-          "version": "slendr_0.8.1.9000",
+          "version": "slendr_0.9.1.9000",
           "backend": "msprime",
           "description": description,
           "sampling": {
@@ -187,7 +205,7 @@ def simulate(
           "sample_names": sample_names,
           "arguments": {
             "SEQUENCE_LENGTH"   : sequence_length,
-            "RECOMB_RATE"       : recombination_rate,
+            "RECOMBINATION_RATE"       : recombination_rate,
             "SEED"              : seed,
             "SIMULATION_LENGTH" : length
           }
@@ -205,14 +223,22 @@ def simulate(
   return ts_metadata
 
 
+def skip_event(time, oldest_time, orig_length, direction):
+  if direction == "forward" and time > oldest_time + orig_length:
+    return True
+  elif direction == "backward" and time < oldest_time - orig_length:
+    return True
+  else:
+    return False
+
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(
       "msprime script for executing non-spatial slendr models"
   )
   parser.add_argument("--model", metavar="DIRECTORY", default=".",
                      help="Path to a slendr model directory")
-  parser.add_argument("--output", metavar="FILE",
-                      help="Path to a tree sequence output file")
+  parser.add_argument("--path", metavar="FILE",
+                      help="Path to a tree-sequence file")
   parser.add_argument("--sequence-length", required=True, type=int,
                       help="The length of a sequence to simulate")
   parser.add_argument("--recombination-rate", required=True, type=float,
@@ -236,8 +262,8 @@ if __name__ == "__main__":
 
   logging.info(f"Loading slendr model configuration files from {model_dir}")
 
-  if not args.output:
-      args.output = pathlib.Path(model_dir, "output_msprime_ts.trees")
+  if not args.path:
+      args.path = pathlib.Path(model_dir, "msprime.trees")
 
   if not os.path.exists(model_dir):
       sys.exit(f"Model directory {model_dir} does not exist")
@@ -247,6 +273,7 @@ if __name__ == "__main__":
   resizes_path = pathlib.Path(model_dir, "resizes.tsv")
   geneflows_path = pathlib.Path(model_dir, "geneflow.tsv")
   length_path = pathlib.Path(model_dir, "length.txt")
+  orig_length_path = pathlib.Path(model_dir, "orig_length.txt")
   direction_path = pathlib.Path(model_dir, "direction.txt")
   description_path = pathlib.Path(model_dir, "description.txt")
 
@@ -263,6 +290,7 @@ if __name__ == "__main__":
 
   # read the total simulation length
   length = int(float(open(length_path, "r").readline().rstrip()))
+  orig_length = int(float(open(orig_length_path, "r").readline().rstrip()))
 
   # read the direction of the model ("forward" or "backward")
   direction = open(direction_path, "r").readline().rstrip()
@@ -277,11 +305,11 @@ if __name__ == "__main__":
       samples = pandas.read_table(sampling_path)
 
   ts = simulate(args.sequence_length, args.recombination_rate, args.seed,
-                populations, resizes, geneflows, length, direction, description,
+                populations, resizes, geneflows, length, orig_length, direction, description,
                 samples, args.debug)
 
-  output_path = os.path.expanduser(args.output)
+  path = os.path.expanduser(args.path)
 
-  logging.info(f"Saving tree sequence output to {output_path}")
+  logging.info(f"Saving tree sequence to {path}")
 
-  ts.dump(output_path)
+  ts.dump(path)

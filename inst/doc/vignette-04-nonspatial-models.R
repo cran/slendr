@@ -4,7 +4,10 @@ env_present <- slendr:::is_slendr_env_present()
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
-  eval = env_present
+  eval = env_present,
+  fig.width = 6,
+  fig.height = 4,
+  dpi = 70
 )
 
 ## -----------------------------------------------------------------------------
@@ -13,10 +16,11 @@ library(slendr)
 init_env()
 
 # African ancestral population
-afr <- population("AFR", time = 52000, N = 3000)
+afr <- population("AFR", time = 100000, N = 3000)
 
 # first migrants out of Africa
-ooa <- population("OOA", parent = afr, time = 51000, N = 500, remove = 25000)
+ooa <- population("OOA", parent = afr, time = 60000, N = 500, remove = 23000) %>%
+  resize(N = 2000, time = 40000, how = "step")
 
 # Eastern hunter-gatherers
 ehg <- population("EHG", parent = ooa, time = 28000, N = 1000, remove = 6000)
@@ -41,11 +45,9 @@ gf <- list(
 ## -----------------------------------------------------------------------------
 model <- compile_model(
   populations = list(afr, ooa, ehg, eur, ana, yam),
-  gene_flow = gf, generation_time = 30
+  gene_flow = gf, generation_time = 30,
+  time_units = "years before present"
 )
-
-## ----non-spatial_graph, fig.width = 6, fig.height = 6, dpi = 60---------------
-plot_model(model)
 
 ## -----------------------------------------------------------------------------
 samples <- schedule_sampling(
@@ -54,12 +56,20 @@ samples <- schedule_sampling(
   list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
 )
 
-## ----non-spatial-graph_sampling, fig.width=7, fig.height=4--------------------
-plot_model(model, samples = samples, gene_flow = FALSE)
+## ----non-spatial-graph_sampling, fig.width=6, fig.height=4--------------------
+plot_model(model, samples = samples)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ts_slim <- slim(model, sequence_length = 100000, recombination_rate = 0)
 
-## ----eval = FALSE-------------------------------------------------------------
-#  ts_msprime <- msprime(model, sequence_length = 100000, recombination_rate = 0)
+## -----------------------------------------------------------------------------
+ts_msprime <- msprime(model, sequence_length = 100000, recombination_rate = 0)
+
+## -----------------------------------------------------------------------------
+extract_parameters(ts_msprime)
+
+## -----------------------------------------------------------------------------
+introgression_model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
+
+extract_parameters(introgression_model)
 

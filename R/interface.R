@@ -702,8 +702,8 @@ gene_flow <- function(from, to, rate, start, end, overlap = TRUE) {
   this makes sense for your model, you can add `overlap = F` which
   will instruct slendr to simulate gene flow without spatial overlap
   between populations.",
-  from_name, to_name, start, deparse(substitute(from)),
-  deparse(substitute(to))), call. = FALSE)
+  from_name, to_name, start, deparse(base::substitute(from)),
+  deparse(base::substitute(to))), call. = FALSE)
     }
   } else
     overlap <- FALSE
@@ -1048,8 +1048,8 @@ overlap <- function(x, y, name = NULL) {
       result <- sf::st_sf(geometry = sf::st_combine(result))
 
     if (is.null(name)) {
-      xname <- deparse(substitute(x))
-      yname <- deparse(substitute(y))
+      xname <- deparse(base::substitute(x))
+      yname <- deparse(base::substitute(y))
       result$region <- sprintf("(overlap of %s and %s)", xname, yname)
     } else
       result$region <- name
@@ -1085,8 +1085,8 @@ subtract <- function(x, y, name = NULL) {
 
   if (nrow(result)) {
     if (is.null(name)) {
-      xname <- deparse(substitute(x))
-      yname <- deparse(substitute(y))
+      xname <- deparse(base::substitute(x))
+      yname <- deparse(base::substitute(y))
       result$region <- sprintf("(%s minus %s)", xname, yname)
     } else
       result$region <- name
@@ -1278,12 +1278,14 @@ schedule_sampling <- function(model, times, ..., locations = NULL, strict = FALS
 
     if (strict)
       stop("A sampling event was scheduled outside of the simulation time window", call. = FALSE)
+    else if (model$direction == "forward")
+      times <- times[times <= oldest_time + model$orig_length]
     else
-      times <- times[times <= model$orig_length]
+      times <- times[times >= oldest_time - model$orig_length]
   }
 
-  schedule <- purrr::map_dfr(times, function(t) {
-    purrr::map_dfr(samples, function(s) {
+  schedule <- lapply(times, function(t) {
+    lapply(samples, function(s) {
       pop <- s[[1]]
       n <- s[[2]]
       tryCatch(
@@ -1298,18 +1300,15 @@ schedule_sampling <- function(model, times, ..., locations = NULL, strict = FALS
             return(NULL)
           else
             stop("Cannot schedule sampling for '", pop$pop, "' at time ", t,
-                 " because the population will not yet be present in the simulation",
-                 " at that point. Consider running this function with `strict = FALSE`",
-                 " which will automatically retain only valid sampling events.",
+                 " because\nthe population will not yet be present in the simulation",
+                 " at that\npoint. Consider running this function with `strict = FALSE`",
+                 " which\nwill automatically retain only valid sampling events.",
                  call. = FALSE)
         })
-    })
-  })
+    }) %>% do.call(rbind, .)
+  }) %>% do.call(rbind, .)
 
-  if (is.null(schedule))
-    stop("No sampling events have been generated", call. = FALSE)
-
-  if (!nrow(schedule)) {
+  if (is.null(schedule)) {
     warning("No valid sampling events were retained", call. = FALSE)
     return(NULL)
   }
@@ -1368,7 +1367,7 @@ init_env <- function(quiet = FALSE) {
     # at least it prevents having to do things like:
     # reticulate::py_run_string("def get_pedigree_ids(ts): return [ind.metadata['pedigree_id']
     #                                                              for ind in ts.individuals()]")
-    # (moved from ts_load() here because this is a better place for loading our Python functions)
+    # (moved from ts_read() here because this is a better place for loading our Python functions)
     reticulate::source_python(file = system.file("pylib/pylib.py", package = "slendr"))
 
     if (!reticulate::py_module_available("msprime") ||
@@ -1402,17 +1401,12 @@ init_env <- function(quiet = FALSE) {
 #'   is \code{FALSE}.
 #' @param agree Automatically agree to all questions?
 #' @param pip Should pip be used instead of conda for installing slendr's Python
-#'   dependencies? Note that this will still use the conda distribution to
-#'   install Python itself, but will change the repository from which slendr
-#'   will install its Python dependencies. Unless explicitly set to \code{TRUE},
-#'   Python dependencies will be installed from conda repositories by default,
-#'   expect for the case of osx-arm64 Mac architecture, for which conda
-#'   dependencies are broken.
+#'   dependencies?
 #'
 #' @return No return value, called for side effects
 #'
 #' @export
-setup_env <- function(quiet = FALSE, agree = FALSE, pip = NULL) {
+setup_env <- function(quiet = FALSE, agree = FALSE, pip = FALSE) {
   if (is_slendr_env_present()) {
     message("A required slendr Python environment is already present. You can activate\n",
             "it by calling init_env().")
@@ -1452,18 +1446,19 @@ setup_env <- function(quiet = FALSE, agree = FALSE, pip = NULL) {
       reticulate::conda_create(envname = PYTHON_ENV, python_version = python_version)
       reticulate::use_condaenv(PYTHON_ENV, required = TRUE)
 
-      # msprime/tskit conda dependency is broken on M1 Mac architecture, fallback
-      # to pip in cases like this (otherwise use conda to avoid any potential
-      # compilation issues such as missing libgsl)
-      if (is.null(pip))
-        pip <- all(Sys.info()[c("sysname", "machine")] == c("Darwin", "arm64"))
+      # # some Python dependencies are  broken on M1 Mac architecture, so fallback
+      # # to pip in cases like this (otherwise use conda to avoid any potential
+      # # compilation issues such as missing libgsl)
+      # if (is.null(pip))
+      #   pip <- all(Sys.info()[c("sysname", "machine")] == c("Darwin", "arm64"))
 
-      # tspop isn't available on conda so it will need to be installed by pip
+      # tspop isn't available on conda and pyslim gives installation errors with conda
+      # on M-architecture Macs, so they will need to be installed by pip
       # no matter the user's preference (given by the pip function argument value)
-      # TODO: check at some point later if tspop is on conda
-      which_tspop <- grepl("tspop", package_versions)
-      reticulate::conda_install(envname = PYTHON_ENV, packages = package_versions[!which_tspop], pip = pip)
-      reticulate::conda_install(envname = PYTHON_ENV, packages = c(package_versions[which_tspop], "pyarrow"), pip = TRUE)
+      # TODO: check at some point later if tspop / pyslim are on conda for all systems
+      which_tspop_and_pyslim <- grepl("tspop|pyslim", package_versions)
+      reticulate::conda_install(envname = PYTHON_ENV, packages = package_versions[!which_tspop_and_pyslim], pip = pip)
+      reticulate::conda_install(envname = PYTHON_ENV, packages = c(package_versions[which_tspop_and_pyslim], "pyarrow"), pip = TRUE)
 
       if (!quiet) {
         message("======================================================================")
