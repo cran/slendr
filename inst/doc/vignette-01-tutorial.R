@@ -1,5 +1,5 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr:::is_slendr_env_present()
+env_present <- slendr::check_dependencies(python = TRUE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -116,7 +116,7 @@ ana
 plot_map(ana, title = "Anatolian expansion into Europe")
 
 ## ----plot_ana_raw, eval = FALSE-----------------------------------------------
-#  plot_map(ana, title = "Anatolian expansion into Europe (not intersected)", intersect = FALSE)
+# plot_map(ana, title = "Anatolian expansion into Europe (not intersected)", intersect = FALSE)
 
 ## ----plot_yam_migr------------------------------------------------------------
 yam <- population( # Yamnaya steppe population
@@ -135,7 +135,7 @@ plot_map(yam)
 plot_map(afr, ooa, ehg, eur, ana, yam)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  gf <- gene_flow(from = eur, to = afr, rate = 0.1, start = 20000, end = 15000)
+# gf <- gene_flow(from = eur, to = afr, rate = 0.1, start = 20000, end = 15000)
 
 ## -----------------------------------------------------------------------------
 gf <- list(
@@ -176,7 +176,7 @@ loaded_model <- read_model(model_dir)
 plot_model(model, proportions = TRUE)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  explore_model(model)
+# explore_model(model)
 
 ## -----------------------------------------------------------------------------
 ts <- slim(model, sequence_length = 100000, recombination_rate = 1e-8)

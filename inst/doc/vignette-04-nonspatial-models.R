@@ -1,5 +1,5 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr:::is_slendr_env_present()
+env_present <- slendr::check_dependencies(python = TRUE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -60,7 +60,7 @@ samples <- schedule_sampling(
 plot_model(model, samples = samples)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  ts_slim <- slim(model, sequence_length = 100000, recombination_rate = 0)
+# ts_slim <- slim(model, sequence_length = 100000, recombination_rate = 0)
 
 ## -----------------------------------------------------------------------------
 ts_msprime <- msprime(model, sequence_length = 100000, recombination_rate = 0)

@@ -1,5 +1,5 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr:::is_slendr_env_present()
+env_present <- slendr::check_dependencies(python = TRUE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 library(slendr)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  setup_env()
+# setup_env()
 
 ## -----------------------------------------------------------------------------
 init_env()
@@ -69,9 +69,9 @@ emh_samples <- schedule_sampling(model, times = runif(n = 40, min = 10000, max =
 emh_samples
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  # this attempts to sample a Neanderthal individual at a point when Neanderthals
-#  # are already extinct, resulting in an error
-#  schedule_sampling(model, times = 10000, list(nea, 1), strict = TRUE)
+# # this attempts to sample a Neanderthal individual at a point when Neanderthals
+# # are already extinct, resulting in an error
+# schedule_sampling(model, times = 10000, list(nea, 1), strict = TRUE)
 
 ## -----------------------------------------------------------------------------
 ts <- msprime(
@@ -107,7 +107,7 @@ ts_small <- ts_simplify(ts, simplify_to = c("CH_1", "NEA_1", "NEA_2", "AFR_1", "
 ts_small
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  ts <- ts_recapitate(ts, recombination_rate = 1e-8, Ne = 10000)
+# ts <- ts_recapitate(ts, recombination_rate = 1e-8, Ne = 10000)
 
 ## -----------------------------------------------------------------------------
 ts_coalesced(ts)
@@ -124,12 +124,12 @@ tree <- ts_phylo(ts_small, 42 - 1)
 tree
 
 ## ----plot_ggtree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.which("qpDstat") != ""----
-#  library(ggtree)
-#  
-#  ggtree(tree) +
-#    geom_point2(aes(subset = !isTip)) + # points for internal nodes
-#    geom_tiplab() + # sample labels for tips
-#    hexpand(0.1)    # make more space for the tip labels
+# library(ggtree)
+# 
+# ggtree(tree) +
+#   geom_point2(aes(subset = !isTip)) + # points for internal nodes
+#   geom_tiplab() + # sample labels for tips
+#   hexpand(0.1)    # make more space for the tip labels
 
 ## ----plot_apetree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.which("qpDstat") != ""----
 library(ape)
@@ -137,11 +137,11 @@ plot(tree)
 nodelabels()
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  # iterate over all trees in the tree-sequence and check if each
-#  # has only one root (i.e. is fully coalesced) - note that Python
-#  # lists are 0-based, which is something we need to take care of
-#  all(sapply(seq_len(ts$num_trees)[1:100],
-#             function(i) ts$at_index(i - 1)$num_roots == 1))
+# # iterate over all trees in the tree-sequence and check if each
+# # has only one root (i.e. is fully coalesced) - note that Python
+# # lists are 0-based, which is something we need to take care of
+# all(sapply(seq_len(ts$num_trees)[1:100],
+#            function(i) ts$at_index(i - 1)$num_roots == 1))
 
 ## -----------------------------------------------------------------------------
 names(ts)
@@ -191,26 +191,26 @@ dplyr::filter(inds, pop == "EUR") %>%
 snps <- ts_eigenstrat(ts, prefix = file.path(tempdir(), "eigenstrat", "data"))
 
 ## ----eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
-#  library(admixr)
-#  
-#  f4ratio(data = snps, X = c("EUR_1", "EUR_2", "AFR_2"),
-#          A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1")
+# library(admixr)
+# 
+# f4ratio(data = snps, X = c("EUR_1", "EUR_2", "AFR_2"),
+#         A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1")
 
 ## ----ts_vs_admixr, eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
-#  europeans <- inds[inds$pop == "EUR", ]$name
-#  
-#  # tskit result
-#  result_ts <- ts_f4ratio(ts, X = europeans, A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1") %>% select(alpha_ts = alpha)
-#  
-#  # result obtained by admixr/ADMIXTOOLS
-#  result_admixr <- f4ratio(snps, X = europeans, A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1") %>% select(alpha_admixr = alpha)
-#  
-#  bind_cols(result_admixr, result_ts) %>%
-#    ggplot(aes(alpha_ts, alpha_admixr)) +
-#    geom_point() +
-#    geom_abline(slope = 1, linetype = 2, color = "red", linewidth = 0.5) +
-#    labs(x = "f4-ratio statistic calculated with admixr/ADMIXTOOLS",
-#         y = "f4-ratio statistic calculated with tskit")
+# europeans <- inds[inds$pop == "EUR", ]$name
+# 
+# # tskit result
+# result_ts <- ts_f4ratio(ts, X = europeans, A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1") %>% select(alpha_ts = alpha)
+# 
+# # result obtained by admixr/ADMIXTOOLS
+# result_admixr <- f4ratio(snps, X = europeans, A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1") %>% select(alpha_admixr = alpha)
+# 
+# bind_cols(result_admixr, result_ts) %>%
+#   ggplot(aes(alpha_ts, alpha_admixr)) +
+#   geom_point() +
+#   geom_abline(slope = 1, linetype = 2, color = "red", linewidth = 0.5) +
+#   labs(x = "f4-ratio statistic calculated with admixr/ADMIXTOOLS",
+#        y = "f4-ratio statistic calculated with tskit")
 
 ## -----------------------------------------------------------------------------
 ts_vcf(ts, path = file.path(tempdir(), "output.vcf.gz"))

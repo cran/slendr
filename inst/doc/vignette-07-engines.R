@@ -1,5 +1,5 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr:::is_slendr_env_present()
+env_present <- slendr::check_dependencies(python = TRUE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,

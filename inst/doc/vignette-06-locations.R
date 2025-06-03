@@ -1,5 +1,5 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr:::is_slendr_env_present()
+env_present <- slendr::check_dependencies(python = TRUE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -204,25 +204,25 @@ ggplot() +
 as_tibble(level1_branches)[, c("name", "node_id", "child_id", "parent_id", "left_pos", "right_pos")]
 
 ## ----eval = FALSE, echo = FALSE-----------------------------------------------
-#  # pdf("~/Desktop/x.pdf")
-#  # for (i in ts_samples(ts) %>% filter(pop == "EUR") %>% pull(name)) {
-#  
-#  # ancestors <- ts_ancestors(ts, i, verbose = TRUE)
-#  #   p_ancestors <- ggplot() +
-#  #   geom_sf(data = map) +
-#  #   geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
-#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
-#  #           aes(shape = parent_pop, color = parent_pop)) +
-#  #   geom_sf(data = filter(ts_nodes(ts), name == i), size = 3) +
-#  #   coord_sf(expand = 0) +
-#  #   labs(x = "longitude", y = "latitude") +
-#  #   theme_bw() +
-#  #   facet_grid(. ~ node_id) +
-#  #   ggtitle(i) +
-#  #   theme(legend.position = "none"); print(p_ancestors)
-#  
-#  # }
-#  # dev.off()
+# # pdf("~/Desktop/x.pdf")
+# # for (i in ts_samples(ts) %>% filter(pop == "EUR") %>% pull(name)) {
+# 
+# # ancestors <- ts_ancestors(ts, i, verbose = TRUE)
+# #   p_ancestors <- ggplot() +
+# #   geom_sf(data = map) +
+# #   geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
+# #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+# #           aes(shape = parent_pop, color = parent_pop)) +
+# #   geom_sf(data = filter(ts_nodes(ts), name == i), size = 3) +
+# #   coord_sf(expand = 0) +
+# #   labs(x = "longitude", y = "latitude") +
+# #   theme_bw() +
+# #   facet_grid(. ~ node_id) +
+# #   ggtitle(i) +
+# #   theme(legend.position = "none"); print(p_ancestors)
+# 
+# # }
+# # dev.off()
 
 ## ----plot_ancestors_time------------------------------------------------------
 ggplot() +
@@ -244,25 +244,25 @@ nodes <- unique(lineages[!is.na(lineages$name), ]$node_id)
 ts_samples(ts) %>% filter(pop == "ANA")
 
 ## ----eval = FALSE, echo = FALSE-----------------------------------------------
-#  # pdf("~/Desktop/z.pdf")
-#  # for (i in ts_samples(ts) %>% filter(pop == "ANA") %>% pull(name)) {
-#  
-#  # ancestors <- ts_ancestors(ts, i, verbose = TRUE)
-#  #   p_ancestors <- ggplot() +
-#  #   geom_sf(data = map) +
-#  #   geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
-#  #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
-#  #           aes(shape = parent_pop, color = parent_pop)) +
-#  #   geom_sf(data = filter(ts_nodes(ts), name == i), size = 3) +
-#  #   coord_sf(expand = 0) +
-#  #   labs(x = "longitude", y = "latitude") +
-#  #   theme_bw() +
-#  #   facet_grid(. ~ node_id) +
-#  #   ggtitle(i) +
-#  #   theme(legend.position = "none"); print(p_ancestors)
-#  
-#  # }
-#  # dev.off()
+# # pdf("~/Desktop/z.pdf")
+# # for (i in ts_samples(ts) %>% filter(pop == "ANA") %>% pull(name)) {
+# 
+# # ancestors <- ts_ancestors(ts, i, verbose = TRUE)
+# #   p_ancestors <- ggplot() +
+# #   geom_sf(data = map) +
+# #   geom_sf(data = ancestors, size = 0.5, aes(alpha = parent_time)) +
+# #   geom_sf(data = sf::st_set_geometry(ancestors, "parent_location"),
+# #           aes(shape = parent_pop, color = parent_pop)) +
+# #   geom_sf(data = filter(ts_nodes(ts), name == i), size = 3) +
+# #   coord_sf(expand = 0) +
+# #   labs(x = "longitude", y = "latitude") +
+# #   theme_bw() +
+# #   facet_grid(. ~ node_id) +
+# #   ggtitle(i) +
+# #   theme(legend.position = "none"); print(p_ancestors)
+# 
+# # }
+# # dev.off()
 
 ## ----include = FALSE----------------------------------------------------------
 ana_ind <- ts_samples(ts) %>% filter(name == "ANA_45")

@@ -24,40 +24,40 @@ seed <- 42
 set.seed(seed)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  afr <- population("AFR", time = 100000, N = 20000)
-#  eur <- population("EUR", time = 60000, N = 2000, parent = afr)
-#  
-#  # <... compile model and simulate a tree sequence `ts` ...>
+# afr <- population("AFR", time = 100000, N = 20000)
+# eur <- population("EUR", time = 60000, N = 2000, parent = afr)
+# 
+# # <... compile model and simulate a tree sequence `ts` ...>
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # compute heterozygosity in the individual "EUR"
-#  ts_diversity(ts, "EUR_1")
-#  
-#  # compute genetic divergence between selected Africans and Europeans
-#  afr_samples <- c("AFR_1", "AFR_2", "AFR_3")
-#  eur_samples <- c("EUR_1", "EUR_2", "EUR_3")
-#  ts_divergence(ts, list(afr = afr_samples, eur = eur_samples))
+# # compute heterozygosity in the individual "EUR"
+# ts_diversity(ts, "EUR_1")
+# 
+# # compute genetic divergence between selected Africans and Europeans
+# afr_samples <- c("AFR_1", "AFR_2", "AFR_3")
+# eur_samples <- c("EUR_1", "EUR_2", "EUR_3")
+# ts_divergence(ts, list(afr = afr_samples, eur = eur_samples))
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  afr <- population("AFR", time = 90000, N = 20000)
-#  eur <- population("EUR", time = 60000, N = 2000, parent = afr)
+# afr <- population("AFR", time = 90000, N = 20000)
+# eur <- population("EUR", time = 60000, N = 2000, parent = afr)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  model <- compile_model(populations = list(afr, eur), generation_time = 30)
-#  
-#  slim(model, sequence_length = 100000, recombination_rate = 1e-8, method = "gui")
+# model <- compile_model(populations = list(afr, eur), generation_time = 30)
+# 
+# slim(model, sequence_length = 100000, recombination_rate = 1e-8, method = "gui")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  pop <- population("pop", time = 1, N = 1000)
-#  simple_model <- compile_model(pop, generation_time = 1, simulation_length = 1000)
-#  
-#  slim(simple_model, sequence_length = 1000, recombination_rate = 0, method = "gui")
+# pop <- population("pop", time = 1, N = 1000)
+# simple_model <- compile_model(pop, generation_time = 1, simulation_length = 1000)
+# 
+# slim(simple_model, sequence_length = 1000, recombination_rate = 0, method = "gui")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  pop <- population("pop", time = 1, N = 1000)
-#  simple_model <- compile_model(pop, generation_time = 1, simulation_length = 1000)
-#  
-#  slim(simple_model, sequence_length = 1000, recombination_rate = 0, burnin = 100, method = "gui")
+# pop <- population("pop", time = 1, N = 1000)
+# simple_model <- compile_model(pop, generation_time = 1, simulation_length = 1000)
+# 
+# slim(simple_model, sequence_length = 1000, recombination_rate = 0, burnin = 100, method = "gui")
 
 ## -----------------------------------------------------------------------------
 library(slendr)
@@ -111,10 +111,10 @@ model <- compile_model(
 )
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  slim(model, sequence_length = 1e6, recombination_rate = 0, ts = FALSE, method = "gui")
+# slim(model, sequence_length = 1e6, recombination_rate = 0, method = "gui")
 
 ## ----echo=FALSE---------------------------------------------------------------
-slim(model, sequence_length = 1e6, recombination_rate = 0, ts = FALSE, path = tempdir())
+slim(model, sequence_length = 1e6, recombination_rate = 0, path = tempdir())
 
 ## -----------------------------------------------------------------------------
 extension_path <- system.file("extdata", "extension_trajectory_params.txt", package = "slendr")
@@ -130,13 +130,13 @@ extension <- substitute_values(
 )
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  extension <- substitute_values(
-#    extension_path,
-#    onset_time = 15000,
-#    origin_pop = "EUR", target_pop = "EUR"
-#  )
-#  
-#  # Error: The extension script contains the following unsubstituted patterns: {{s}}
+# extension <- substitute_values(
+#   extension_path,
+#   onset_time = 15000,
+#   origin_pop = "EUR", target_pop = "EUR"
+# )
+# 
+# # Error: The extension script contains the following unsubstituted patterns: {{s}}
 
 ## -----------------------------------------------------------------------------
 model <- compile_model(
@@ -146,10 +146,10 @@ model <- compile_model(
 )
 
 ## ----echo = FALSE-------------------------------------------------------------
-slim(model, sequence_length = 1e6, recombination_rate = 1e-8, ts = FALSE, path = tempdir())
+slim(model, sequence_length = 1e6, recombination_rate = 1e-8, path = tempdir())
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  slim(model, sequence_length = 1e6, recombination_rate = 0, path = tempdir(), ts = FALSE, random_seed = 42)
+# slim(model, sequence_length = 1e6, recombination_rate = 0, path = tempdir(), random_seed = 42)
 
 ## -----------------------------------------------------------------------------
 run_model <- function(origin_pop, onset_time) {
@@ -166,7 +166,7 @@ run_model <- function(origin_pop, onset_time) {
   )
   
   slim(model, sequence_length = 1e6, recombination_rate = 0,
-       path = tempdir(), ts = FALSE, random_seed = 42)
+       path = tempdir(), random_seed = 42)
 }
 
 run_model(origin_pop = "EUR", onset_time = 15000)
@@ -233,7 +233,7 @@ initialize() {
 
 function (void) add_mutation(void) {
     // sample one target carrier of the new mutation...
-    target = sample(population(origin_pop).genomes, 1);
+    target = sample(population(origin_pop).haplosomes, 1);
     // ... and add the mutation in the middle of it
     mut = target.addNewMutation(m1, s, position = asInteger(SEQUENCE_LENGTH / 2));
 
@@ -267,9 +267,9 @@ tick(onset_time):SIMULATION_END late() {
     freq_origin = "NA";
     freq_target = "NA";
     if (population(origin_pop, check = T))
-      freq_origin = population(origin_pop).genomes.mutationFrequenciesInGenomes();
+      freq_origin = population(origin_pop).haplosomes.mutationFrequenciesInHaplosomes();
     if (population(target_pop, check = T))
-      freq_target = population(target_pop).genomes.mutationFrequenciesInGenomes();
+      freq_target = population(target_pop).haplosomes.mutationFrequenciesInHaplosomes();
 
     writeFile(traj_file,
               community.tick + "\t" +
@@ -294,7 +294,7 @@ run_model <- function(origin_pop, onset_time) {
   )
   
   slim(model, sequence_length = 1e6, recombination_rate = 0,
-       path = tempdir(), ts = FALSE, random_seed = 42)
+       path = tempdir(), random_seed = 42)
 }
 
 run_model("EUR", onset_time = 15000)
@@ -401,7 +401,7 @@ initialize() {
 // Add Neanderthal-specific mutations one tick prior to the introgression
 tick(introgression_time) - 1 late() {
   // get all Neanderthal chromosomes just prior to the introgression
-  target = population("NEA").genomes;
+  target = population("NEA").haplosomes;
 
   write_log("adding neutral Neanderthal markers");
 
@@ -445,14 +445,14 @@ modern_samples <- schedule_sampling(model, times = 0, list(eur, 100))
 samples <- rbind(nea_samples, modern_samples)
 
 ## ----echo=FALSE, eval = RERUN & run_vignette----------------------------------
-#  x = Sys.time()
-#  data_dir <- "~/Projects/introgression_data/"
-#  slim(model, recombination_rate = 1e-8, samples = samples, path = data_dir)
-#  y = Sys.time()
-#  y - x # Time difference of 45.62365 mins
+# x = Sys.time()
+# data_dir <- "~/Projects/introgression_data/"
+# slim(model, recombination_rate = 1e-8, samples = samples, path = data_dir)
+# y = Sys.time()
+# y - x # Time difference of 45.62365 mins
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  slim(model, recombination_rate = 1e-8, samples = samples, path = "~/Projects/introgression_data/")
+# slim(model, recombination_rate = 1e-8, samples = samples, path = "~/Projects/introgression_data/")
 
 ## -----------------------------------------------------------------------------
 n_genes <- 200

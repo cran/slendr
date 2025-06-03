@@ -138,7 +138,8 @@ ts_tracts <- function(ts, census, squashed = TRUE, source = NULL, target = NULL,
   if (from_slendr) {
     # add symbolic names of individuals and their populations to each tract by
     # joining with the annotated nodes table based on the node ID
-    samples <- ts_nodes(ts) %>% dplyr::filter(sampled) %>% dplyr::select(name, node_id, pop)
+    nodes <- ts_nodes(ts) %>% dplyr::filter(sampled) %>% dplyr::select(name, node_id, pop)
+    samples <- ts_samples(ts) %>% dplyr::inner_join(nodes, by = c("name", "pop"))
     tracts <- dplyr::inner_join(tracts, samples, by = c("sample" = "node_id"))
 
     # add symbolic names of the source populations
@@ -152,6 +153,9 @@ ts_tracts <- function(ts, census, squashed = TRUE, source = NULL, target = NULL,
     tracts$population <- NULL
     tracts$sample <- NULL
 
+    # add a haplotype number for each individual, for convenience
+    tracts <- tracts %>% dplyr::group_by(name) %>% dplyr::mutate(haplotype = dplyr::dense_rank(node_id)) %>% dplyr::ungroup()
+
     # non-squashed tract table contains an extra column, so take care of it
     if (!squashed) {
       tracts$ancestor_id <- tracts$ancestor
@@ -160,8 +164,8 @@ ts_tracts <- function(ts, census, squashed = TRUE, source = NULL, target = NULL,
     } else
       ancestor_col <- NULL
 
-    columns <- c("name", "node_id", "pop", "source_pop", "left", "right", "length",
-                 ancestor_col, "source_pop_id")
+    columns <- c("name", "haplotype", "time", "pop", "source_pop", "left", "right", "length",
+                 ancestor_col, "source_pop_id", "node_id")
 
     # filter for target and source populations of interest
     tracts <- tracts[tracts$pop %in% target & tracts$source_pop %in% source, ]

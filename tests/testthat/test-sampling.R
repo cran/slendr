@@ -1,6 +1,6 @@
 msg <- "Cannot schedule sampling"
 
-skip_if(!is_slendr_env_present())
+skip_if(!check_dependencies(python = TRUE))
 
 init_env(quiet = TRUE)
 
@@ -71,7 +71,7 @@ test_that("only locations within world bounds are valid", {
 })
 
 test_that("sampling is as close to the a single specified position as possible", {
-  skip_if(!is_slendr_env_present())
+  skip_if(!check_dependencies(python = TRUE))
 
   n_samples <- 5
   times <- c(10, 100)
@@ -128,7 +128,7 @@ test_that("sampling is as close to the a single specified position as possible",
 })
 
 test_that("sampling is as close to the multiple specified positions as possible", {
-  skip_if(!is_slendr_env_present())
+  skip_if(!check_dependencies(python = TRUE))
 
   n_samples <- 5
   times <- c(10, 100)
@@ -229,7 +229,7 @@ test_that("sampling locations may only be given for spatial models", {
 })
 
 test_that("a mix of spatial and non-spatial samplings is not allowed for a single population", {
-  skip_if(!is_slendr_env_present())
+  skip_if(!check_dependencies(python = TRUE))
 
   map <- world(xrange = c(0, 100), yrange = c(0, 100), landscape = "blank")
   p1 <- population(name = "p1", time = 10, N = 100)
@@ -255,7 +255,7 @@ test_that("a mix of spatial and non-spatial samplings is not allowed for a singl
 })
 
 test_that("sampling table is correctly adjusted after simplification (msprime)", {
-  skip_if(!is_slendr_env_present())
+  skip_if(!check_dependencies(python = TRUE))
 
   pop1 <- population("pop1", time = 1, N = 100)
   pop2 <- population("pop2", time = 10, N = 42, parent = pop1)
@@ -288,7 +288,7 @@ test_that("sampling table is correctly adjusted after simplification (msprime)",
 })
 
 test_that("sampling table is correctly adjusted after simplification (SLiM)", {
-  skip_if(!is_slendr_env_present())
+  skip_if(!check_dependencies(python = TRUE))
 
   pop1 <- population("pop1", time = 1, N = 100)
   pop2 <- population("pop2", time = 10, N = 42, parent = pop1)
@@ -318,4 +318,40 @@ test_that("sampling table is correctly adjusted after simplification (SLiM)", {
   expect_s3_class(ts_small2_nomodel <- ts_read(tmp_small2), "slendr_ts")
   expect_true(nrow(ts_samples(ts_small2_model)) == 4)
   expect_error(ts_samples(ts_small2_nomodel), "Sampling schedule can only be extracted")
+})
+
+test_that("all sampled populations must be present in the compiled model", {
+  pA <- population("pA", time = 1, N = 1000)
+  pB <- population("pB", time = 300, N = 1000, parent = pA)
+  pC <- population("pC", time = 600, N = 1000, parent = pB)
+  pD <- population("pD", time = 800, N = 1000, parent = pA)
+  pE <- population("pE", time = 1300, N = 1000, parent = pC)
+
+  model <- compile_model(list(pA, pB, pC, pD, pE), generation_time = 1, simulation_length = 2000)
+
+  p1 <- population("p1", time = 1, N = 1000)
+  p2 <- population("p2", time = 300, N = 1000, parent = p1)
+  p3 <- population("p3", time = 600, N = 1000, parent = p2)
+  p4 <- population("p4", time = 800, N = 1000, parent = p1)
+  p5 <- population("p5", time = 1300, N = 1000, parent = p4)
+
+  expect_error(
+    schedule_sampling(model, times = 2000, list(p1, 10), list(p2, 10), list(p3, 10), list(p4, 10), list(p5, 10)),
+    "The following sampled populations are not part of the model: p1, p2, p3, p4, p5"
+  )
+
+  expect_error(
+    schedule_sampling(model, times = 2000, list(pA, 10), list(p2, 10), list(pC, 10), list(p4, 10), list(pD, 10)),
+    "The following sampled populations are not part of the model: p2, p4"
+  )
+
+  expect_error(
+    schedule_sampling(model, times = 2000, list(pA, 10), list(pB, 10), list(pC, 10), list(p4, 10), list(pD, 10)),
+    "The following sampled populations are not part of the model: p4"
+  )
+
+  expect_s3_class(
+    schedule_sampling(model, times = 2000, list(pA, 10), list(pB, 10), list(pC, 10), list(pD, 10), list(pD, 10)),
+    "data.frame"
+  )
 })
