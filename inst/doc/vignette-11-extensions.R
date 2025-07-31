@@ -1,5 +1,5 @@
 ## ----include = FALSE----------------------------------------------------------
-run_vignette <- Sys.getenv("RUNNER_OS") == "" && slendr::check_dependencies(python = TRUE, slim = TRUE, quit = FALSE) 
+run_vignette <- Sys.getenv("RUNNER_OS") == "" && slendr::check_dependencies(python = TRUE, slim = TRUE, quit = FALSE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -158,13 +158,13 @@ run_model <- function(origin_pop, onset_time) {
     s = 0.1, onset_time = onset_time,
     origin_pop = origin_pop, target_pop = "EUR"
   )
-  
+
   model <- compile_model(
     populations = list(afr, ooa, ehg, eur, ana, yam),
     gene_flow = gf, generation_time = 30,
     extension = extension
   )
-  
+
   slim(model, sequence_length = 1e6, recombination_rate = 0,
        path = tempdir(), random_seed = 42)
 }
@@ -286,13 +286,13 @@ run_model <- function(origin_pop, onset_time) {
     s = 0.1, onset_time = onset_time,
     origin_pop = origin_pop, target_pop = "EUR"
   )
-  
+
   model <- compile_model(
     populations = list(afr, ooa, ehg, eur, ana, yam),
     gene_flow = gf, generation_time = 30,
     extension = extension
   )
-  
+
   slim(model, sequence_length = 1e6, recombination_rate = 0,
        path = tempdir(), random_seed = 42)
 }
@@ -446,23 +446,23 @@ samples <- rbind(nea_samples, modern_samples)
 
 ## ----echo=FALSE, eval = RERUN & run_vignette----------------------------------
 # x = Sys.time()
-# data_dir <- "~/Projects/introgression_data/"
+# data_dir <- "~/Code/__archive/introgression_data/"
 # slim(model, recombination_rate = 1e-8, samples = samples, path = data_dir)
 # y = Sys.time()
 # y - x # Time difference of 45.62365 mins
 
 ## ----eval=FALSE---------------------------------------------------------------
-# slim(model, recombination_rate = 1e-8, samples = samples, path = "~/Projects/introgression_data/")
+# slim(model, recombination_rate = 1e-8, samples = samples, path = "~/Code/__archive/introgression_data/")
 
 ## -----------------------------------------------------------------------------
 n_genes <- 200
 gene_length <- 5e6
 window_length <- 100e3
 
-## ----eval = run_vignette & file.exists("~/Projects/introgression_data/frequencies.tsv")----
-freqs <- read_tsv("~/Projects/introgression_data/frequencies.tsv")
+## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/frequencies.tsv")----
+freqs <- read_tsv("~/Code/__archive/introgression_data/frequencies.tsv")
 
-## ----introgression_freqs, eval = run_vignette & file.exists("~/Projects/introgression_data/frequencies.tsv")----
+## ----introgression_freqs, eval = run_vignette & file.exists("~/Code/__archive/introgression_data/frequencies.tsv")----
 freqs %>%
 mutate(pos = pos %% 5e6) %>%
 group_by(pos) %>%
@@ -475,9 +475,9 @@ ggplot() +
        subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)") +
   coord_cartesian(ylim = c(0, 3))
 
-## ----eval = run_vignette & file.exists("~/Projects/introgression_data/slim.trees")----
+## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
 # load a tree sequence and extract the names of recorded individuals
-ts <- ts_read(file = "~/Projects/introgression_data/slim.trees", model)
+ts <- ts_read(file = "~/Code/__archive/introgression_data/slim.trees", model)
 samples <- ts_names(ts, split = "pop")
 
 samples
@@ -491,7 +491,7 @@ tail(windows)
 # compute divergence from the tree sequence in each window separately
 divergence <- ts_divergence(ts, samples, windows = windows, mode = "branch")$divergence[[1]]
 
-## ----eval = run_vignette & file.exists("~/Projects/introgression_data/slim.trees")----
+## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
 # compute average divergence at each position in a gene, and a 95% C.I.
 div_df <- tibble(
   pop = "eur",
@@ -503,9 +503,9 @@ div_df <- tibble(
     mean = mean(div), n = n(), std = sd(div),
     ci_low = mean - 2 * std / sqrt(n),
     ci_up = mean + 2 * std / sqrt(n)
-  ) 
+  )
 
-## ----introgression_divergence, eval = run_vignette & file.exists("~/Projects/introgression_data/slim.trees")----
+## ----introgression_divergence, eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
 ggplot(div_df) +
   geom_ribbon(aes(pos, ymin = ci_low, ymax = ci_up), fill = "grey70") +
   geom_line(aes(pos, mean)) +

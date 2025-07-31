@@ -161,17 +161,21 @@ ts_write <- function(ts, file) {
 
   # overwrite the original list of sample names (if the tree sequence was simplified
   # down to a smaller number of individuals than originally sampled)
-  if (from_slendr && nrow(ts_samples(ts)) != nrow(attr(ts, "metadata")$sampling)) {
+  if (from_slendr && length(attr(ts, "metadata")$sample_names) != length(attr(ts, "metadata")$subset_names)) {
     tables <- ts$dump_tables()
     tables$metadata_schema = tskit$MetadataSchema(list("codec" = "json"))
 
     sample_names <- attr(ts, "metadata")$sample_names
+    subset_names <- attr(ts, "metadata")$subset_names
     pedigree_ids <- attr(ts, "metadata")$sample_ids
     if (type == "SLiM") {
       tables$metadata$SLiM$user_metadata$slendr[[1]]$sample_names <- sample_names
+      tables$metadata$SLiM$user_metadata$slendr[[1]]$subset_names <- subset_names
       tables$metadata$SLiM$user_metadata$slendr[[1]]$sample_ids <- pedigree_ids
-    } else
+    } else {
       tables$metadata$slendr$sample_names <- sample_names
+      tables$metadata$slendr$subset_names <- subset_names
+    }
 
     # put the tree sequence object back together
     ts <- tables$tree_sequence()
@@ -414,6 +418,7 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE,
   ts_new <- ts$simplify(as.integer(samples),
                         filter_populations = FALSE,
                         filter_nodes = filter_nodes,
+                        filter_individuals = filter_nodes,
                         keep_input_roots = keep_input_roots,
                         keep_unary = keep_unary,
                         keep_unary_in_individuals = keep_unary_in_individuals)
@@ -487,7 +492,7 @@ ts_simplify <- function(ts, simplify_to = NULL, keep_input_roots = FALSE,
   # replace the names of sampled individuals (if simplification led to subsetting)
   if (from_slendr) {
     sampled_nodes <- attr(ts_new, "nodes") %>% dplyr::filter(sampled)
-    attr(ts_new, "metadata")$sample_names <-  unique(sampled_nodes$name)
+    attr(ts_new, "metadata")$subset_names <-  unique(sampled_nodes$name)
     if (type == "SLiM")
       attr(ts_new, "metadata")$sample_ids <- unique(sampled_nodes$pedigree_id)
   }
@@ -1263,8 +1268,12 @@ ts_samples <- function(ts) {
          "from a slendr model. To access information about times and\nlocations ",
          "of nodes and individuals from non-slendr tree sequences,\nuse the ",
          "function ts_nodes().\n", call. = FALSE)
-  samples <- attr(ts, "metadata")$sampling %>%
-    dplyr::filter(name %in% attr(ts, "metadata")$sample_names)
+
+  samples <- attr(ts, "metadata")$sampling
+  metadata <- attr(ts, "metadata")
+
+  if (length(metadata$sample_names) != length(metadata$subset_names))
+    samples <- dplyr::filter(samples, name %in% metadata$subset_names)
 
   samples
 }
@@ -2478,7 +2487,8 @@ get_ts_raw_individuals <- function(ts) {
   # create a data frame which will form the output table with individuals in the tree sequence
   # (unlike the raw tree-sequence tables, IDs are explicitly stored as 0-based columns)
   ind_table <- dplyr::tibble(
-    ind_id = seq_len(ts$num_individuals) - 1
+    # ind_id = seq_len(ts$num_individuals) - 1
+    ind_id = as.numeric(reticulate::iterate(ts$individuals(), function(ind) ind$id, simplify = TRUE))
   )
 
   if (attr(ts, "type") == "SLiM") {
@@ -2503,6 +2513,8 @@ get_ts_raw_individuals <- function(ts) {
     } else {
       ind_table$time <- ts$individual_times
       # for pure SLiM tree sequences, simply use the sampling information encoded in the data
+      # TODO: Check that this `seq(ts$num_nodes) - 1` doesn't break when filter_nodes = FALSE
+      #       during simplification.
       ind_table$sampled <- ind_table$ind_id %in% unique(nodes[(seq(ts$num_nodes) - 1) %in% as.integer(ts$samples())]$individual)
       # ind_table$sampled <- ifelse(is.na(ind_table$sampled), FALSE, TRUE)
     }
@@ -2510,7 +2522,9 @@ get_ts_raw_individuals <- function(ts) {
   } else { # msprime tree-sequence table
     nodes_table <- dplyr::tibble(
       ind_id = nodes$individual,
-      pop_id = nodes$population
+      pop_id = nodes$population,
+      # sampled = reticulate::iterate(ts$nodes(), function(node) node$is_sample() == 1, simplify = TRUE)
+      sampled = nodes[["flags"]] == tskit$NODE_IS_SAMPLE
     )
 
     if (from_slendr)
@@ -2523,8 +2537,9 @@ get_ts_raw_individuals <- function(ts) {
 
     ind_table <- dplyr::inner_join(ind_table, nodes_table, by = "ind_id")
 
-    # in a non-SLiM tree sequence, genomes/nodes of all individuals are "samples"
-    ind_table$sampled <- TRUE
+    # # in a non-SLiM tree sequence, genomes/nodes of all individuals are "samples"
+    # # (FIXED: untrue because of simplification! `sampled` is now joined in from the nodes table)
+    # ind_table$sampled <- TRUE
   }
 
   if (attr(ts, "spatial")) {
@@ -2622,7 +2637,7 @@ get_pyslim_table_data <- function(ts, simplify_to = NULL) {
     # (this is achieved by the filter() step right below)
     samples <- attr(ts, "metadata")$sampling %>%
       dplyr::arrange(-time, pop) %>%
-      dplyr::filter(name %in% attr(ts, "metadata")$sample_names)
+      dplyr::filter(name %in% attr(ts, "metadata")$subset_names)
     if (!is.null(simplify_to))
       samples <- samples %>% dplyr::filter(name %in% simplify_to)
   } else
@@ -2719,11 +2734,14 @@ get_tskit_table_data <- function(ts, simplify_to = NULL) {
     # subset of sampled nodes -- in these situations, subset the original sampling table
     # using the names of sampled individuals that are propagated through serialization
     samples <- attr(ts, "metadata")$sampling %>%
-      dplyr::filter(name %in% attr(ts, "metadata")$sample_names)
+      dplyr::arrange(-time, pop) %>%
+      dplyr::filter(name %in% attr(ts, "metadata")$subset_names)
     if (!is.null(simplify_to))
       samples <- dplyr::filter(samples, name %in% simplify_to)
-    samples <- dplyr::arrange(samples, -time, pop)
-    individuals <- dplyr::mutate(individuals, name = samples$name)
+    # this was originally broken for simplification
+    # individuals <- dplyr::mutate(individuals, name = samples$name)
+    individuals$name <- NA
+    individuals$name[individuals$sampled] <- samples$name
   }
 
   # some tree sequence don't have any information about individuals -- for those cases,
@@ -3023,16 +3041,14 @@ get_sampling <- function(metadata) {
         dplyr::filter(., n > 1) %>% .[rep(seq_len(nrow(.)), .$n), ]
       )
     } %>%
-    dplyr::group_by(pop) %>%
-    dplyr::mutate(name = paste0(pop, "_", 1:dplyr::n())) %>%
-    dplyr::ungroup() %>%
     dplyr::arrange(-time_orig, pop) %>%
+    dplyr::mutate(name = metadata$sample_names) %>% # we can no longer rely on automated symbolic names
     dplyr::rename(time = time_orig) %>%
     dplyr::select(name, time, pop)
 
   # if needed (i.e. after simplification to a smaller set of sampled individuals), subset
   # the full original sampling schedule table to only individuals of interest
-  df %>% dplyr::filter(name %in% metadata$sample_names)
+  df %>% dplyr::filter(name %in% metadata$subset_names)
 }
 
 # Extract list with slendr metadata (created as Eidos Dictionaries by SLiM and Python
@@ -3051,11 +3067,18 @@ get_slendr_metadata <- function(ts) {
     arguments <- metadata$arguments
   }
 
+  if (is.null(metadata$subset_names)) {
+    metadata$subset_names <- metadata$sample_names
+  } else {
+    metadata$subset_names <- metadata$subset_names
+  }
+
   list(
     version = metadata$version,
     description = metadata$description,
     sampling = get_sampling(metadata),
     sample_names = metadata$sample_names,
+    subset_names = metadata$subset_names,
     sample_ids = metadata$sample_ids,
     map = metadata$map[[1]],
     arguments = arguments

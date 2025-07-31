@@ -1,6 +1,6 @@
 Package: slendr
 Title: A Simulation Framework for Spatiotemporal Population Genetics
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: 
     person(given = "Martin",
            family = "Petr",
@@ -44,8 +44,8 @@ URL: https://github.com/bodkan/slendr
 BugReports: https://github.com/bodkan/slendr/issues
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2025-06-03 12:20:18 UTC; mp
+Packaged: 2025-07-31 13:31:33 UTC; mp
 Author: Martin Petr [aut, cre] (ORCID: <https://orcid.org/0000-0003-4879-8421>)
 Maintainer: Martin Petr <contact@bodkan.net>
 Repository: CRAN
-Date/Publication: 2025-06-03 13:40:01 UTC
+Date/Publication: 2025-07-31 14:50:02 UTC

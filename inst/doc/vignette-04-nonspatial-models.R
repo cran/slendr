@@ -73,3 +73,27 @@ introgression_model <- read_model(path = system.file("extdata/models/introgressi
 
 extract_parameters(introgression_model)
 
+## -----------------------------------------------------------------------------
+schedule_amh <- schedule_sampling(
+  model,
+  times = c(0, 5000, 12000, 20000, 35000, 39000, 43000),
+  list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
+)
+
+schedule_ui <- schedule_sampling(model, times = 45000, list(ooa, 1, "Ust_Ishim"))
+
+# bind the two tables together into a single schedule
+schedule <- rbind(schedule_amh, schedule_ui)
+
+## -----------------------------------------------------------------------------
+ts <- msprime(model, sequence_length = 100000, recombination_rate = 0, samples = schedule)
+
+## ----eval=FALSE---------------------------------------------------------------
+# ts_samples(ts)
+
+## ----echo=FALSE---------------------------------------------------------------
+ts_samples(ts) %>% as.data.frame()
+
+## -----------------------------------------------------------------------------
+ts_f3(ts, A = "AFR_1", B = "EUR_1", C = "Ust_Ishim", mode = "branch")
+

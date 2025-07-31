@@ -1,6 +1,26 @@
+# slendr 1.2.0
+
+- Due to new kind of issues related to conda activating environments in an incorrect path which [started to pop up](https://github.com/bodkan/slendr/issues/179) (possibly due to a misfeature in the reticulate package), activating procedure in _slendr_ was reverted to a slow, but apparently [more robust approach](https://github.com/bodkan/slendr/pull/182/commits/de868c160fb8eafd278676b98fd99edc90373c61). This will unfortunately make running massively parallelized simulations on Windows problematic due to a hard-to-detect race condition in conda. Users are advised to execute parallelized simulations on unix systems. ([PR #182](https://github.com/bodkan/slendr/pull/182))
+
+- _slendr_ now allows recording of specific singular samples under unique names. See the documentation to `schedule_sampling()` for an example. ([PR #181](https://github.com/bodkan/slendr/pull/181))
+
+- The dependency _rnaturalearth_ has introduced some low-level changes that required minor tweaks to _slendr_'s spatial internals. Thanks to @PMassicotte for his kind help on fixing this! ([PR #180](https://github.com/bodkan/slendr/pull/180))
+
+- Fixed an issue with setting `lock = TRUE` in the `set_range()` function (issue #176 reported by @Sgornard -- thank you!). ([#6d01e407](https://github.com/bodkan/slendr/commit/6d01e407))
+
+- If a non-spatial population is created which has a spatial parent population, _slendr_ gives an informative error message. ([#6bb646](https://github.com/bodkan/slendr/commit/6bb646))
+
+- `plot_model()` now uses the same color for population ranges and population labels.  ([#c54632e5](https://github.com/bodkan/slendr/commit/c54632e5))
+
+- `plot_map()` can now optionally visualize splits in a spatial setting ([#4664388c](https://github.com/bodkan/slendr/commit/4664388c))
+
+- `plot_model()` now plots y-axis time using a more readable integer scale.  ([#6b0e7fcc](https://github.com/bodkan/slendr/commit/6b0e7fcc))
+
 # slendr 1.1.0
 
-- SLiM 5 is now required to run `slim()` simulations with _slendr_. Similarly, _tskit_ and _msprime_ have been upgraded to versions 0.6.4 and 1.3.4, respectively. ([PR #183](https://github.com/bodkan/slendr/pull/173))
+A relatively modest release, mostly pushed out to keep _slendr_ in step with the recent release of SLiM 5.0 and new releases of  _msprime_ and _tskit_. As a result, _slendr_'s SLiM-based functionality (and particularly its new "SLiM extension" mechanism) requires SLiM 5.0
+
+- SLiM 5 is now required to run `slim()` simulations with _slendr_. Similarly, _tskit_ and _msprime_ have been upgraded to versions 0.6.4 and 1.3.4, respectively. ([PR #173](https://github.com/bodkan/slendr/pull/173))
 
 - `schedule_sampling()` now checks that all sampled populations are actually present in the compiled model ([#97abf75](https://github.com/bodkan/slendr/commit/97abf75))
 
@@ -13,7 +33,6 @@
 - `get_python()` now replaces a `get_env()` function introduced in an earlier release. This function returns the full path to a Python binary which is part of the _slendr_ virtual Python environment. As such, it can be directly ran on the command line, and the resulting Python session will have all of the _slendr_ Python dependencies (_tskit_, _msprime_, etc.) available for import. ([#a76d3f](https://github.com/bodkan/slendr/commit/a76d3f))
 
 - A new option `quiet =` now controls whether or not should `ts_genotypes()` write a message if any multiallelic sites are encountered during conversion from a tree-sequence object. ([#9260c6](https://github.com/bodkan/slendr/commit/9260c6))
-
 
 # slendr 1.0.0
 

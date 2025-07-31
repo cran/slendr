@@ -161,7 +161,7 @@ model <- compile_model(
 )
 
 ## -----------------------------------------------------------------------------
-list.files(model_dir, pattern = "*.jpg")
+list.files(model_dir, pattern = "*.png")
 
 ## -----------------------------------------------------------------------------
 read.table(file.path(model_dir, "populations.tsv"), header = TRUE)
