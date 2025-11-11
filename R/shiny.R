@@ -5,10 +5,13 @@
 #' @return No return value, called in order to start an interactive browser-based
 #'   interface to explore the dynamics of a slendr model
 #'
-#' @import shiny
 #' @export
 explore_model <- function(model) {
   check_spatial_pkgs()
+
+  if (!requireNamespace("shiny", quietly = TRUE) || !requireNamespace("shinyWidgets", quietly = TRUE))
+    message("For interactive model visualization, please install the R packages ",
+            "shiny and shinyWidgets\nby calling `install.packages(c(\"shiny\", \"shinyWidgets\"))`")
 
   if (!has_map(model$populations[[1]]))
     stop("Cannot plot spatial map dynamics for non-spatial models.
@@ -80,62 +83,62 @@ the demographic history encapsulated in your model.",
 
   interpolated_maps <- fill_maps(model$populations, time_point_snapshots)
 
-  ui <- fluidPage(
-    tags$style(type = "text/css", ".recalculating { opacity: 1.0; }"),
+  ui <- shiny::fluidPage(
+    shiny::tags$style(type = "text/css", ".recalculating { opacity: 1.0; }"),
 
-    navbarPage(
+    shiny::navbarPage(
       "Model explorer",
 
-      tabPanel(
+      shiny::tabPanel(
         "Spatial dynamics",
 
-        sidebarLayout(
+        shiny::sidebarLayout(
 
-          sidebarPanel(
+          shiny::sidebarPanel(
 
-            htmlOutput(outputId = "time_label"),
+            shiny::htmlOutput(outputId = "time_label"),
 
-            br(),
+            shiny::br(),
 
-            fluidRow(
-              column(2, actionButton("previous_time", label = "",
-                                     icon = icon("angle-double-left", "fa-1x"))),
+            shiny::fluidRow(
+              shiny::column(2, shiny::actionButton("previous_time", label = "",
+                                     icon = shiny::icon("angle-double-left", "fa-1x"))),
 
-              column(8, shinyWidgets::sliderTextInput(
+              shiny::column(8, shinyWidgets::sliderTextInput(
                 inputId = "time_slider",
                 label = "",
                 choices = rev(time_point_snapshots),
                 selected = max(time_point_snapshots),
                 width = "100%",
-                animate = animationOptions(interval = 2000, loop = FALSE)
+                animate = shiny::animationOptions(interval = 2000, loop = FALSE)
               )),
 
-              column(2, actionButton("next_time", label = "",
-                                     icon = icon("angle-double-right", "fa-1x")))
+              shiny::column(2, shiny::actionButton("next_time", label = "",
+                                     icon = shiny::icon("angle-double-right", "fa-1x")))
             ),
 
-            selectInput(
+            shiny::selectInput(
               inputId = "time_select",
               label = "Select event:",
               choices = event_choices,
               selected = max(time_point_snapshots)
             ),
 
-            selectInput(
+            shiny::selectInput(
               inputId = "coord_system",
               label = "Coordinate system:",
               choices = coord_choice
             ),
 
-            fluidRow(
-              column(4, checkboxInput(
+            shiny::fluidRow(
+              shiny::column(4, shiny::checkboxInput(
                 inputId = "intersect",
                 label = "Intersect ranges",
                 value = TRUE
               )),
 
               if (nrow(model$world)) {
-                column(4, checkboxInput(
+                shiny::column(4, shiny::checkboxInput(
                   inputId = "show_map",
                   label = "Show map",
                   value = TRUE
@@ -143,28 +146,28 @@ the demographic history encapsulated in your model.",
               } else NULL,
 
               if (!is.null(model$geneflow)) {
-                column(4, checkboxInput(
+                shiny::column(4, shiny::checkboxInput(
                   inputId = "show_geneflows",
-                  label = "Indicate geneflows",
+                  label = "Indicate gene flows",
                   value = TRUE
                 ))
               } else NULL,
             ),
 
-            p(strong("Generation time: "), model$generation_time, " time units")
+            shiny::p(shiny::strong("Generation time: "), model$generation_time, " time units")
 
           ),
 
-          mainPanel(
+          shiny::mainPanel(
 
-            fluidRow(
+            shiny::fluidRow(
               align = "center",
 
-              plotOutput(outputId = "slendr_maps", height = 480),
+              shiny::plotOutput(outputId = "slendr_maps", height = 480),
 
-              hr(),
+              shiny::hr(),
 
-              tableOutput("geneflows_table")
+              shiny::tableOutput("geneflows_table")
 
             )
 
@@ -173,12 +176,12 @@ the demographic history encapsulated in your model.",
 
       ), # tabPanel
 
-      tabPanel(
+      shiny::tabPanel(
         "Population history graph",
 
-          mainPanel(
+          shiny::mainPanel(
 
-            plotOutput(outputId = "slendr_graph")
+            shiny::plotOutput(outputId = "slendr_graph")
 
           )
 
@@ -191,7 +194,7 @@ the demographic history encapsulated in your model.",
 
   server <- function(input, output, session) {
 
-    output$time_label = renderText({
+    output$time_label = shiny::renderText({
       event <- events[events$time == input$time_slider, "event"]
       if (length(event))
         label <- sprintf("<i>(%s)</i>", event)
@@ -200,22 +203,22 @@ the demographic history encapsulated in your model.",
       sprintf("<b>Time point:</b> %s %s", input$time_slider, label)
     })
 
-    observeEvent(input$time_select, {
+    shiny::observeEvent(input$time_select, {
       value <- as.numeric(input$time_select)
       shinyWidgets::updateSliderTextInput(session, "time_slider", selected = value)
     }, ignoreInit = TRUE)
 
-    observeEvent(input$previous_time, {
+    shiny::observeEvent(input$previous_time, {
       value <- get_time_point(time_point_snapshots, input$time_slider, "previous")
       shinyWidgets::updateSliderTextInput(session, "time_slider", selected = value)
     })
 
-    observeEvent(input$next_time, {
+    shiny::observeEvent(input$next_time, {
       value <- get_time_point(time_point_snapshots, input$time_slider, "next")
       shinyWidgets::updateSliderTextInput(session, "time_slider", selected = value)
     })
 
-    output$slendr_maps <- renderPlot({
+    output$slendr_maps <- shiny::renderPlot({
 
       plot_map(
         model,
@@ -229,7 +232,7 @@ the demographic history encapsulated in your model.",
 
     })
 
-    output$geneflows_table <- renderTable({
+    output$geneflows_table <- shiny::renderTable({
       if (!is.null(model$geneflow)) {
         migr_df <- get_geneflows(model, input$time_slider)
         table <- migr_df[, c("from", "to", "tstart_orig", "tend_orig", "rate")]
@@ -244,11 +247,11 @@ the demographic history encapsulated in your model.",
       } else return(NULL)
     }, sanitize.text.function = identity)
 
-    output$slendr_graph <- renderPlot({ plot_model(model) }, height = 600)
+    output$slendr_graph <- shiny::renderPlot({ plot_model(model) }, height = 600)
 
   }
 
-  shinyApp(ui, server)
+  shiny::shinyApp(ui, server)
 }
 
 # Take a list of slendr_pop population boundary objects and

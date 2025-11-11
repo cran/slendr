@@ -1,13 +1,11 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr::check_dependencies(python = TRUE)
-
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = slendr:::is_slim_present() && env_present && Sys.which("qpDstat") != ""
+  eval = Sys.which("qpDstat") != "" && slendr::check_dependencies(python = TRUE, slim = TRUE)
 )
 
 ## -----------------------------------------------------------------------------
@@ -123,7 +121,7 @@ tree <- ts_phylo(ts_small, 42 - 1)
 ## -----------------------------------------------------------------------------
 tree
 
-## ----plot_ggtree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.which("qpDstat") != ""----
+## ----plot_ggtree, eval = slendr::check_dependencies(python = TRUE, slim = TRUE) && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.which("qpDstat") != ""----
 # library(ggtree)
 # 
 # ggtree(tree) +
@@ -131,7 +129,7 @@ tree
 #   geom_tiplab() + # sample labels for tips
 #   hexpand(0.1)    # make more space for the tip labels
 
-## ----plot_apetree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.which("qpDstat") != ""----
+## ----plot_apetree, eval = slendr::check_dependencies(python = TRUE, slim = TRUE) && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.which("qpDstat") != ""----
 library(ape)
 plot(tree)
 nodelabels()
@@ -190,13 +188,13 @@ dplyr::filter(inds, pop == "EUR") %>%
 ## -----------------------------------------------------------------------------
 snps <- ts_eigenstrat(ts, prefix = file.path(tempdir(), "eigenstrat", "data"))
 
-## ----eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
+## ----eval = Sys.which("qpDstat") != "" && slendr::check_dependencies(python = TRUE) && Sys.getenv("R_HAS_GGTREE") == TRUE----
 # library(admixr)
 # 
 # f4ratio(data = snps, X = c("EUR_1", "EUR_2", "AFR_2"),
 #         A = "NEA_1", B = "NEA_2", C = "AFR_1", O = "CH_1")
 
-## ----ts_vs_admixr, eval = Sys.which("qpDstat") != "" && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE----
+## ----ts_vs_admixr, eval = Sys.which("qpDstat") != "" && slendr::check_dependencies(python = TRUE) && Sys.getenv("R_HAS_GGTREE") == TRUE----
 # europeans <- inds[inds$pop == "EUR", ]$name
 # 
 # # tskit result

@@ -1,13 +1,11 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr::check_dependencies(python = TRUE)
-
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
   fig.width = 6,
   fig.height = 4,
   dpi = 60,
-  eval = slendr:::is_slim_present() && env_present
+  eval = slendr::check_dependencies(python = TRUE, slim = TRUE)
 )
 
 ## -----------------------------------------------------------------------------
@@ -60,7 +58,7 @@ ts
 ## ----plot_gif_interactions, message = FALSE, eval = FALSE---------------------
 # animate_model(model, locations_file, steps = 80, width = 500, height = 200)
 
-## ----plot_interactions, eval = Sys.which("slim") != "" && env_present---------
+## ----plot_interactions, eval = slendr::check_dependencies(python = TRUE, slim = TRUE)----
 library(ggplot2)
 
 locations <- ts_nodes(ts) %>% dplyr::filter()

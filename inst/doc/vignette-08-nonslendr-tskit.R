@@ -1,6 +1,4 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr::check_dependencies(python = TRUE)
-
 #if (Sys.getenv("RUNNER_OS") == "Windows") {
 #  bash_path <- "D:/a/_temp/msys64/usr/bin/bash.exe"
 #} else {
@@ -13,7 +11,7 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 5,
   dpi = 60,
-  eval = slendr:::is_slim_present() && env_present && Sys.getenv("RUNNER_OS") != "Windows"#,
+  eval = Sys.getenv("RUNNER_OS") != "Windows" && slendr::check_dependencies(python = TRUE, slim = TRUE)
   #engine.path = list(bash = bash_path)
 )
 
@@ -69,7 +67,7 @@ ts_small <- ts_simplify(ts, simplify_to = samples)
 tree <- ts_phylo(ts_small, 42 - 1)
 tree
 
-## ----nonslendr_tree, eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.getenv("RUNNER_OS") != "Windows"----
+## ----nonslendr_tree, eval = slendr::check_dependencies(python = TRUE, slim = TRUE) && Sys.getenv("R_HAS_GGTREE") == TRUE && Sys.getenv("RUNNER_OS") != "Windows"----
 # library(ggtree)
 # 
 # labels <- ts_nodes(tree) %>% select(node = phylo_id, tskit_id = node_id)
@@ -77,7 +75,7 @@ tree
 # ggtree(tree, branch.length = "none") %<+% labels +
 #   geom_label(aes(label = tskit_id))
 
-## ----eval = slendr:::is_slim_present() && env_present && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") != "Windows"----
+## ----ape_tree, eval = slendr::check_dependencies(python = TRUE, slim = TRUE) && Sys.getenv("R_HAS_GGTREE") != TRUE && Sys.getenv("RUNNER_OS") != "Windows"----
 library(ape)
 plot(tree, show.tip.label = FALSE)
 nodelabels()

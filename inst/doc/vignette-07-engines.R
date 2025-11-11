@@ -1,13 +1,11 @@
 ## ----include = FALSE----------------------------------------------------------
-env_present <- slendr::check_dependencies(python = TRUE)
-
 knitr::opts_chunk$set(
   collapse = FALSE,
   comment = "#>",
   fig.width = 8,
   fig.height = 6,
   dpi = 60,
-  eval = slendr:::is_slim_present() && env_present
+  eval = slendr::check_dependencies(python = TRUE, slim = TRUE)
 )
 
 ## ----message = FALSE----------------------------------------------------------

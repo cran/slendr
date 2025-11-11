@@ -1,5 +1,7 @@
 ## ----include = FALSE----------------------------------------------------------
-run_vignette <- Sys.getenv("RUNNER_OS") == "" && slendr::check_dependencies(python = TRUE, slim = TRUE, quit = FALSE)
+RERUN <- FALSE
+
+run_vignette <- Sys.getenv("RUNNER_OS") == "" && slendr::check_dependencies(python = TRUE, slim = TRUE)
 
 knitr::opts_chunk$set(
   collapse = FALSE,
@@ -9,8 +11,6 @@ knitr::opts_chunk$set(
   dpi = 60,
   eval = run_vignette
 )
-
-RERUN <- FALSE
 
 ## ----collapse = TRUE, message = FALSE-----------------------------------------
 library(slendr)
