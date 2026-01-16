@@ -344,7 +344,7 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
 
   # extract times at which each population will be removed from the simulation
   if (model$direction == "backward")
-    default_end <- log10_ydelta
+    default_end <- get_oldest_time(model$populations, model$direction) - model$orig_length + log10_ydelta
   else
     default_end <- get_oldest_time(model$populations, model$direction) + model$orig_length
 
@@ -544,7 +544,7 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
     p <- p + geom_point(data = gene_flow, aes(x = x, y = y))
     if (proportions) {
       p <- p + geom_label(data = gene_flow,
-                          aes(label = sprintf("%s%%", 100 * rate),
+                          aes(label = sprintf("%s%%", 100 * proportion),
                               x = xend - (xend - x) / 2,
                               y = y + (yend + log10_ydelta - y) / 2), size = 3)
     }

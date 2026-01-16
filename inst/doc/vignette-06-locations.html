@@ -376,8 +376,8 @@ sequence in a spatial context.</p>
 <p>We begin by specifying our spatial model. We will use the same
 demographic model of modern human history in West Eurasia, which we
 extensively discussed in the <a href="vignette-01-tutorial.html">introductory tutorial</a> and on the
-main <a href="../index.html">landing page</a>. Here is a complete model
-definition script, without further comments:</p>
+main <a href="https://bodkan.net/slendr/">landing page</a>. Here is a
+complete model definition script, without further comments:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># simulated world map</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>map <span class="ot">&lt;-</span> <span class="fu">world</span>(</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">xrange =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">13</span>, <span class="dv">70</span>), <span class="co"># min-max longitude</span></span>
@@ -453,9 +453,9 @@ definition script, without further comments:</p>
 <span id="cb2-73"><a href="#cb2-73" tabindex="-1"></a></span>
 <span id="cb2-74"><a href="#cb2-74" tabindex="-1"></a><span class="co"># geneflow events</span></span>
 <span id="cb2-75"><a href="#cb2-75" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-76"><a href="#cb2-76" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> yam, <span class="at">rate =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">6000</span>, <span class="at">end =</span> <span class="dv">5000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb2-77"><a href="#cb2-77" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> eur, <span class="at">rate =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">8000</span>, <span class="at">end =</span> <span class="dv">6000</span>),</span>
-<span id="cb2-78"><a href="#cb2-78" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> yam, <span class="at">to =</span> eur, <span class="at">rate =</span> <span class="fl">0.75</span>, <span class="at">start =</span> <span class="dv">4000</span>, <span class="at">end =</span> <span class="dv">3000</span>)</span>
+<span id="cb2-76"><a href="#cb2-76" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> yam, <span class="at">proportion =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">6000</span>, <span class="at">end =</span> <span class="dv">5000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb2-77"><a href="#cb2-77" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> eur, <span class="at">proportion =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">8000</span>, <span class="at">end =</span> <span class="dv">6000</span>),</span>
+<span id="cb2-78"><a href="#cb2-78" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> yam, <span class="at">to =</span> eur, <span class="at">proportion =</span> <span class="fl">0.75</span>, <span class="at">start =</span> <span class="dv">4000</span>, <span class="at">end =</span> <span class="dv">3000</span>)</span>
 <span id="cb2-79"><a href="#cb2-79" tabindex="-1"></a>)</span>
 <span id="cb2-80"><a href="#cb2-80" tabindex="-1"></a></span>
 <span id="cb2-81"><a href="#cb2-81" tabindex="-1"></a><span class="co"># compile the spatial model</span></span>

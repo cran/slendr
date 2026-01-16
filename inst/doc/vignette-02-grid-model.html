@@ -419,7 +419,7 @@ relationships on the two-dimensional grid, allowing each population to
 exchange migrants with each of its neighbors (making sure the
 coordinates of each population stay within the grid using simple modulo
 arithmetic on the population index <em>i</em>).</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>set_geneflow <span class="ot">&lt;-</span> <span class="cf">function</span>(i, n_side, rate, start, end, populations) {</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>set_geneflow <span class="ot">&lt;-</span> <span class="cf">function</span>(i, n_side, proportion, start, end, populations) {</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  pop <span class="ot">&lt;-</span> populations[[i]]</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="co"># get the position of the i-th population on the n*n grid</span></span>
@@ -438,8 +438,8 @@ arithmetic on the population index <em>i</em>).</p>
 <span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(neighbor)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
 <span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a></span>
 <span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>    <span class="fu">rbind</span>(</span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>      <span class="fu">gene_flow</span>(<span class="at">from =</span> pop, <span class="at">to =</span> neighbor, <span class="at">rate =</span> rate, <span class="at">start =</span> start, <span class="at">end =</span> end, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>      <span class="fu">gene_flow</span>(<span class="at">from =</span> neighbor, <span class="at">to =</span> pop, <span class="at">rate =</span> rate, <span class="at">start =</span> start, <span class="at">end =</span> end, <span class="at">overlap =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>      <span class="fu">gene_flow</span>(<span class="at">from =</span> pop, <span class="at">to =</span> neighbor, <span class="at">proportion =</span> proportion, <span class="at">start =</span> start, <span class="at">end =</span> end, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>      <span class="fu">gene_flow</span>(<span class="at">from =</span> neighbor, <span class="at">to =</span> pop, <span class="at">proportion =</span> proportion, <span class="at">start =</span> start, <span class="at">end =</span> end, <span class="at">overlap =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>    )</span>
 <span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  }) <span class="sc">%&gt;%</span></span>
 <span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>    <span class="fu">do.call</span>(rbind, .)</span>
@@ -451,17 +451,17 @@ population in the lower left corner of the grid (so, the very first
 population in the series)? If everything works, this population should
 only be allowed to exchange migrants with its neighbor to the right
 (population number 2) and its neighbor above.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">set_geneflow</span>(<span class="dv">1</span>, n, <span class="at">rate =</span> <span class="fl">0.1</span>, <span class="at">start =</span> <span class="dv">2</span>, <span class="at">end =</span> <span class="dv">1000</span>, populations)</span></code></pre></div>
-<pre><code>#&gt;   from_name to_name tstart tend rate overlap
-#&gt; 1      pop1    pop2      2 1000  0.1   FALSE
-#&gt; 2      pop2    pop1      2 1000  0.1   FALSE
-#&gt; 3      pop1    pop6      2 1000  0.1   FALSE
-#&gt; 4      pop6    pop1      2 1000  0.1   FALSE</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">set_geneflow</span>(<span class="dv">1</span>, n, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">start =</span> <span class="dv">2</span>, <span class="at">end =</span> <span class="dv">1000</span>, populations)</span></code></pre></div>
+<pre><code>#&gt;   from_name to_name tstart tend proportion overlap
+#&gt; 1      pop1    pop2      2 1000        0.1   FALSE
+#&gt; 2      pop2    pop1      2 1000        0.1   FALSE
+#&gt; 3      pop1    pop6      2 1000        0.1   FALSE
+#&gt; 4      pop6    pop1      2 1000        0.1   FALSE</code></pre>
 <p>Looks right! Let’s generate the entire set of continuous gene flow
 events:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>geneflows <span class="ot">&lt;-</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="fu">seq</span>(<span class="dv">1</span>, n <span class="sc">*</span> n) <span class="sc">%&gt;%</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="fu">lapply</span>(set_geneflow, n, <span class="at">rate =</span> <span class="fl">0.05</span>, <span class="at">start =</span> <span class="dv">2</span>, <span class="at">end =</span> <span class="dv">1000</span>, populations) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="fu">lapply</span>(set_geneflow, n, <span class="at">proportion =</span> <span class="fl">0.05</span>, <span class="at">start =</span> <span class="dv">2</span>, <span class="at">end =</span> <span class="dv">1000</span>, populations) <span class="sc">%&gt;%</span></span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, .) <span class="sc">%&gt;%</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  unique <span class="co"># filter out duplicate events due to symmetries</span></span></code></pre></div>
 <p>The total number of individual gene flow events is:</p>
@@ -496,19 +496,19 @@ function.</p>
 #&gt; ╔═══════════╤═════╤═════════╤════════════╗
 #&gt; ║Table      │Rows │Size     │Has Metadata║
 #&gt; ╠═══════════╪═════╪═════════╪════════════╣
-#&gt; ║Edges      │9,073│283.5 KiB│          No║
+#&gt; ║Edges      │9,103│284.5 KiB│          No║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
-#&gt; ║Individuals│6,338│620.5 KiB│         Yes║
+#&gt; ║Individuals│6,361│622.8 KiB│         Yes║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
 #&gt; ║Migrations │    0│  8 Bytes│          No║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
 #&gt; ║Mutations  │    0│  1.2 KiB│          No║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
-#&gt; ║Nodes      │9,099│330.4 KiB│         Yes║
+#&gt; ║Nodes      │9,129│331.5 KiB│         Yes║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
 #&gt; ║Populations│   25│  5.7 KiB│         Yes║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
-#&gt; ║Provenances│    1│ 43.5 KiB│          No║
+#&gt; ║Provenances│    1│ 43.6 KiB│          No║
 #&gt; ╟───────────┼─────┼─────────┼────────────╢
 #&gt; ║Sites      │    0│ 16 Bytes│          No║
 #&gt; ╚═══════════╧═════╧═════════╧════════════╝</code></pre>
@@ -621,38 +621,38 @@ complex interaction/gene-flow network between each deme, which we can
 encode like this (instead of forcing a regular arrangement of demes and
 gene-flow interactions in previous examples):</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p1, p2, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p2, p1, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p1, p3, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p1, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p2, p3, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p2, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p2, p7, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p2, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p7, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p3, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p8, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p8, p7, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p7, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p4, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p5, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p5, p4, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p5, p6, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p6, p5, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p4, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p3, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p1, p9, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p9, p1, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p9, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p9, p3, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p9, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-27"><a href="#cb21-27" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p9, p4, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-28"><a href="#cb21-28" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p10, p4, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-29"><a href="#cb21-29" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p10, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-30"><a href="#cb21-30" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p10, p8, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-31"><a href="#cb21-31" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p8, p10, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-32"><a href="#cb21-32" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p10, p5, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb21-33"><a href="#cb21-33" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p5, p10, <span class="fl">0.1</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p1, p2, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p2, p1, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p1, p3, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p1, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p2, p3, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p2, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p2, p7, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p2, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p7, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p3, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p8, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p8, p7, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p7, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p7, p4, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p5, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p5, p4, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p5, p6, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p6, p5, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p4, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p3, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p1, p9, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p9, p1, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p3, p9, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p9, p3, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p9, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-27"><a href="#cb21-27" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p9, p4, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-28"><a href="#cb21-28" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p10, p4, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-29"><a href="#cb21-29" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p4, p10, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-30"><a href="#cb21-30" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p10, p8, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-31"><a href="#cb21-31" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p8, p10, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-32"><a href="#cb21-32" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p10, p5, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb21-33"><a href="#cb21-33" tabindex="-1"></a>  <span class="fu">gene_flow</span>(p5, p10, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb21-34"><a href="#cb21-34" tabindex="-1"></a>)</span></code></pre></div>
 <p>Now we can compile the model&amp;nbsp`with a twist, however: because
 we will only try to simulate data in a non-spatial way using

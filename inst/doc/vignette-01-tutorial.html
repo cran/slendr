@@ -392,7 +392,7 @@ and tailor the simulation run to the user-defined model. Alternatively,
 <em>slendr</em> also supports executing standard population genetics
 models in a random-mating setting. This means that models do not need an
 explicit geographic map and can be simulated either with the same
-built-in SLiM back end script, or with a more efficient <a href="https://slendr.net/articles/vignette-07-backends.html"><em>msprime</em>
+built-in SLiM back end script, or with a more efficient <a href="https://bodkan.net/slendr/articles/vignette-07-engines.html"><em>msprime</em>
 back end</a> which is also provided with the package.</p></li>
 </ol>
 <p>The most important design objective was to make the integration of
@@ -775,7 +775,7 @@ a given point in space-time.</p>
 you’ll see that the European and African populations don’t have any
 overlap in population ranges. If we try to instruct <em>slendr</em> to
 simulate geneflow between them, we will get an error:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">gene_flow</span>(<span class="at">from =</span> eur, <span class="at">to =</span> afr, <span class="at">rate =</span> <span class="fl">0.1</span>, <span class="at">start =</span> <span class="dv">20000</span>, <span class="at">end =</span> <span class="dv">15000</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">gene_flow</span>(<span class="at">from =</span> eur, <span class="at">to =</span> afr, <span class="at">proportion =</span> <span class="fl">0.1</span>, <span class="at">start =</span> <span class="dv">20000</span>, <span class="at">end =</span> <span class="dv">15000</span>)</span></code></pre></div>
 <pre><code>Error: No overlap between population ranges of EUR and AFR at time 20000.
 
   Please check the spatial maps of both populations by running
@@ -790,25 +790,25 @@ is set to <code>TRUE</code> by default).</p>
 <p>Many models will include multiple gene flow events, which we can
 collect in a simple R list:</p>
 <div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> yam, <span class="at">rate =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">6500</span>, <span class="at">end =</span> <span class="dv">6400</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> eur, <span class="at">rate =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">8000</span>, <span class="at">end =</span> <span class="dv">6000</span>),</span>
-<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> yam, <span class="at">to =</span> eur, <span class="at">rate =</span> <span class="fl">0.75</span>, <span class="at">start =</span> <span class="dv">4000</span>, <span class="at">end =</span> <span class="dv">3000</span>)</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> yam, <span class="at">proportion =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">6500</span>, <span class="at">end =</span> <span class="dv">6400</span>, <span class="at">overlap =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> ana, <span class="at">to =</span> eur, <span class="at">proportion =</span> <span class="fl">0.5</span>, <span class="at">start =</span> <span class="dv">8000</span>, <span class="at">end =</span> <span class="dv">6000</span>),</span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a>  <span class="fu">gene_flow</span>(<span class="at">from =</span> yam, <span class="at">to =</span> eur, <span class="at">proportion =</span> <span class="fl">0.75</span>, <span class="at">start =</span> <span class="dv">4000</span>, <span class="at">end =</span> <span class="dv">3000</span>)</span>
 <span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a>)</span></code></pre></div>
 <p>The <code>gene_flow()</code> function simply returns a data frame
 collecting all the geneflow parameters for the
 <code>compile_model()</code> step below:</p>
 <div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a>gf</span></code></pre></div>
 <pre><code>#&gt; [[1]]
-#&gt;   from_name to_name tstart tend rate overlap
-#&gt; 1       ANA     YAM   6500 6400  0.5   FALSE
+#&gt;   from_name to_name tstart tend proportion overlap
+#&gt; 1       ANA     YAM   6500 6400        0.5   FALSE
 #&gt; 
 #&gt; [[2]]
-#&gt;   from_name to_name tstart tend rate overlap
-#&gt; 1       ANA     EUR   8000 6000  0.5    TRUE
+#&gt;   from_name to_name tstart tend proportion overlap
+#&gt; 1       ANA     EUR   8000 6000        0.5    TRUE
 #&gt; 
 #&gt; [[3]]
-#&gt;   from_name to_name tstart tend rate overlap
-#&gt; 1       YAM     EUR   4000 3000 0.75    TRUE</code></pre>
+#&gt;   from_name to_name tstart tend proportion overlap
+#&gt; 1       YAM     EUR   4000 3000       0.75    TRUE</code></pre>
 </div>
 <div id="compile-the-whole-model-and-load-it-in-slim" class="section level2">
 <h2>Compile the whole model and load it in SLiM</h2>
@@ -875,10 +875,14 @@ graphically above, namely:</p>
 <li>the table of geneflow events:</li>
 </ul>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a><span class="fu">read.table</span>(<span class="fu">file.path</span>(model_dir, <span class="st">&quot;geneflow.tsv&quot;</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
-<pre><code>#&gt;   from  to rate overlap tstart_gen tstart_orig tend_gen tend_orig from_id to_id
-#&gt; 1  ANA YAM 0.50       0       1518        6500     1521      6400       3     5
-#&gt; 2  ANA EUR 0.50       1       1468        8000     1534      6000       3     4
-#&gt; 3  YAM EUR 0.75       1       1601        4000     1634      3000       5     4</code></pre>
+<pre><code>#&gt;   from  to proportion overlap tstart_gen tstart_orig tend_gen tend_orig from_id
+#&gt; 1  ANA YAM       0.50       0       1518        6500     1521      6400       3
+#&gt; 2  ANA EUR       0.50       1       1468        8000     1534      6000       3
+#&gt; 3  YAM EUR       0.75       1       1601        4000     1634      3000       5
+#&gt;   to_id
+#&gt; 1     5
+#&gt; 2     4
+#&gt; 3     4</code></pre>
 <ul>
 <li>and finally, the table of populations whose spatial maps will be
 updated throughout the simulation, as well as the times of those updates
@@ -970,15 +974,15 @@ user:</p>
 #&gt; ╔═══════════╤══════╤═════════╤════════════╗
 #&gt; ║Table      │Rows  │Size     │Has Metadata║
 #&gt; ╠═══════════╪══════╪═════════╪════════════╣
-#&gt; ║Edges      │18,605│581.4 KiB│          No║
+#&gt; ║Edges      │18,633│582.3 KiB│          No║
 #&gt; ╟───────────┼──────┼─────────┼────────────╢
-#&gt; ║Individuals│12,753│  1.2 MiB│         Yes║
+#&gt; ║Individuals│12,795│  1.2 MiB│         Yes║
 #&gt; ╟───────────┼──────┼─────────┼────────────╢
 #&gt; ║Migrations │     0│  8 Bytes│          No║
 #&gt; ╟───────────┼──────┼─────────┼────────────╢
 #&gt; ║Mutations  │     0│  1.2 KiB│          No║
 #&gt; ╟───────────┼──────┼─────────┼────────────╢
-#&gt; ║Nodes      │18,303│662.9 KiB│         Yes║
+#&gt; ║Nodes      │18,350│664.6 KiB│         Yes║
 #&gt; ╟───────────┼──────┼─────────┼────────────╢
 #&gt; ║Populations│     6│  2.6 KiB│         Yes║
 #&gt; ╟───────────┼──────┼─────────┼────────────╢
@@ -999,27 +1003,27 @@ to <em>slendr</em> than what we demonstrated here. For instance:</p>
 <ul>
 <li><p>You can tweak parameters influencing dispersal dynamics (how
 “clumpy” populations are, how far offspring can migrate from their
-parents, etc.) and change how those dynamics evolve over time. See <a href="https://slendr.net/articles/vignette-03-interactions.html">this
+parents, etc.) and change how those dynamics evolve over time. See <a href="https://bodkan.net/slendr/articles/vignette-03-interactions.html">this
 vignette</a> for more information.</p></li>
 <li><p>You can use <em>slendr</em> to program non-spatial models, which
 means that any standard, Wright-Fisher demographic model can be
 simulated with only a few lines of R code and, for instance, plugged
 into an <a href="https://en.wikipedia.org/wiki/Approximate_Bayesian_computation">Approximate
 Bayesian Computation</a> pipeline or other analyses leveraging readily
-available R packages. You can find more in <a href="https://slendr.net/articles/vignette-04-nonspatial-models.html">this
-vignette</a> and a much more detailed example in a vignette about <a href="https://slendr.net/articles/vignette-07-backends.html">SLiM and
-<em>msprime</em> back ends</a>.</p></li>
+available R packages. You can find more in <a href="https://bodkan.net/slendr/articles/vignette-04-nonspatial-models.html">this
+vignette</a> and a much more detailed example in a vignette about <a href="https://bodkan.net/slendr/articles/vignette-07-engines.html">SLiM
+and <em>msprime</em> back ends</a>.</p></li>
 <li><p>You can build complex spatial models which are still abstract
 (not assuming any real geographic location), including traditional
 simulations of demes in a lattice structure. A complete example is shown
-<a href="https://slendr.net/articles/vignette-02-grid-model.html">in
+<a href="https://bodkan.net/slendr/articles/vignette-02-grid-model.html">in
 this vignette</a>.</p></li>
 <li><p>Because SLiM saves data in the <code>.trees</code> tree-sequence
 file format, thanks to the R package <a href="https://rstudio.github.io/reticulate/index.html"><em>reticulate</em></a>
 for interfacing with Python code you have the incredible power of <a href="https://tskit.dev/"><em>tskit</em></a> and <a href="https://tskit.dev/pyslim/docs/latest/introduction.html"><em>pyslim</em></a>
 to process simulated data at a massive scale right at your fingertips,
 all within the convenient environment of R. See a much more detailed
-example in a vignette about <a href="https://slendr.net/articles/vignette-07-backends.html">this
+example in a vignette about <a href="https://bodkan.net/slendr/articles/vignette-07-engines.html">this
 vignette</a> for an extensive tutorial of this feature.</p></li>
 </ul>
 </div>

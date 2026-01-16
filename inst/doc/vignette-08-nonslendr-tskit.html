@@ -12,7 +12,7 @@
 
 
 
-<title>Analyzing non-slendr tree sequences</title>
+<title>Standard SLiM and msprime tree sequences</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -337,7 +337,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Analyzing non-slendr tree sequences</h1>
+<h1 class="title toc-ignore">Standard SLiM and msprime tree
+sequences</h1>
 
 
 
@@ -378,8 +379,8 @@ provided by <em>slendr</em></a>.</p>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">42</span></span>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">set.seed</span>(SEED)</span></code></pre></div>
-<div id="non-spatial-slim-tree-sequences" class="section level4">
-<h4>Non-spatial SLiM tree sequences</h4>
+<div id="slim-tree-sequences" class="section level2">
+<h2>SLiM tree sequences</h2>
 <p>Consider the following SLiM script, which creates a couple of
 populations (with different <span class="math inline">\(N_e\)</span>)
 splitting from an ancestral population <code>p1</code> (lets save it to
@@ -411,7 +412,7 @@ splitting from an ancestral population <code>p1</code> (lets save it to
 }
 
 6000 late() {
-    sim.treeSeqOutput(&quot;/var/folders/lq/bl36db_s6w908hnjkntdp4140000gn/T//RtmpyDHthW/filebb4e7700da51&quot;);
+    sim.treeSeqOutput(&quot;/var/folders/lq/bl36db_s6w908hnjkntdp4140000gn/T//RtmpbXgvnl/file166dc387152be&quot;);
 }</code></pre>
 <p>After we run this script in SLiM, we can use <em>slendr</em> to load
 the output tree sequence (saved to
@@ -472,7 +473,7 @@ function, by first creating a list of lists with node IDs
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 3 p3    0.000463  </span></span>
 <span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 4 p4    0.000201</span></span></code></pre></div>
 <p>Just as with <em>slendr</em> tree sequences (as demonstrated in our
-<a href="https://slendr.net/articles/vignette-09-paper.html#example-4-figure-5">paper</a>)
+<a href="https://bodkan.net/slendr/articles/vignette-09-paper.html#example-4-figure-5">paper</a>)
 we can get a individual trees too, extracted in the in the phylogenetic
 format provided by the <a href="https://CRAN.R-project.org/package=ape">ape</a> R package. Here we
 first simplify the tree sequence even further to just 10 nodes to make
@@ -496,12 +497,12 @@ things manageable:</p>
 <span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt;   45, 28, 22, 31, 35, 36, ...</span></span>
 <span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; Rooted; includes branch length(s).</span></span></code></pre></div>
-<p>Once we have that R tree object, we can use packages like <a href="https://yulab-smu.top/treedata-book/">ggtree</a> to visualize the
-tree (any other phylogenetic package would work too). Note that because
-nodes of ‘ape phylo’ trees must conform to a strict format (they must be
-labelled <code>1...N</code>), we will extract the information about the
-node IDs in the tskit tree-sequence data to be able to plot them in the
-tree.</p>
+<p>Once we have that R tree object, we can use packages like
+<em>gtree</em> to visualize the tree (any other phylogenetic package
+would work too). Note that because nodes of ‘ape phylo’ trees must
+conform to a strict format (they must be labelled <code>1...N</code>),
+we will extract the information about the node IDs in the tskit
+tree-sequence data to be able to plot them in the tree.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">library</span>(ggtree)</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>labels <span class="ot">&lt;-</span> <span class="fu">ts_nodes</span>(tree) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="at">node =</span> phylo_id, <span class="at">tskit_id =</span> node_id)</span>
@@ -514,8 +515,8 @@ tree.</p>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">tiplabels</span>()</span></code></pre></div>
 <p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
 </div>
-<div id="msprime-non-slendr-tree-sequences" class="section level4">
-<h4>msprime (non-slendr) tree sequences</h4>
+<div id="msprime-tree-sequences" class="section level2">
+<h2>msprime tree sequences</h2>
 <p>The same as above applies also to msprime tree sequences (which is
 really not that surprising, given that it’s all tskit under the
 hood).</p>
@@ -543,11 +544,11 @@ and analyze it with the slendr functionality:</p>
 <span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; 10 0         NA       9     0          0 TRUE         0</span></span>
 <span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt; # ℹ 189 more rows</span></span></code></pre></div>
 </div>
-<div id="spatial-slim-non-slendr-tree-sequences" class="section level4">
-<h4>Spatial SLiM (non-slendr) tree sequences</h4>
+<div id="spatial-slim-tree-sequences" class="section level2">
+<h2>Spatial SLiM tree sequences</h2>
 <p>Furthermore, the generalized interface also supports
-<em>slendr</em>’s <a href="https://slendr.net/articles/vignette-06-locations.html">spatial
-tree-sequence features</a>, with all the <a href="https://slendr.net/articles/vignette-09-paper.html#example-4-figure-5">bells
+<em>slendr</em>’s <a href="https://bodkan.net/slendr/articles/vignette-06-locations.html">spatial
+tree-sequence features</a>, with all the <a href="https://bodkan.net/slendr/articles/vignette-09-paper.html#example-4-figure-5">bells
 and whistles</a>.</p>
 <p>For instance, lets take the following spatial SLiM script (modified
 from the SLiM manual) and execute it with SLiM the usual way:</p>
@@ -583,7 +584,7 @@ modifyChild() {
 }
 
 10000 late() {
-    sim.treeSeqOutput(&quot;/var/folders/lq/bl36db_s6w908hnjkntdp4140000gn/T//RtmpyDHthW/filebb4e58a127c4&quot;);
+    sim.treeSeqOutput(&quot;/var/folders/lq/bl36db_s6w908hnjkntdp4140000gn/T//RtmpbXgvnl/file166dc61ae92a9&quot;);
 }</code></pre>
 <p>We can then load and simplify the output tree sequence in just as we
 did above in this vignette (or anywhere in the <em>slendr</em>
@@ -629,7 +630,7 @@ all the way to the root, with each “link” in the plot signifying
 parent-child edge somewhere along the tree sequence) and plot it on a 2D
 surface (x and y dimensions [0, 1]). The plot is a little chaotic, but
 hopefully conveys the idea (the “focal node” 0 is highlighted in red).
-This is essentially the same plot we have in <a href="https://slendr.net/articles/vignette-09-paper.html#example-4-figure-5">the
+This is essentially the same plot we have in <a href="https://bodkan.net/slendr/articles/vignette-09-paper.html#example-4-figure-5">the
 last figure of our paper</a>.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>ancestral_links <span class="ot">&lt;-</span> <span class="fu">ts_ancestors</span>(ts, <span class="dv">0</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
@@ -642,7 +643,7 @@ last figure of our paper</a>.</p>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
 <p>In this vignette we gave a brief overview of using <em>slendr</em>’s
-<a href="../reference/index.html#tree-sequence-loading-and-processing">R-tskit
+<a href="https://bodkan.net/slendr/reference/index.html#tree-sequence-loading-and-processing">R-tskit
 interface</a> for loading, processing, and analyzing “pure”
 non-<em>slendr</em> tree sequences produced by msprime and SLiM
 scripts.</p>

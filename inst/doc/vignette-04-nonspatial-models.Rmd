@@ -56,9 +56,9 @@ We can define gene flow events in the same way as we did for the spatial model:
 
 ```{r}
 gf <- list(
-  gene_flow(from = ana, to = yam, rate = 0.5, start = 6500, end = 6400),
-  gene_flow(from = ana, to = eur, rate = 0.5, start = 8000, end = 6000),
-  gene_flow(from = yam, to = eur, rate = 0.75, start = 4000, end = 3000)
+  gene_flow(from = ana, to = yam, proportion = 0.5, start = 6500, end = 6400),
+  gene_flow(from = ana, to = eur, proportion = 0.5, start = 8000, end = 6000),
+  gene_flow(from = yam, to = eur, proportion = 0.75, start = 4000, end = 3000)
 )
 ```
 
@@ -104,7 +104,7 @@ Given that we are running a non-spatial simulation, you might wonder if it would
 ts_msprime <- msprime(model, sequence_length = 100000, recombination_rate = 0)
 ```
 
-In fact, because both SLiM and *msprime* back ends save outputs in a tree sequence format, we can analyse them using the same tools. See [this vignette](https://slendr.net/articles/vignette-05-tree-sequences.html) for more information about tree sequence analysis with _slendr_, and for more discussion on alternative simulation back ends and more extensive examples of data analysis with tree sequences you can read [this tutorial](https://slendr.net/articles/vignette-07-backends.html).
+In fact, because both SLiM and *msprime* back ends save outputs in a tree sequence format, we can analyse them using the same tools. See [this vignette](https://bodkan.net/slendr/articles/vignette-05-tree-sequences.html) for more information about tree sequence analysis with _slendr_, and for more discussion on alternative simulation back ends and more extensive examples of data analysis with tree sequences you can read [this tutorial](https://bodkan.net/slendr/articles/vignette-07-engines.html).
 
 ## Extracting parameters from a model or tree sequences
 

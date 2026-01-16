@@ -133,13 +133,13 @@ plot_map(yam)
 plot_map(afr, ooa, ehg, eur, ana, yam)
 
 ## ----eval = FALSE-------------------------------------------------------------
-# gf <- gene_flow(from = eur, to = afr, rate = 0.1, start = 20000, end = 15000)
+# gf <- gene_flow(from = eur, to = afr, proportion = 0.1, start = 20000, end = 15000)
 
 ## -----------------------------------------------------------------------------
 gf <- list(
-  gene_flow(from = ana, to = yam, rate = 0.5, start = 6500, end = 6400, overlap = FALSE),
-  gene_flow(from = ana, to = eur, rate = 0.5, start = 8000, end = 6000),
-  gene_flow(from = yam, to = eur, rate = 0.75, start = 4000, end = 3000)
+  gene_flow(from = ana, to = yam, proportion = 0.5, start = 6500, end = 6400, overlap = FALSE),
+  gene_flow(from = ana, to = eur, proportion = 0.5, start = 8000, end = 6000),
+  gene_flow(from = yam, to = eur, proportion = 0.75, start = 4000, end = 3000)
 )
 
 ## -----------------------------------------------------------------------------

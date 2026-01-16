@@ -48,7 +48,7 @@ set.seed(seed)
 <!-- check_env() -->
 <!-- ``` -->
 
-We begin by specifying our spatial model. We will use the same demographic model of modern human history in West Eurasia, which we extensively discussed in the [introductory tutorial](vignette-01-tutorial.html) and on the main [landing page](../index.html). Here is a complete model definition script, without further comments:
+We begin by specifying our spatial model. We will use the same demographic model of modern human history in West Eurasia, which we extensively discussed in the [introductory tutorial](vignette-01-tutorial.html) and on the main [landing page](https://bodkan.net/slendr/). Here is a complete model definition script, without further comments:
 
 ```{r, results = FALSE}
 # simulated world map
@@ -126,9 +126,9 @@ yam <- population(
 
 # geneflow events
 gf <- list(
-  gene_flow(from = ana, to = yam, rate = 0.5, start = 6000, end = 5000, overlap = FALSE),
-  gene_flow(from = ana, to = eur, rate = 0.5, start = 8000, end = 6000),
-  gene_flow(from = yam, to = eur, rate = 0.75, start = 4000, end = 3000)
+  gene_flow(from = ana, to = yam, proportion = 0.5, start = 6000, end = 5000, overlap = FALSE),
+  gene_flow(from = ana, to = eur, proportion = 0.5, start = 8000, end = 6000),
+  gene_flow(from = yam, to = eur, proportion = 0.75, start = 4000, end = 3000)
 )
 
 # compile the spatial model

@@ -453,7 +453,7 @@ ancestry in <code>x1</code>, and only one individual from the rest.</p>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co"># model with gene flow</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">gene_flow</span>(<span class="at">from =</span> b, <span class="at">to =</span> x1, <span class="at">start =</span> <span class="dv">4100</span>, <span class="at">end =</span> <span class="dv">4400</span>, <span class="at">rate =</span> <span class="fl">0.1</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">gene_flow</span>(<span class="at">from =</span> b, <span class="at">to =</span> x1, <span class="at">start =</span> <span class="dv">4100</span>, <span class="at">end =</span> <span class="dv">4400</span>, <span class="at">proportion =</span> <span class="fl">0.1</span>)</span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>model_gf <span class="ot">&lt;-</span> <span class="fu">compile_model</span>(<span class="at">populations =</span> <span class="fu">list</span>(a, b, x1, x2, c, o), <span class="at">gene_flow =</span> gf, <span class="at">generation_time =</span> <span class="dv">1</span>, <span class="at">simulation_length =</span> <span class="dv">4500</span>)</span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>

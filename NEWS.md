@@ -1,3 +1,29 @@
+# slendr 1.4.0
+
+- Two new arguments of `gene_flow()` specifying the magnitude of migration have been implemented, clarifying confusion in the original implementation (see [#99](https://github.com/bodkan/slendr/issues/99) for an example):
+
+1. `migration_rate` specifies the rate of gene flow per unit of time of the given gene-flow time window;
+2. `proportion` specifies the total amount of ancestry received by a population from the given source population over the time span of the gene-flow event (this is, effectively, what the `rate` argument meant until this point, somewhat confusingly unless the user looked at the manpage of the `gene_flow()` function).
+
+  - As far as the original argument `rate` is concerned, setting the value of this argument in a `gene_flow()` call will now issue an informative warning message about its deprecation in a future major release. However, old code will remain working without any change for the foreseeable future. Furthermore, `gene_flow()` now includes a guard against a given `migration_rate` potentially resulting in a `proportion` of ancestry higher than 1.0 (when aggregated over the total span of the gene-flow window), meaning than users' code will not run into hidden bugs even after the eventual deprecation of `rate`.
+
+([PR #188](https://github.com/bodkan/slendr/pull/188))
+
+- _tskit_ used by _slendr_'s internal Python environment has been updated to
+version 1.0.0. As a result, updating _slendr_ to version 1.4.0 will require
+re-running `setup_env()`. We note that the _tskit_ update does not come with
+any apparent backwards incompatibility issues.
+([PR #190](https://github.com/bodkan/slendr/pull/190))
+
+- Due to issues on a user's system with the Python 3.13 binary installed by
+conda (related to the built-in `pyexpat` module), _slendr_ now reverted to Python
+3.12. As far as we can tell, this is related to either a broken Python 3.13
+distributed by conda for some architectures, or an issue with _reticulate_'s
+interaction with this Python version. Either way, downgrading to Python 3.12 does
+not affect any of the functionality of _slendr_ and so its worth doing as a
+defensive measure in case users in the future run into a similar problem.
+([#b2e5c6](https://github.com/bodkan/slendr/commit/b2e5c6))
+
 # slendr 1.3.0
 
 - In order to minimize the dependency burden for users even further, packages _shiny_ and _shinyWidgets_ are now not installed by default. The function `explore_model()` function now checks if those packages are present upon calling it. If not, the user is informed that they should install those packages first. ([#60fbdf](https://github.com/bodkan/slendr/commit/60fbdf))
@@ -44,7 +70,7 @@ A relatively modest release, mostly pushed out to keep _slendr_ in step with the
 
 # slendr 1.0.0
 
-- **A massive update introducing the possibility of simulating non-neutral _slendr_ models with `slim()` has been introduced. This update is too big to describe in the changelog -- for more information and motivation, see the [description in the associated PR](https://github.com/bodkan/slendr/pull/155), or [the new extensive vignette](https://slendr.net/articles/vignette-11-extensions.html) on the topic. ([PR #155](https://github.com/bodkan/slendr/pull/155))**
+- **A massive update introducing the possibility of simulating non-neutral _slendr_ models with `slim()` has been introduced. This update is too big to describe in the changelog -- for more information and motivation, see the [description in the associated PR](https://github.com/bodkan/slendr/pull/155), or [the new extensive vignette](https://bodkan.net/slendr/articles/vignette-11-extensions.html) on the topic. ([PR #155](https://github.com/bodkan/slendr/pull/155))**
 
 **Implementing changes for the v1.0 release (particularly the support for non-neutral models) required changing _slendr_ internals at a very low level across the whole codebase. Feedback on this functionality, missing features, and bug reports are highly appreciated!**
 
@@ -88,7 +114,7 @@ The above is implemented in PR [#157](https://github.com/bodkan/slendr/pull/157)
 
 # slendr 0.9.0
 
-- A full support for running SLiM and _msprime_ simulations with _slendr_ and for analyzing tree sequences using its [_tskit_](https://tskit.dev) interface has been implemented. Please note that the Windows support is still rather experimental -- the internal _slendr_ test suite currently assumes that SLiM has been installed using the _msys2_ system as described in the section 2.3.1 of the SLiM manual and other means of installing SLiM (such as via conda) might require additional adjustments. A fallback option in the form of the `slim_path=` argument of the `slim()` function can be used in non-standard SLiM installation circumstances. For most convenience, please add the path to the directory containing the `slim.exe` binary to the `PATH` variable by editing the `C:/Users/<username>/Documents/.Renviron` file accordingly. See the relevant section on Windows installation in the [_slendr_ documentation](https://slendr.net/articles/vignette-00-installation.html) for additional information. Feedback on the Windows functionality and bug reports are highly appreciated via [GitHub](https://github.com/bodkan/slendr/issues) issues! **Many thanks to @GKresearch and @rdinnager for their huge help in making the Windows port happen!** (PR #149)
+- A full support for running SLiM and _msprime_ simulations with _slendr_ and for analyzing tree sequences using its [_tskit_](https://tskit.dev) interface has been implemented. Please note that the Windows support is still rather experimental -- the internal _slendr_ test suite currently assumes that SLiM has been installed using the _msys2_ system as described in the section 2.3.1 of the SLiM manual and other means of installing SLiM (such as via conda) might require additional adjustments. A fallback option in the form of the `slim_path=` argument of the `slim()` function can be used in non-standard SLiM installation circumstances. For most convenience, please add the path to the directory containing the `slim.exe` binary to the `PATH` variable by editing the `C:/Users/<username>/Documents/.Renviron` file accordingly. See the relevant section on Windows installation in the [_slendr_ documentation](https://bodkan.net/slendr/articles/vignette-00-installation.html) for additional information. Feedback on the Windows functionality and bug reports are highly appreciated via [GitHub](https://github.com/bodkan/slendr/issues) issues! **Many thanks to @GKresearch and @rdinnager for their huge help in making the Windows port happen!** (PR #149)
 
 - A trivial change has been made to _slendr_'s SLiM back-end script fixing the issue introduced in a SLiM 4.1 upgrade (see changelog for version 0.8.1 below). This is not expected to lead to different simulation outputs between the two versions of slendr (0.8.2 vs 0.8.1) or SLiM (4.1 vs 4.0.1) used. (PR #148)
 
