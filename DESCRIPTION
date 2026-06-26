@@ -1,6 +1,6 @@
 Package: slendr
 Title: A Simulation Framework for Spatiotemporal Population Genetics
-Version: 1.4.0
+Version: 1.5.0
 Authors@R: 
     person(given = "Martin",
            family = "Petr",
@@ -28,7 +28,6 @@ Description: A framework for simulating spatially explicit genomic data which
 Depends: R (>= 3.6.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 SystemRequirements: 'SLiM' is a forward simulation software for
         population genetics and evolutionary biology. See
         <https://messerlab.org/slim/> for installation instructions and
@@ -37,16 +36,17 @@ SystemRequirements: 'SLiM' is a forward simulation software for
         the instructions at <https://tskit.dev/>.
 Imports: ggplot2, dplyr, purrr, readr, magrittr, reticulate, tidyr,
         png, ijtiff, ape, scales, digest, ggrepel
-Suggests: testthat (>= 3.0.0), sf, stars, rnaturalearth, gganimate,
-        knitr, rmarkdown, admixr, units, magick, cowplot, forcats,
-        shinyWidgets, shiny, rsvg
+Suggests: testthat (>= 3.0.0), sf, stars, lwgeom, rnaturalearth,
+        gganimate, knitr, rmarkdown, admixr, units, magick, cowplot,
+        forcats, shinyWidgets, shiny, rsvg
 VignetteBuilder: knitr
 URL: https://github.com/bodkan/slendr
 BugReports: https://github.com/bodkan/slendr/issues
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-01-16 11:53:30 UTC; mp
+Packaged: 2026-06-26 10:45:33 UTC; mp
 Author: Martin Petr [aut, cre] (ORCID: <https://orcid.org/0000-0003-4879-8421>)
 Maintainer: Martin Petr <contact@bodkan.net>
 Repository: CRAN
-Date/Publication: 2026-01-16 14:30:02 UTC
+Date/Publication: 2026-06-26 16:00:02 UTC

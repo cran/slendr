@@ -88,9 +88,12 @@ ts_read <- function(file, model = NULL) {
 
   attr(ts, "metadata") <- get_slendr_metadata(ts)
 
+  # TODO: These probably should be read from the serialized tree sequence in some
+  #       form?
   attr(ts, "recapitated") <- FALSE
   attr(ts, "simplified") <- FALSE
   attr(ts, "mutated") <- FALSE
+  attr(ts, "extended") <- FALSE
 
   class(ts) <- c("slendr_ts", class(ts))
 
@@ -136,7 +139,7 @@ ts_load <- function(file, model = NULL) {
 
 #' Save a tree sequence to a file
 #'
-#' @param ts Tree sequence object loaded by \code{ts_read}
+#' @param ts Tree sequence object
 #' @param file File to which the tree sequence should be saved
 #'
 #' @return No return value, called for side effects
@@ -191,7 +194,7 @@ ts_write <- function(ts, file) {
 #'
 #' Deprecated function. Please use \code{ts_write} instead.
 #'
-#' @param ts Tree sequence object loaded by \code{ts_read}
+#' @param ts Tree sequence object
 #' @param file File to which the tree sequence should be saved
 #'
 #' @export
@@ -209,7 +212,7 @@ ts_save <- function(ts, file) {
 
 #' Recapitate the tree sequence
 #'
-#' @param ts Tree sequence object loaded by \code{ts_read}
+#' @param ts Tree sequence object
 #' @param recombination_rate A constant value of the recombination rate
 #' @param Ne Effective population size during the recapitation process
 #' @param demography Ancestral demography to be passed internally to
@@ -583,6 +586,81 @@ ts_mutate <- function(ts, mutation_rate, random_seed = NULL,
   attr(ts_new, "nodes") <- attr(ts, "nodes")
 
   attr(ts_new, "path") <- attr(ts, "path")
+
+  class(ts_new) <- c("slendr_ts", class(ts_new))
+
+  ts_new
+}
+
+#' Extend the span of sequences covered by ancestral nodes (EXPERIMENTAL)
+#'
+#' Run the "extend haplotypes" algorithm to extend the span of sequence
+#' covered by ancestral nodes, as implemented by the tskit method
+#' \code{TreeSequence.extend_haplotypes}.
+#'
+#' For more details about this functionality, please read the following
+#' resources:
+#' 1. Paper by Fritze et al. 2025 (\doi{10.1093/genetics/iyaf198})
+#' 2. Official tskit documentation at
+#' \url{https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.extend_haplotypes}
+#'
+#' Note that this function has been currently tested exclusively on tree
+#' sequences simulated by slendr's \code{msprime()} simulation engine.
+#'
+#' @param ts Tree sequence object
+#' @param iterations Maximum number of iterations over the tree sequence
+#'   (default is 10)
+#'
+#' @return Tree-sequence object of the class \code{slendr_ts}
+#'
+#' @examples
+#' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
+#' }
+#' init_env()
+#'
+#' # load an example model with an already simulated tree sequence
+#' slendr_ts <- system.file("extdata/models/introgression_msprime.trees", package = "slendr")
+#' model <- read_model(path = system.file("extdata/models/introgression", package = "slendr"))
+#'
+#' ts <- ts_read(slendr_ts, model)
+#' ts_ext <- ts_extend(ts, iterations = 10)
+#'
+#' ts_ext
+#' @export
+ts_extend <- function(ts, iterations = 10) {
+  if (!is.numeric(iterations) || iterations %% 1 != 0 || iterations <= 0)
+    stop("Iterations number must be a non-negative, non-zero integer", call. = FALSE)
+
+  check_ts_class(ts)
+
+  model <- attr(ts, "model")
+  type <- attr(ts, "type")
+  spatial <- attr(ts, "spatial")
+
+  ts_new <- ts$extend_haplotypes(as.integer(iterations))
+
+  # copy attributes over to the new tree-sequence object or generate updates
+  # ones where necessary
+  attr(ts_new, "model") <- model
+  attr(ts_new, "type") <- type
+  attr(ts_new, "spatial") <- spatial
+  attr(ts_new, "metadata") <- attr(ts, "metadata")
+
+  attr(ts_new, "recapitated") <- TRUE
+  attr(ts_new, "simplified") <- attr(ts, "simplified")
+  attr(ts_new, "mutated") <- attr(ts, "mutated")
+  attr(ts_new, "extended") <- TRUE
+
+  attr(ts_new, "raw_nodes") <- get_ts_raw_nodes(ts_new)
+  attr(ts_new, "raw_edges") <- get_ts_raw_edges(ts_new)
+
+  attr(ts_new, "raw_individuals") <- get_ts_raw_individuals(ts_new)
+  attr(ts_new, "raw_mutations") <- get_ts_raw_mutations(ts_new)
+  attr(ts_new, "raw_sites") <- get_ts_raw_sites(ts_new)
+
+  attr(ts_new, "path") <- attr(ts, "path")
+
+  attr(ts_new, "nodes") <- if (type == "SLiM") get_pyslim_table_data(ts_new) else get_tskit_table_data(ts_new)
 
   class(ts_new) <- c("slendr_ts", class(ts_new))
 
@@ -1725,58 +1803,53 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
     return(FALSE)
 }
 
-#' Collect Identity-by-Descent (IBD) segments (EXPERIMENTAL)
+#' Extract Identity-by-Descent (IBD) segments (EXPERIMENTAL)
 #'
-#' This function iterates over a tree sequence and returns IBD tracts between
-#' pairs of individuals or nodes
+#' This function extracts IBD segments between pairs of individuals or nodes
+#' from a given tree sequence.
 #'
-#' This function is considered experimental. For full control over IBD segment
+#' The interface of this function is highly experimental. For full control over IBD segment
 #' detection in tree-sequence data, users can (and perhaps, for the time being,
-#' should) rely on the tskit method \code{ibd_segments}
+#' should) directly use the underlying tskit method \code{ibd_segments}
 #' (see <https://tskit.dev/tskit/docs/stable/python-api.html#tskit.TreeSequence.ibd_segments>).
 #'
-#' Iternally, this function leverages the tskit \code{TreeSequence} method
+#' Internally, this function leverages the tskit \code{TreeSequence} method
 #' \code{ibd_segments}. However, note that the \code{ts_ibd} function always
 #' returns a data frame of IBD tracts, it does not provide an option to iterate
 #' over individual IBD segments as shown in the official tskit documentation
 #' at <https://tskit.dev/tskit/docs/stable/ibd.html>. In general, R handles
-#' heavy iteration poorly, and this function does not attempt to serve as
-#' a full wrapper to \code{ibd_segments}.
+#' heavy iteration rather poorly and, as a result, this function does not attempt
+#' to serve as a full wrapper to \code{ibd_segments}.
 #'
 #' Unfortunately, the distinction between "squashed IBD" (what many would consider
 #' to be the expected definition of IBD) and tskit’s IBD which is defined via
 #' distinct genealogical paths (see <https://github.com/tskit-dev/tskit/issues/2459>
 #' for a discussion of the topic), makes the meaning of the filtering parameter
 #' of the \code{ibd_segments()} method of tskit \code{minimum_length} somewhat
-#' unintuitive. As of this moment, this function argument filters on IBD segments
-#' on the tskit level, not the level of the squashed IBD segments!
+#' unintuitive. As of this moment, the minimum length argument filters on IBD segments
+#' on the "squashed" level, not the level of smaller individual IBD segments
+#' which the tskit machinery operates with. Again, for more details, refer to the
+#' resources linked above.
 #'
 #' @param ts Tree sequence object of the class \code{slendr_ts}
-#' @param coordinates Should coordinates of all detected IBD tracts be reported?
-#'   If \code{FALSE} (the default), only the total length of shared IBD segments
-#'   and their numbers are reported. If \code{TRUE}, coordinates of each segment
-#'   will be returned (but note that this can have a massive impact on memory
-#'   usage). See details for more information.
 #' @param within A character vector with individual names or an integer vector with
 #'   node IDs indicating a set of nodes within which to look for IBD segments.
 #' @param between A list of lists of character vectors with individual names or
 #'   integer vectors with node IDs, indicating a set of nodes between which to
 #'   look for shared IBD segments.
-#' @param squash Should adjacent IBD segments for pairs of nodes be squashed if they
-#'   only differ by their 'genealogical paths' but not by their MRCA? Default is
-#'   \code{FALSE}. For more context, see <https://github.com/tskit-dev/tskit/issues/2459>.
-#'   This option is EXPERIMENTAL!
-#' @param minimum_length Minimum length of an IBD segment to return in results.
-#'   This is useful for reducing the total amount of IBD returned (but see Details).
 #' @param maximum_time Oldest MRCA of a node to be considered as an IBD ancestor
 #'   to return that IBD segment in results. This is useful for reducing the total
 #'   amount of IBD returned.
+#' @param minimum_length Minimum length of a ("squashed") IBD segment for it to
+#'   be included in the results
 #' @param sf If IBD segments in a spatial tree sequence are being analyzed, should
 #'   the returned table be a spatial sf object? Default is \code{TRUE}.
 #'
-#' @return A data frame with IBD results (either coordinates of each IBD segment
-#'   shared by a pair of nodes, or summary statistics about the total IBD sharing
-#'   for that pair)
+#' @return A data frame with IBD coordinates of each IBD segment shared by any
+#'   pair of nodes in the tree sequence
+#'
+#' @seealso \code{\link{ts_extend}} for information about the "extend haplotypes"
+#'   procedure
 #'
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
@@ -1793,33 +1866,24 @@ ts_coalesced <- function(ts, return_failed = FALSE) {
 #' # find IBD segments between specified Neanderthals and Europeans
 #' ts_ibd(
 #'   ts,
-#'   coordinates = TRUE,
 #'   between = list(c("NEA_1", "NEA_2"), c("EUR_1", "EUR_2")),
 #'   minimum_length = 40000
 #' )
 #' @export
-ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL, squash = FALSE,
-                   minimum_length = NULL, maximum_time = NULL, sf = TRUE) {
+ts_ibd <- function(ts, within = NULL, between = NULL, maximum_time = NULL, minimum_length = 0, sf = TRUE) {
   # make sure warnings are reported immediately
   opts <- options(warn = 1)
   on.exit(options(opts))
 
-  if (squash && !is.null(minimum_length)) {
-    warning("Please note that when 'squashed' IBD segments are requested,\n",
-            "the minimum IBD length cut off involves the 'distinct genealogical path'\n",
-            "IBD segments at the tskit level, not the length of the squashed IBD\n",
-            "segments. See the documentation of `ts_ibd()` for more detail and\n",
-            "additional information.", call. = FALSE)
-  }
-
   model <- attr(ts, "model")
   spatial <- attr(ts, "spatial")
 
-  if (is.null(minimum_length) && is.null(maximum_time))
-    warning("No minimum IBD length (minimum_length) or maximum age of an IBD\nancestor ",
-            "(maximum_time) has been provided. As a result all IBD tracts will be\n",
-            "reported. Depending on the size of your tree sequence, this might produce\n",
-            "extremely huge amount of data.", call. = FALSE)
+# if (!attr(ts, "extended")) {
+#   warning("It looks like the tree sequence was not processed by the 'extend\n",
+#           "haplotypes' algorithm (`ts_extend()`) before attempting to extract IBD\n",
+#           "segments. Make sure this is what you intended.", call. = FALSE)
+# }
+
   if (!is.null(within))
     within <- unlist(purrr::map(within, ~ get_node_ids(ts, .x)))
   else if (!is.null(between)) {
@@ -1830,18 +1894,15 @@ ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL, squas
     # names(between) <- NULL
   }
 
-  result <- reticulate::py[["__slendr_collect_ibd"]](
-      ts,
-      coordinates = coordinates,
-      within = within,
-      between = between,
-      min_span = minimum_length,
-      max_time = maximum_time,
-      squash = squash
-  )
+  # reticulate::py_run_file("inst/pylib/pylib.py")
+  # reticulate::repl_python()
+  # __slendr_collect_ibd(r.ts, within=None, between=None, max_time=None, minimum_length=0)
+  result <- reticulate::py[["__slendr_collect_ibd"]](ts, within, between, maximum_time, minimum_length)
 
-  # drop a useless internal attribute (not a loss of information -- *we* are the ones
+  # drop a useless internal attribute (not a loss of information -- we are the ones
   # who created the pandas DataFrame in the first place)
+  # TODO: after pandas 3.0.0 this is broken (most likely problem on reticulate's part),
+  #       which is why setup_env() currently pins pandas==2.3.3
   attr(result, "pandas.index") <- NULL
 
   if (!nrow(result)) return(result)
@@ -1866,7 +1927,7 @@ ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL, squas
       dplyr::rename(node2_location = location)
 
     result <- purrr::map2(
-      result$node1_location, result$node2_location, ~
+      result$node1_location, result$node2_location, ~ {
         if (.x == .y)
           sf::st_sf(connection = sf::st_sfc(sf::st_linestring()), crs = sf::st_crs(nodes))
         else {
@@ -1875,7 +1936,7 @@ ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL, squas
           sf::st_sfc() %>%
           sf::st_sf(connection = ., crs = sf::st_crs(nodes))
         }
-      ) %>%
+      }) %>%
       dplyr::bind_rows() %>%
       dplyr::bind_cols(result, .) %>%
         sf::st_set_geometry("connection") %>%
@@ -1889,12 +1950,8 @@ ts_ibd <- function(ts, coordinates = FALSE, within = NULL, between = NULL, squas
     result[["pop2"]] <- sapply(result$node2, function(i) nodes[nodes$node_id == i, ]$pop)
   }
 
-  if (coordinates)
-    result <- dplyr::mutate(result, length = right - left) %>%
-      dplyr::select(node1, node2, length, mrca, node1_time, node2_time, tmrca, dplyr::everything())
-  else
-    result <- dplyr::select(result, node1, node2, count, total, node1_time, node2_time,
-                                    dplyr::everything())
+  result <- dplyr::mutate(result, length = right - left) %>%
+    dplyr::select(node1, node2, length, mrca, node1_time, node2_time, tmrca, dplyr::everything())
 
   result
 }
@@ -2146,13 +2203,11 @@ ts_fst <- function(ts, sample_sets, mode = c("site", "branch", "node"),
 #' ts <- ts_read(slendr_ts, model) %>% ts_mutate(mutation_rate = 1e-8, random_seed = 42)
 #'
 #' # collect sampled individuals from all populations in a list
-#' sample_sets <- ts_samples(ts) %>%
-#'   split(., .$pop) %>%
-#'   lapply(function(pop) pop$name)
+#' sample_sets <- ts_names(ts, split = "pop")
 #'
 #' # compute the divergence between individuals from each sample set (list of
 #' # individual names generated in the previous step)
-#' ts_divergence(ts, sample_sets) %>% .[order(.$divergence), ]
+#' ts_divergence(ts, sample_sets)
 #' @export
 ts_divergence <- function(ts, sample_sets, mode = c("site", "branch", "node"),
                    windows = NULL, span_normalise = TRUE) {

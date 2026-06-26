@@ -460,57 +460,57 @@ gene_length <- 5e6
 window_length <- 100e3
 
 ## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/frequencies.tsv")----
-freqs <- read_tsv("~/Code/__archive/introgression_data/frequencies.tsv")
+# freqs <- read_tsv("~/Code/__archive/introgression_data/frequencies.tsv")
 
 ## ----introgression_freqs, eval = run_vignette & file.exists("~/Code/__archive/introgression_data/frequencies.tsv")----
-freqs %>%
-mutate(pos = pos %% 5e6) %>%
-group_by(pos) %>%
-summarise(freq = 100 * mean(freq)) %>%
-ggplot() +
-  geom_line(aes(pos, freq)) +
-  geom_vline(xintercept = gene_length / 2, linetype = 2) +
-  labs(x = "coordinate along a gene", y = "Neanderthal ancestry proportion [%]",
-       title = "Proportion of Neanderthal ancestry in Europeans along 5Mb independent genes",
-       subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)") +
-  coord_cartesian(ylim = c(0, 3))
+# freqs %>%
+# mutate(pos = pos %% 5e6) %>%
+# group_by(pos) %>%
+# summarise(freq = 100 * mean(freq)) %>%
+# ggplot() +
+#   geom_line(aes(pos, freq)) +
+#   geom_vline(xintercept = gene_length / 2, linetype = 2) +
+#   labs(x = "coordinate along a gene", y = "Neanderthal ancestry proportion [%]",
+#        title = "Proportion of Neanderthal ancestry in Europeans along 5Mb independent genes",
+#        subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)") +
+#   coord_cartesian(ylim = c(0, 3))
 
 ## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
-# load a tree sequence and extract the names of recorded individuals
-ts <- ts_read(file = "~/Code/__archive/introgression_data/slim.trees", model)
-samples <- ts_names(ts, split = "pop")
-
-samples
-
-# compute coordinates of sliding windows along the genome
-windows <- seq(from = 0, to = n_genes * gene_length - 1, by = window_length)
-
-head(windows)
-tail(windows)
-
-# compute divergence from the tree sequence in each window separately
-divergence <- ts_divergence(ts, samples, windows = windows, mode = "branch")$divergence[[1]]
+# # load a tree sequence and extract the names of recorded individuals
+# ts <- ts_read(file = "~/Code/__archive/introgression_data/slim.trees", model)
+# samples <- ts_names(ts, split = "pop")
+# 
+# samples
+# 
+# # compute coordinates of sliding windows along the genome
+# windows <- seq(from = 0, to = n_genes * gene_length - 1, by = window_length)
+# 
+# head(windows)
+# tail(windows)
+# 
+# # compute divergence from the tree sequence in each window separately
+# divergence <- ts_divergence(ts, samples, windows = windows, mode = "branch")$divergence[[1]]
 
 ## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
-# compute average divergence at each position in a gene, and a 95% C.I.
-div_df <- tibble(
-  pop = "eur",
-  pos = windows %% gene_length,
-  div = divergence
-) %>%
-  group_by(pop, pos) %>%
-  summarise(
-    mean = mean(div), n = n(), std = sd(div),
-    ci_low = mean - 2 * std / sqrt(n),
-    ci_up = mean + 2 * std / sqrt(n)
-  )
+# # compute average divergence at each position in a gene, and a 95% C.I.
+# div_df <- tibble(
+#   pop = "eur",
+#   pos = windows %% gene_length,
+#   div = divergence
+# ) %>%
+#   group_by(pop, pos) %>%
+#   summarise(
+#     mean = mean(div), n = n(), std = sd(div),
+#     ci_low = mean - 2 * std / sqrt(n),
+#     ci_up = mean + 2 * std / sqrt(n)
+#   )
 
 ## ----introgression_divergence, eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
-ggplot(div_df) +
-  geom_ribbon(aes(pos, ymin = ci_low, ymax = ci_up), fill = "grey70") +
-  geom_line(aes(pos, mean)) +
-  geom_vline(aes(xintercept = gene_length / 2), linetype = 2) +
-  labs(x = "coordinate along a gene", y = "divergence to Neanderthal",
-       title = "Divergence of Europeans to a Neanderthal genome along 5Mb independent genes",
-       subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)")
+# ggplot(div_df) +
+#   geom_ribbon(aes(pos, ymin = ci_low, ymax = ci_up), fill = "grey70") +
+#   geom_line(aes(pos, mean)) +
+#   geom_vline(aes(xintercept = gene_length / 2), linetype = 2) +
+#   labs(x = "coordinate along a gene", y = "divergence to Neanderthal",
+#        title = "Divergence of Europeans to a Neanderthal genome along 5Mb independent genes",
+#        subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)")
 
