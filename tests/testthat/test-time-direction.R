@@ -1,7 +1,8 @@
 # skip_if(TRUE)
 
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE))
-init_env(quiet = TRUE)
+init_env()
 
 test_that("forward and backward time model objects are equivalent", {
   map <- world(xrange = c(0, 100), yrange = c(0, 100), landscape = "blank")
@@ -242,7 +243,7 @@ test_that("resizing of populations is consistent with established population dyn
   p1 <- population(name = "pop1", map = map, time = 1, N = 500, center = c(10, 25), radius = 300000)
   p2 <- population(name = "pop2", parent = p1, time = 10, N = 500, center = c(10, 25), radius = 300000)
   msg <- "The new event (.*) pre-dates the last specified active event"
-  expect_error(resize(p2, N = 10, how = "step", time = 5), msg)
+  expect_error(resize(p2, N = 10, time = 5), msg)
 })
 
 test_that("resizing of populations is consistent with established population dynamics (backward time)", {
@@ -250,7 +251,7 @@ test_that("resizing of populations is consistent with established population dyn
   p1 <- population(name = "pop1", map = map, time = 30000, N = 500, center = c(10, 25), radius = 300000)
   p2 <- population(name = "pop2", parent = p1, time = 25000, N = 500, center = c(10, 25), radius = 300000)
   msg <- "The new event (.*) pre-dates the last specified active event"
-  expect_error(resize(p2, N = 10, how = "step", time = 28000), msg)
+  expect_error(resize(p2, N = 10, time = 28000), msg)
 })
 
 
@@ -352,7 +353,7 @@ test_that("Explicitly given direction must agree with the implied direction", {
   msg <- "The direction that was explicitly specified contradicts the direction implied by the model"
 
   pop <- population("pop", time = 500, N = 100, map = map, center = c(20, 50), radius = 500e3) %>%
-    resize(N = 1000, time = 900, how = "step")
+    resize(N = 1000, time = 900)
 
   model_dir <- file.path(tempdir(), "direction_conflict")
   expect_error(compile_model(populations = list(pop), generation_time = 1,
@@ -360,7 +361,7 @@ test_that("Explicitly given direction must agree with the implied direction", {
                        path = model_dir, direction = "backward", overwrite = TRUE, force = TRUE), msg)
 
   pop <- population("pop", time = 500, N = 100, map = map, center = c(20, 50), radius = 500e3) %>%
-    resize(N = 1000, time = 300, how = "step")
+    resize(N = 1000, time = 300)
 
   model_dir <- file.path(tempdir(), "direction_conflict")
   expect_error(compile_model(populations = list(pop), generation_time = 1,

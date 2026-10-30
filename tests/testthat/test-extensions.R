@@ -1,6 +1,7 @@
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE, slim = TRUE))
 
-init_env(quiet = TRUE)
+init_env()
 
 # basic extension type and sanity checking --------------------------------
 
@@ -66,7 +67,7 @@ test_that("SLiM extension file is correctly embedded into the compiled script", 
 test_that("SLiM extension file is correctly embedded into the compiled script", {
   msg <- "SLiM extension snippets must either contain no initialize"
 
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(initialize() { initializeMutationType("m1", 0.5, "f", 0.0); })"
   expect_error(compile_model(populations = pop, generation_time = 1, extension = extension), msg)
@@ -97,7 +98,7 @@ test_that("SLiM extension file is correctly embedded into the compiled script", 
 })
 
 test_that("if simulation length is not given in a model, slim() requires it (non-custom script)", {
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(
   initialize() {
@@ -119,7 +120,7 @@ test_that("if simulation length is not given in a model, slim() requires it (non
 })
 
 test_that("if recombination rate is not given in a model, slim() requires it (non-custom script)", {
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(
   initialize() {
@@ -140,7 +141,7 @@ test_that("if recombination rate is not given in a model, slim() requires it (no
 })
 
 test_that("if simulation length is not given in a model, slim() requires it (customized script)", {
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(
   initialize() {
@@ -161,7 +162,7 @@ test_that("if simulation length is not given in a model, slim() requires it (cus
 })
 
 test_that("if recombination rate is not given in a model, slim() requires it (customized script)", {
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(
   initialize() {
@@ -182,7 +183,7 @@ test_that("if recombination rate is not given in a model, slim() requires it (cu
 })
 
 test_that("slim() does not require sequence length and recombination rate with custom scripts", {
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(
   initialize() {
@@ -201,7 +202,7 @@ test_that("slim() does not require sequence length and recombination rate with c
 })
 
 test_that("slim() does not accept sequence length and recombination rate with custom scripts", {
-  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+  pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
   extension <- r"(
   initialize() {
@@ -226,7 +227,7 @@ test_that("slim() does not accept sequence length and recombination rate with cu
 
 # output generation -------------------------------------------------------
 
-pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10, how = "step")
+pop <- population("pop", time = 100, N = 100) %>% resize(time = 10, N = 10)
 
 output_file <- normalizePath(tempfile(), winslash = "/", mustWork = FALSE)
 extension <- sprintf(r"(

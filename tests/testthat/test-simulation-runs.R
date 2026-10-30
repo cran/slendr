@@ -1,3 +1,4 @@
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE))
 
 # Run a given forward/backward simulation with different combinations
@@ -35,7 +36,7 @@ test_that("Forward simulation from generation 1 has the correct length without b
   model <- results[[2]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length))
 
@@ -51,7 +52,7 @@ test_that("Forward simulation from generation 1 has the correct length with burn
   model <- results[[2]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length))
 
@@ -67,7 +68,7 @@ test_that("Forward simulation from generation > 1 has the correct length without
   model <- results[[2]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length))
 
@@ -82,7 +83,7 @@ test_that("Forward simulation from generation > 1 has the correct length with bu
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length))
 
@@ -99,7 +100,7 @@ test_that("Backward simulation has the correct length without burnin", {
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == 0))
 
@@ -114,7 +115,7 @@ test_that("Backward simulation has the correct length with burnin", {
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == 0))
 
@@ -129,7 +130,7 @@ test_that("Backward simulation of limited length has the correct length without 
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start - simulation_length))
 
@@ -144,7 +145,7 @@ test_that("Backward simulation of limited length has the correct length with bur
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start - simulation_length))
 
@@ -161,7 +162,7 @@ test_that("Forward simulation from generation 1 has the correct length without b
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length - simulation_length %% gen_time))
 
@@ -176,7 +177,7 @@ test_that("Forward simulation from generation 1 has the correct length with burn
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length - simulation_length %% gen_time))
 
@@ -191,7 +192,7 @@ test_that("Forward simulation from generation > 1 has the correct length without
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length - simulation_length %% gen_time))
 
@@ -206,7 +207,7 @@ test_that("Forward simulation from generation > 1 has the correct length with bu
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start + simulation_length - simulation_length %% gen_time))
 
@@ -223,7 +224,7 @@ test_that("Backward simulation has the correct length without burnin", {
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == 0))
 
@@ -238,7 +239,7 @@ test_that("Backward simulation has the correct length with burnin", {
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == 0))
 
@@ -253,7 +254,7 @@ test_that("Backward simulation of limited length has the correct length without 
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start - simulation_length + simulation_length %% gen_time))
 
@@ -268,7 +269,7 @@ test_that("Backward simulation of limited length has the correct length with bur
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start - simulation_length + simulation_length %% gen_time))
 
@@ -285,7 +286,7 @@ test_that("Backward simulation has the correct length without burnin", {
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start %% gen_time))
 
@@ -300,7 +301,7 @@ test_that("Backward simulation has the correct length with burnin", {
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start %% gen_time))
 
@@ -315,7 +316,7 @@ test_that("Backward simulation of limited length has the correct length without 
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start - gen_time * (simulation_length %/% gen_time)))
 
@@ -330,7 +331,7 @@ test_that("Backward simulation of limited length has the correct length with bur
   result <- results[[1]]
   ts <- results[[3]]
 
-  samples <- ts_samples(ts)
+  samples <- ts_recorded(ts)
   expect_true(nrow(samples) == 5)
   expect_true(all(samples$time == start - gen_time * (simulation_length %/% gen_time)))
 

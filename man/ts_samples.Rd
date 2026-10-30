@@ -2,20 +2,30 @@
 % Please edit documentation in R/tree-sequences.R
 \name{ts_samples}
 \alias{ts_samples}
-\title{Extract names and times of individuals of interest in the current tree sequence
-(either all sampled individuals or those that the user simplified to)}
+\title{Extract names and times of individuals of interest recorded in a tree
+sequence produced from a slendr model}
 \usage{
-ts_samples(ts)
+ts_samples(x, schedule = NULL)
 }
 \arguments{
-\item{ts}{Tree sequence object of the class \code{slendr_ts}}
+\item{x}{Either a tree sequence object of the class \code{slendr_ts}, or
+a compiled slendr model of the class \code{slendr_model}}
+
+\item{schedule}{If individuals from a model (not yet a tree sequence) are to be
+obtained, this argument can be used to only extract those individuals who
+would be simulated from the model}
 }
 \value{
-Table of individuals scheduled for sampling across space and time
+Table of individuals scheduled for recording across space and time
 }
 \description{
-Extract names and times of individuals of interest in the current tree sequence
-(either all sampled individuals or those that the user simplified to)
+Extracts a table of metadata information about individuals recorded in
+a given simulated tree sequence or in a tree sequence which would be
+produced by a given model
+}
+\details{
+If a model is provided as \code{x}, the function will first simulate
+a trivially small tree sequence using the built-in msprime engine.
 }
 \examples{
 \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
@@ -29,6 +39,7 @@ model <- read_model(path = system.file("extdata/models/introgression", package =
 # load the tree-sequence object from disk
 ts <- ts_read(slendr_ts, model)
 
-# extract the table of individuals scheduled for simulation and sampling
-ts_samples(ts)
+# extract the table of individuals recorded in the tree sequence
+ts_recorded(ts)
 }
+\keyword{internal}

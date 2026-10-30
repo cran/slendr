@@ -1,3 +1,4 @@
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE))
 
 map <- world(xrange = c(1, 100), yrange = c(1, 100), landscape = "blank")
@@ -13,20 +14,20 @@ model <- compile_model(
   overwrite = TRUE, force = TRUE
 )
 
-samples <- schedule_sampling(model, times = 100, list(pop, 10))
+samples <- schedule_recording(model, times = 100, list(pop, 10))
 
 slim_ts <- normalizePath(tempfile(fileext = ".slim.trees"), winslash = "/", mustWork = FALSE)
 msprime_ts <- normalizePath(tempfile(fileext = ".msprime.trees"), winslash = "/", mustWork = FALSE)
 
 slim(
-  model, samples = samples,
+  model, schedule = samples,
   sequence_length = 100000, recombination_rate = 1e-8,
   method = "batch",
   random_seed = 42
 ) %>% ts_write(slim_ts)
 
 msprime(
-  model, samples = samples,
+  model, schedule = samples,
   sequence_length = 100000, recombination_rate = 1e-8,
   random_seed = 42
 ) %>% ts_write(msprime_ts)
@@ -223,7 +224,7 @@ test_that("ts_phylo gives a warning when a tree sequence is not fully spatial", 
 
 test_that("ts_nodes and ts_edges give the same result in single-tree tree sequences", {
   ts <- slim(
-    model, samples = samples,
+    model, schedule = samples,
     sequence_length = 100000, recombination_rate = 0,
     method = "batch",
     random_seed = 42

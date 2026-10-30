@@ -12,137 +12,138 @@
 # exhaustive enough -- it's better to put new tests in a separate script so that it's
 # cleare why have these been introduced.
 
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE))
-init_env(quiet = TRUE)
+init_env()
 
 # resizes with default sampling ---------------------------------------------------------------
 
 test_that("forward models not starting from 1 given the same outcome (resizes, all samples)", {
   pop1 <- population("pop1", time = 1500, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 20, simulation_length = 1000)
 
   tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8)
   tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 test_that("forward models starting from 1 give the same outcome (resizes, all samples)", {
   pop1 <- population("pop1", time = 1, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 20, simulation_length = 3000)
 
   tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8)
   tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 test_that("(truncated) forward models starting from 1 give the same outcome (resizes, all samples)", {
   pop1 <- population("pop1", time = 1, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 20, simulation_length = 1000)
 
   tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8)
   tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 # resizes with defined sampling ---------------------------------------------------------------
 
 test_that("forward models not starting from 1 give the same outcome (resizes, defined samples)", {
   pop1 <- population("pop1", time = 1500, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 20, simulation_length = 1000)
 
-  samples <- schedule_sampling(model, times = c(1, 500, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
+  samples <- schedule_recording(model, times = c(1, 500, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
 
-  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
-  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
+  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
+  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 test_that("forward models not starting from 1 give the same outcome (resizes, defined samples)", {
   pop1 <- population("pop1", time = 1, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 20, simulation_length = 3000)
 
-  samples <- schedule_sampling(model, times = c(1, 500, 1000, 1001, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
+  samples <- schedule_recording(model, times = c(1, 500, 1000, 1001, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
 
-  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
-  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
+  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
+  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 # gene-flow events ---------------------------------------------------------------
 
 test_that("forward models not starting from 1 given the same outcome (gene flows)", {
   pop1 <- population("pop1", time = 1500, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   gf <- gene_flow(pop1, pop2, proportion = 0.1, start = 1800, end = 1900)
 
   model <- compile_model(list(pop1, pop2), gene_flow = gf, generation_time = 20, simulation_length = 1000)
 
-  samples <- schedule_sampling(model, times = c(1, 500, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
+  samples <- schedule_recording(model, times = c(1, 500, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
 
-  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
-  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
+  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
+  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 test_that("forward models starting from 1 given the same outcome (gene flows)", {
   pop1 <- population("pop1", time = 1, N = 100) %>%
-    resize(time = 1800, N = 10, how = "step") %>%
-    resize(time = 2024, N = 30, how = "step") %>%
-    resize(time = 2200, N = 30, how = "step")
+    resize(time = 1800, N = 10) %>%
+    resize(time = 2024, N = 30) %>%
+    resize(time = 2200, N = 30)
   pop2 <- population("pop2", time = 1700, N = 100, parent = pop1) %>%
-    resize(time = 1800, N = 10, how = "step")
+    resize(time = 1800, N = 10)
 
   gf <- gene_flow(pop1, pop2, proportion = 0.1, start = 1800, end = 1900)
 
   model <- compile_model(list(pop1, pop2), gene_flow = gf, generation_time = 20, simulation_length = 1000)
 
-  samples <- schedule_sampling(model, times = c(1, 500, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
+  samples <- schedule_recording(model, times = c(1, 500, 1900, 2200, 2500), list(pop1, 2), list(pop2, 2))
 
-  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
-  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, samples = samples)
+  tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
+  tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8, schedule = samples)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 
@@ -154,30 +155,30 @@ test_that("forward models starting from 1 given the same outcome (gene flows)", 
 
 test_that("backward models correctly sample by default 'at present' (non-truncated)", {
   pop1 <- population("pop1", time = 10000, N = 100) %>%
-    resize(time = 7800, N = 10, how = "step") %>%
-    resize(time = 4024, N = 30, how = "step")
+    resize(time = 7800, N = 10) %>%
+    resize(time = 4024, N = 30)
   pop2 <- population("pop2", time = 1700, N = 50, parent = pop1) %>%
-    resize(time = 800, N = 10, how = "step")
+    resize(time = 800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 100)
 
   tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8)
   tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })
 
 test_that("backward models correctly sample by default 'at present' (truncated)", {
   pop1 <- population("pop1", time = 10000, N = 100) %>%
-    resize(time = 7800, N = 10, how = "step") %>%
-    resize(time = 4024, N = 30, how = "step")
+    resize(time = 7800, N = 10) %>%
+    resize(time = 4024, N = 30)
   pop2 <- population("pop2", time = 1700, N = 50, parent = pop1) %>%
-    resize(time = 800, N = 10, how = "step")
+    resize(time = 800, N = 10)
 
   model <- compile_model(list(pop1, pop2), generation_time = 100, simulation_length = 5000)
 
   tss <- slim(model, sequence_length = 1e6, recombination_rate = 1e-8)
   tsm <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
 
-  expect_equal(ts_samples(tss), ts_samples(tsm))
+  expect_equal(ts_recorded(tss), ts_recorded(tsm))
 })

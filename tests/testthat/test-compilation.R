@@ -1,3 +1,5 @@
+skip_on_cran()
+
 test_that("name of a population can only be a scalar character value", {
   error_msg <- "A population name must be a character scalar value"
   expect_error(population(name = c("asd", "xyz"), time = 1, N = 100), error_msg)
@@ -57,7 +59,7 @@ test_that("invalid blank maps are prevented", {
 
 test_that("deletion in non-interactive mode must be forced", {
   skip_if(interactive())
-  p <- population(name = "pop", N = 700, time = 100) %>% resize(N = 100, time = 50, how = "step")
+  p <- population(name = "pop", N = 700, time = 100) %>% resize(N = 100, time = 50)
   directory <- file.path(tempdir(), "dir-forced")
   dir.create(directory)
   expect_error(model <- compile_model(p, path = directory, generation_time = 30, overwrite = TRUE),
@@ -67,7 +69,7 @@ test_that("deletion in non-interactive mode must be forced", {
 })
 
 skip_if(!check_dependencies(python = TRUE))
-init_env(quiet = TRUE)
+init_env()
 
 test_that("sequence length can only be an integer number (SLiM)", {
   p <- population(name = "pop1", N = 700, time = 1)
@@ -142,10 +144,10 @@ test_that("purely non-spatial populations compile in silence", {
 
 afr <- population("AFR", time = 52000, N = 3000)
 ooa <- population("OOA", parent = afr, time = 51000, N = 500, remove = 25000) %>%
-  resize(N = 2000, time = 40000, how = "step")
+  resize(N = 2000, time = 40000)
 ehg <- population("EHG", parent = ooa, time = 28000, N = 1000, remove = 6000)
 eur <- population("EUR", parent = ehg, time = 25000, N = 2000) %>%
-  resize(N = 10000, how = "exponential", time = 5000, end = 0)
+  resize(N = 10000, time = 5000, end = 0)
 ana <- population("ANA", time = 28000, N = 3000, parent = ooa, remove = 4000)
 yam <- population("YAM", time = 7000, N = 500, parent = ehg, remove = 2500)
 
@@ -198,7 +200,7 @@ test_that("parameters of the base model are extracted properly (from model)", {
 })
 
 skip_if(!check_dependencies(python = TRUE))
-init_env(quiet = TRUE)
+init_env()
 
 ts <- msprime(model, sequence_length = 1, recombination_rate = 0)
 ts_nogf <- msprime(model_nogf, sequence_length = 1, recombination_rate = 0)

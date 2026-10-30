@@ -36,14 +36,14 @@ afr <- population("AFR", time = 100000, N = 3000)
 
 # first migrants out of Africa
 ooa <- population("OOA", parent = afr, time = 60000, N = 500, remove = 23000) %>%
-  resize(N = 2000, time = 40000, how = "step")
+  resize(N = 2000, time = 40000)
 
 # Eastern hunter-gatherers
 ehg <- population("EHG", parent = ooa, time = 28000, N = 1000, remove = 6000)
 
 # European population
 eur <- population("EUR", parent = ehg, time = 25000, N = 2000) %>%
-  resize(N = 10000, how = "exponential", time = 5000, end = 0)
+  resize(N = 10000, time = 5000, end = 0)
 
 # Anatolian farmers
 ana <- population("ANA", time = 28000, N = 3000, parent = ooa, remove = 4000)
@@ -74,10 +74,10 @@ model <- compile_model(
 
 Using the `plot_map()` function doesn't make sense, as there are no spatial maps to plot. However, we can still plot the demographic graph, verifying that the model has been specified correctly using the function `plot_model()` as shown below.
 
-Let's say we also want to schedule specific sampling events at specific times (which record only specified individuals in a tree sequence). We can use `schedule_sampling()` to do just that:
+Let's say we also want to schedule specific sampling events at specific times (which record only specified individuals in a tree sequence). We can use `schedule_recording()` to do just that:
 
 ```{r}
-samples <- schedule_sampling(
+samples <- schedule_recording(
   model,
   times = c(0, 5000, 12000, 20000, 35000, 39000, 43000),
   list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
@@ -87,7 +87,7 @@ samples <- schedule_sampling(
 Because it's not just the model itself that's useful to visually verify (which is the main purpose of `plot_model()`) but also the sampling scheme, _slendr_ makes it possible to overlay the numbers of individuals scheduled for tree-sequence recording from each lineage at each timepoint:
 
 ```{r, non-spatial-graph_sampling, fig.width=6, fig.height=4}
-plot_model(model, samples = samples)
+plot_model(model, schedule = samples)
 ```
 
 Even the final step---execution of the model in SLiM---is the same, using the built-in `slim()` function:
@@ -129,13 +129,13 @@ As we can see, `extract_parameters()` returns a list of data frames, one data fr
 As an addendum, it is worth mentioning that in addition to automatically naming recorded samples according to the format of `"<population>_<number>"`, _slendr_ supports uniquely named samples. For instance, imagine that we want to record an ancient individual representing a 45.000 years old hunter gatherer known as Ust'-Ishim (Fu, _et al., Nature, 2014). We could include this sample among our other, generically named, samples like this:
 
 ```{r}
-schedule_amh <- schedule_sampling(
+schedule_amh <- schedule_recording(
   model,
   times = c(0, 5000, 12000, 20000, 35000, 39000, 43000),
   list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
 )
 
-schedule_ui <- schedule_sampling(model, times = 45000, list(ooa, 1, "Ust_Ishim"))
+schedule_ui <- schedule_recording(model, times = 45000, list(ooa, 1, "Ust_Ishim"))
 
 # bind the two tables together into a single schedule
 schedule <- rbind(schedule_amh, schedule_ui)
@@ -144,7 +144,7 @@ schedule <- rbind(schedule_amh, schedule_ui)
 Then we would simulate just like before:
 
 ```{r}
-ts <- msprime(model, sequence_length = 100000, recombination_rate = 0, samples = schedule)
+ts <- msprime(model, sequence_length = 100000, recombination_rate = 0, schedule = schedule)
 ```
 
 When we inspect the table of all recorded individuals, we can see that the Ust'-Ishim individual is stored under its proper symbolic name:

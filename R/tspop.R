@@ -60,7 +60,7 @@
 #' @examples
 #' \dontshow{check_dependencies(python = TRUE, quit = TRUE) # dependencies must be present
 #' }
-#' init_env(quiet = TRUE)
+#' init_env()
 #'
 #' # load an example model with an already simulated tree sequence
 #' slendr_ts <- system.file("extdata/models/introgression_msprime.trees", package = "slendr")
@@ -139,7 +139,7 @@ ts_tracts <- function(ts, census, squashed = TRUE, source = NULL, target = NULL,
     # add symbolic names of individuals and their populations to each tract by
     # joining with the annotated nodes table based on the node ID
     nodes <- ts_nodes(ts) %>% dplyr::filter(sampled) %>% dplyr::select(name, node_id, pop)
-    samples <- ts_samples(ts) %>% dplyr::inner_join(nodes, by = c("name", "pop"))
+    samples <- ts_recorded(ts) %>% dplyr::inner_join(nodes, by = c("name", "pop"))
     tracts <- dplyr::inner_join(tracts, samples, by = c("sample" = "node_id"))
 
     # add symbolic names of the source populations

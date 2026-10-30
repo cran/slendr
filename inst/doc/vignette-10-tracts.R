@@ -45,9 +45,9 @@ plot_model(
 )
 
 ## -----------------------------------------------------------------------------
-samples <- schedule_sampling(model, times = 0, list(eur, 50), list(pap, 50))
+samples <- schedule_recording(model, times = 0, list(eur, 50), list(pap, 50))
 
-ts <- msprime(model, sequence_length = 100e6, recombination_rate = 1e-8, samples = samples, random_seed = 42)
+ts <- msprime(model, sequence_length = 100e6, recombination_rate = 1e-8, schedule = samples, random_seed = 42)
 
 ## -----------------------------------------------------------------------------
 nea_tracts <- ts_tracts(ts, census = 55000)

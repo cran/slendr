@@ -1,6 +1,7 @@
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE))
 
-init_env(quiet = TRUE)
+init_env()
 
 map <- world(xrange = c(0, 3500), yrange = c(0, 700), landscape = "blank")
 
@@ -22,8 +23,8 @@ model <- compile_model(
 )
 
 samples <- rbind(
-  schedule_sampling(model, times = 2, list(p1, 2), list(p2, 2)),
-  schedule_sampling(model, times = 300, list(p1, 10), list(p2, 10))
+  schedule_recording(model, times = 2, list(p1, 2), list(p2, 2)),
+  schedule_recording(model, times = 300, list(p1, 10), list(p2, 10))
 )
 
 slim_ts <- normalizePath(tempfile(fileext = ".trees"), winslash = "/", mustWork = FALSE)
@@ -34,10 +35,10 @@ locations_file <- normalizePath(tempfile(fileext = ".gz"), winslash = "/", mustW
 slim(model, sequence_length = 100000, recombination_rate = 0,
      locations = locations_file, burnin = 0,
      method = "batch", random_seed = 314159,
-     samples = samples, verbose = FALSE) %>% ts_write(slim_ts)
+     schedule = samples, verbose = FALSE) %>% ts_write(slim_ts)
 
 msprime(model, sequence_length = 100000, recombination_rate = 0,
-        random_seed = 314159, samples = samples, verbose = FALSE) %>% ts_write(msprime_ts)
+        random_seed = 314159, schedule = samples, verbose = FALSE) %>% ts_write(msprime_ts)
 
 test_that("ts_read fails gracefully on incorrect filename", {
   expect_error(ts <- ts_read(model, file = paste0(msprime_ts, "blah")), "File not found")
@@ -67,7 +68,7 @@ test_that("ts_write and ts_read result in the same tree sequence (SLiM)", {
   ts2 <- ts_read(model, file = file)
 
   data1 <- ts_nodes(ts1); data2 <- ts_nodes(ts2)
-  samples1 <- ts_samples(ts1); samples2 <- ts_samples(ts2)
+  samples1 <- ts_recorded(ts1); samples2 <- ts_recorded(ts2)
 
   expect_equal(data1, data2)
   expect_equal(samples1, samples2)
@@ -80,7 +81,7 @@ test_that("ts_write and ts_read result in the same tree sequence (msprime)", {
   ts2 <- ts_read(model, file = file)
 
   data1 <- ts_nodes(ts1); data2 <- ts_nodes(ts2)
-  samples1 <- ts_samples(ts1); samples2 <- ts_samples(ts2)
+  samples1 <- ts_recorded(ts1); samples2 <- ts_recorded(ts2)
 
   expect_equal(data1, data2)
   expect_equal(samples1, samples2)
@@ -221,7 +222,7 @@ test_that("simplification retains only specified samples (SLiM)", {
   ts <- ts_read(model, file = slim_ts) %>%
     ts_recapitate(Ne = 1, recombination_rate = 0) %>%
     ts_simplify(simplify_to = simplify_to)
-  df_samples <- ts_samples(ts) %>% dplyr::arrange(name, time)
+  df_samples <- ts_recorded(ts) %>% dplyr::arrange(name, time)
   df_data <- ts_nodes(ts) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time)
   expect_true(all(df_data$name == df_samples$name))
   expect_true(all(df_data$time == df_samples$time))
@@ -229,10 +230,10 @@ test_that("simplification retains only specified samples (SLiM)", {
 
   suppressWarnings(ts2 <- ts_read(model, file = slim_ts) %>%
     ts_recapitate(recombination_rate = 0, Ne = 1))
-  simplify_to <- sample(ts_samples(ts2)$name, 10)
+  simplify_to <- sample(ts_recorded(ts2)$name, 10)
 
   ts2 <- ts_simplify(ts2, simplify_to = simplify_to)
-  df_samples2 <- ts_samples(ts2) %>% dplyr::arrange(name, time)
+  df_samples2 <- ts_recorded(ts2) %>% dplyr::arrange(name, time)
   df_data2 <- ts_nodes(ts2) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time)
   expect_true(all(df_data2$name == df_samples2$name))
   expect_true(all(df_data2$time == df_samples2$time))
@@ -242,17 +243,17 @@ test_that("simplification retains only specified samples (SLiM)", {
 test_that("simplification retains only specified samples (msprime)", {
   simplify_to <- c("pop1_1", "pop1_2", "pop2_7")
   ts <- ts_read(model, file = msprime_ts) %>% ts_simplify(simplify_to = simplify_to)
-  df_samples <- ts_samples(ts) %>% dplyr::arrange(name, time)
+  df_samples <- ts_recorded(ts) %>% dplyr::arrange(name, time)
   df_data <- ts_nodes(ts) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time)
   expect_true(all(df_data$name == df_samples$name))
   expect_true(all(df_data$time == df_samples$time))
   expect_true(all(df_data$pop == df_samples$pop))
 
   suppressWarnings(ts2 <- ts_read(model, file = msprime_ts) %>% ts_recapitate(recombination_rate = 0, Ne = 1))
-  simplify_to <- sample(ts_samples(ts2)$name, 10)
+  simplify_to <- sample(ts_recorded(ts2)$name, 10)
 
   ts2 <- ts_simplify(ts2, simplify_to = simplify_to)
-  df_samples2 <- ts_samples(ts2) %>% dplyr::arrange(name, time)
+  df_samples2 <- ts_recorded(ts2) %>% dplyr::arrange(name, time)
   df_data2 <- ts_nodes(ts2) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time)
   expect_true(all(df_data2$name == df_samples2$name))
   expect_true(all(df_data2$time == df_samples2$time))
@@ -266,28 +267,28 @@ test_that("ts_samples() names match ts_nodes() information (SLiM)", {
   ts2 <- ts_read(model, file = slim_ts) %>% ts_recapitate(Ne = 1000, recombination_rate = 0)
   ts3 <- ts_read(model, file = slim_ts) %>% ts_recapitate(Ne = 1, recombination_rate = 0) %>%
     ts_simplify(simplify_to = simplify_to)
-  simplify_to <- sample(ts_samples(ts1)$name, 10)
+  simplify_to <- sample(ts_recorded(ts1)$name, 10)
   ts4 <- ts_simplify(ts1, simplify_to = simplify_to)
 
-  df_samples1 <- ts_samples(ts1) %>% dplyr::arrange(name, time)
+  df_samples1 <- ts_recorded(ts1) %>% dplyr::arrange(name, time)
   df_data1 <- ts_nodes(ts1) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data1$name == df_samples1$name))
   expect_true(all(df_data1$time == df_samples1$time))
   expect_true(all(df_data1$pop == df_samples1$pop))
 
-  df_samples2 <- ts_samples(ts2) %>% dplyr::arrange(name, time)
+  df_samples2 <- ts_recorded(ts2) %>% dplyr::arrange(name, time)
   df_data2 <- ts_nodes(ts2) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data2$name == df_samples2$name))
   expect_true(all(df_data2$time == df_samples2$time))
   expect_true(all(df_data2$pop == df_samples2$pop))
 
-  df_samples3 <- ts_samples(ts3) %>% dplyr::arrange(name, time)
+  df_samples3 <- ts_recorded(ts3) %>% dplyr::arrange(name, time)
   df_data3 <- ts_nodes(ts3) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data3$name == df_samples3$name))
   expect_true(all(df_data3$time == df_samples3$time))
   expect_true(all(df_data3$pop == df_samples3$pop))
 
-  df_samples4 <- ts_samples(ts4) %>% dplyr::arrange(name, time)
+  df_samples4 <- ts_recorded(ts4) %>% dplyr::arrange(name, time)
   df_data4 <- ts_nodes(ts4) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data4$name == df_samples4$name))
   expect_true(all(df_data4$time == df_samples4$time))
@@ -299,22 +300,22 @@ test_that("ts_samples() names match ts_nodes() information (msprime)", {
 
   ts1 <- ts_read(model, file = msprime_ts)
   ts3 <- ts_read(model, file = msprime_ts) %>% ts_simplify(simplify_to = simplify_to)
-  simplify_to <- sample(ts_samples(ts1)$name, 10)
+  simplify_to <- sample(ts_recorded(ts1)$name, 10)
   ts4 <- ts_simplify(ts1, simplify_to = simplify_to)
 
-  df_samples1 <- ts_samples(ts1) %>% dplyr::arrange(name, time)
+  df_samples1 <- ts_recorded(ts1) %>% dplyr::arrange(name, time)
   df_data1 <- ts_nodes(ts1) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data1$name == df_samples1$name))
   expect_true(all(df_data1$time == df_samples1$time))
   expect_true(all(df_data1$pop == df_samples1$pop))
 
-  df_samples3 <- ts_samples(ts3) %>% dplyr::arrange(name, time)
+  df_samples3 <- ts_recorded(ts3) %>% dplyr::arrange(name, time)
   df_data3 <- ts_nodes(ts3) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data3$name == df_samples3$name))
   expect_true(all(df_data3$time == df_samples3$time))
   expect_true(all(df_data3$pop == df_samples3$pop))
 
-  df_samples4 <- ts_samples(ts4) %>% dplyr::arrange(name, time)
+  df_samples4 <- ts_recorded(ts4) %>% dplyr::arrange(name, time)
   df_data4 <- ts_nodes(ts4) %>% stats::na.omit() %>% dplyr::distinct(name, .keep_all = TRUE) %>% dplyr::arrange(name, time) %>% as.data.frame()
   expect_true(all(df_data4$name == df_samples4$name))
   expect_true(all(df_data4$time == df_samples4$time))
@@ -481,7 +482,7 @@ test_that("slendr metadata is correctly loaded (spatial model without CRS)", {
   ts <- slim(model, sequence_length = sequence_length, recombination_rate = RECOMBINATION_RATE,
        locations = locations_file, burnin = burnin_length,
        method = "batch", random_seed = seed, max_attempts = max_attempts,
-       samples = samples, verbose = FALSE)
+       schedule = samples, verbose = FALSE)
   ts_write(ts, output)
 
   metadata <- ts_metadata(ts)
@@ -513,7 +514,7 @@ test_that("slendr metadata is correctly loaded (non-spatial SLiM model)", {
   ts <- slim(model, sequence_length = sequence_length, recombination_rate = RECOMBINATION_RATE,
        locations = locations_file, burnin = burnin_length,
        method = "batch", random_seed = seed,
-       samples = samples, verbose = FALSE, spatial = spatial)
+       schedule = samples, verbose = FALSE, spatial = spatial)
   ts_write(ts, output)
 
   metadata <- ts_metadata(ts)
@@ -539,7 +540,7 @@ test_that("slendr metadata is correctly loaded (non-spatial msprime model)", {
   spatial <- FALSE
 
   ts <- msprime(model, sequence_length = sequence_length, recombination_rate = RECOMBINATION_RATE,
-       random_seed = seed, samples = samples, verbose = FALSE)
+       random_seed = seed, schedule = samples, verbose = FALSE)
   ts_write(ts, output)
   metadata <- ts_metadata(ts)
 
@@ -631,9 +632,9 @@ test_that("locations and times in the tree sequence match values saved by SLiM (
 
 test_that("metadata is the same for SLiM and msprime conditional on a model", {
   samples <- rbind(
-    schedule_sampling(model, times = 2, list(p1, 2), list(p2, 2)),
-    schedule_sampling(model, times = 212, list(p1, 5), list(p2, 3)),
-    schedule_sampling(model, times = 300, list(p1, 10), list(p2, 10))
+    schedule_recording(model, times = 2, list(p1, 2), list(p2, 2)),
+    schedule_recording(model, times = 212, list(p1, 5), list(p2, 3)),
+    schedule_recording(model, times = 300, list(p1, 10), list(p2, 10))
   )
 
   slim_ts <- normalizePath(file.path(model_dir, "output_slim.trees"), winslash = "/", mustWork = FALSE)
@@ -642,10 +643,10 @@ test_that("metadata is the same for SLiM and msprime conditional on a model", {
   slim(model, sequence_length = 100000, recombination_rate = 0,
        locations = locations_file, burnin = 10,
        method = "batch", random_seed = 314159,
-       samples = samples, verbose = FALSE) %>% ts_write(slim_ts)
+       schedule = samples, verbose = FALSE) %>% ts_write(slim_ts)
 
   msprime(model, sequence_length = 100000, recombination_rate = 0,
-          random_seed = 314159, samples = samples, verbose = FALSE) %>% ts_write(msprime_ts)
+          random_seed = 314159, schedule = samples, verbose = FALSE) %>% ts_write(msprime_ts)
 
   simplify_to <- c("pop1_1", "pop1_2", "pop1_17")
 
@@ -671,12 +672,12 @@ test_that("metadata is the same for SLiM and msprime conditional on a model", {
   mts5 <- ts_mutate(mts4, mutation_rate = 1e-7)
   mts6 <- ts_read(model = model, file = msprime_ts) %>% ts_mutate(mutation_rate = 1e-7)
 
-  expect_equal(ts_samples(sts1), ts_samples(mts1))
-  expect_equal(ts_samples(sts2), ts_samples(mts2))
-  expect_equal(ts_samples(sts3), ts_samples(mts3))
-  expect_equal(ts_samples(sts4), ts_samples(mts4))
-  expect_equal(ts_samples(sts5), ts_samples(mts5))
-  expect_equal(ts_samples(sts6), ts_samples(mts6))
+  expect_equal(ts_recorded(sts1), ts_recorded(mts1))
+  expect_equal(ts_recorded(sts2), ts_recorded(mts2))
+  expect_equal(ts_recorded(sts3), ts_recorded(mts3))
+  expect_equal(ts_recorded(sts4), ts_recorded(mts4))
+  expect_equal(ts_recorded(sts5), ts_recorded(mts5))
+  expect_equal(ts_recorded(sts6), ts_recorded(mts6))
 
   sdata1 <- ts_nodes(sts1) %>% dplyr::filter(sampled) %>% dplyr::arrange(name) %>% as.data.frame()
   mdata1 <- ts_nodes(mts1) %>% stats::na.omit() %>% dplyr::arrange(name) %>% as.data.frame()
@@ -764,7 +765,7 @@ test_that("ts_ibd() on spatial SLiM/slendr tree sequences works properly (with C
     slim(sequence_length = 1e6, recombination_rate = 1e-8, random_seed = 42)
 
   set.seed(42)
-  samples <- sample(ts_samples(ts)$name, 20)
+  samples <- sample(ts_recorded(ts)$name, 20)
 
   suppressWarnings(ibd_sf <- ts_ibd(ts, within = samples))
   suppressWarnings(ibd_nosf <- ts_ibd(ts, within = samples, sf = FALSE))
@@ -804,7 +805,7 @@ test_that("ts_read does not track any file path if a tree sequence is directly l
   nonser_model$path <- NULL
 
   ts1 <- msprime(nonser_model, sequence_length = 100000, recombination_rate = 0,
-                 random_seed = 314159, samples = samples)
+                 random_seed = 314159, schedule = samples)
 
   suppressWarnings(ts2 <- ts_recapitate(ts1, recombination_rate = 0, Ne = 100))
   ts3 <- ts_simplify(ts2)
@@ -831,17 +832,29 @@ test_that("ts_names(ts) returns a simple character vector", {
 })
 
 test_that("ts_names(ts, split = 'pop') returns a list of character vectors", {
-  expect_type(ts_names(ts_msprime, split = "pop"), "list")
-  expect_type(ts_names(ts_slim, split = "pop"), "list")
+  expect_type(ts_names(ts_msprime, split = TRUE), "list")
+  expect_type(ts_names(ts_slim, split = TRUE), "list")
 
-  expect_true(length(ts_names(ts_msprime, split = "pop")) == 2)
-  expect_true(length(ts_names(ts_slim, split = "pop")) == 2)
+  expect_true(length(ts_names(ts_msprime, split = TRUE)) == 2)
+  expect_true(length(ts_names(ts_slim, split = TRUE)) == 2)
 })
 
-test_that("ts_names(ts, split = 'time') returns a list of character vectors", {
-  expect_type(ts_names(ts_msprime, split = "time"), "list")
-  expect_type(ts_names(ts_slim, split = "time"), "list")
+# test replicates ---------------------------------------------------------
 
-  expect_true(length(ts_names(ts_msprime, split = "time")) == length(unique(samples$time)))
-  expect_true(length(ts_names(ts_slim, split = "time")) == length(unique(samples$time)))
+test_that("replicates are computed correctly", {
+  samples <- ts_names(model, split = TRUE)
+
+  set.seed(42)
+  ts <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
+  df1 <- ts_f2(ts, A = samples["pop1"], B = samples["pop2"], mode = "branch")
+
+  set.seed(42)
+  n <- 5
+  df2 <- ts_replicate(n, {
+    ts <- msprime(model, sequence_length = 1e6, recombination_rate = 1e-8)
+    ts_f2(ts, A = samples["pop1"], B = samples["pop2"], mode = "branch")
+  })
+
+  expect_true(nrow(df2) == n)
+  expect_equal(df1, df2[1, c("A", "B", "statistic", "f2")])
 })

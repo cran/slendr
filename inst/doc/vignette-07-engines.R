@@ -37,7 +37,7 @@ x2 <- population("x2", time = 4000, N = 5000, parent = x1)
 # no gene flow model
 model_nogf <- compile_model(populations = list(a, b, x1, x2, c, o), generation_time = 1, simulation_length = 4500)
 
-samples <- schedule_sampling(
+samples <- schedule_recording(
   model_nogf, times = 4500,
   list(a, 1), list(b, 1), list(x1, 50), list(x2, 50), list(c, 1), list(o, 1)
 )
@@ -47,7 +47,7 @@ gf <- gene_flow(from = b, to = x1, start = 4100, end = 4400, proportion = 0.1)
 
 model_gf <- compile_model(populations = list(a, b, x1, x2, c, o), gene_flow = gf, generation_time = 1, simulation_length = 4500)
 
-samples <- schedule_sampling(
+samples <- schedule_recording(
   model_gf, times = 4500,
   list(a, 1), list(b, 1), list(x1, 50), list(x2, 50), list(c, 1), list(o, 1)
 )
@@ -58,12 +58,12 @@ plot_model(model_gf, sizes = FALSE, proportions = TRUE)
 
 ## -----------------------------------------------------------------------------
 # model without gene flow
-slim_nogf <- slim(model_nogf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
-msprime_nogf <- msprime(model_nogf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
+slim_nogf <- slim(model_nogf, sequence_length = seq_len, recombination_rate = rec_rate, schedule = samples, random_seed = seed)
+msprime_nogf <- msprime(model_nogf, sequence_length = seq_len, recombination_rate = rec_rate, schedule = samples, random_seed = seed)
 
 # model with b -> x1 gene flow
-slim_gf <- slim(model_gf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
-msprime_gf <- msprime(model_gf, sequence_length = seq_len, recombination_rate = rec_rate, samples = samples, random_seed = seed)
+slim_gf <- slim(model_gf, sequence_length = seq_len, recombination_rate = rec_rate, schedule = samples, random_seed = seed)
+msprime_gf <- msprime(model_gf, sequence_length = seq_len, recombination_rate = rec_rate, schedule = samples, random_seed = seed)
 
 ## -----------------------------------------------------------------------------
 # SLiM outputs -- we can use built-in slendr functions for those
@@ -175,19 +175,19 @@ forward_const <- population("const", time = 1, N = N)
 
 # decreasing step Ne model
 forward_decr <- population("decr", time = 1, N = N, map = FALSE) %>%
-  resize(time = 2000, N = N / N_factor, how = "step")
+  resize(time = 2000, N = N / N_factor)
 
 # increasing step Ne model
 forward_incr <- population("inc", time = 1, N = N) %>%
-  resize(time = 2000, N = N * N_factor, how = "step")
+  resize(time = 2000, N = N * N_factor)
 
 # exponential increase in size
 forward_exp_incr <- population("exp_inc", time = 1, N = N) %>%
-  resize(time = 2000, end = 3000, N = N * N_factor, how = "exponential")
+  resize(time = 2000, end = 3000, N = N * N_factor)
 
 # exponential decrease in size
 forward_exp_decr <- population("exp_decr", time = 1, N = N) %>%
-  resize(time = 2000, end = 3000, N = N / N_factor, how = "exponential")
+  resize(time = 2000, end = 3000, N = N / N_factor)
 
 ## -----------------------------------------------------------------------------
 # constant Ne model
@@ -195,19 +195,19 @@ backward_const <- population("const", time = 5000, N = N)
 
 # decreasing step Ne model
 backward_decr <- population("decr", time = 5000, N = N) %>%
-  resize(time = 3000, N = N / N_factor, how = "step")
+  resize(time = 3000, N = N / N_factor)
 
 # increasing step Ne model
 backward_incr <- population("inc", time = 5000, N = N) %>%
-  resize(time = 3000, N = N * N_factor, how = "step")
+  resize(time = 3000, N = N * N_factor)
 
 # exponential increase in size
 backward_exp_incr <- population("exp_inc", time = 5000, N = N) %>%
-  resize(time = 3000, end = 2000, N = N * N_factor, how = "exponential")
+  resize(time = 3000, end = 2000, N = N * N_factor)
 
 # exponential decrease in size
 backward_exp_decr <- population("exp_decr", time = 5000, N = N) %>%
-  resize(time = 3000, end = 2000, N = N / N_factor, how = "exponential")
+  resize(time = 3000, end = 2000, N = N / N_factor)
 
 ## -----------------------------------------------------------------------------
 compile_run_afs <- function(model_name, pop, seed = 42) {
@@ -227,15 +227,15 @@ compile_run_afs <- function(model_name, pop, seed = 42) {
   # compile model
   model <- compile_model(pop, generation_time = 15, direction = direction, simulation_length = simulation_length)
 
-  samples <- schedule_sampling(model, times = sampling_time, list(pop, 50))
+  samples <- schedule_recording(model, times = sampling_time, list(pop, 50))
 
   # run the model in SLiM
   ts_slim <- slim(model, sequence_length = seq_len, recombination_rate = rec_rate,
-                  samples = samples, random_seed = seed, verbose = FALSE)
+                  schedule = samples, random_seed = seed, verbose = FALSE)
 
   # run the same model in msprim
   ts_msprime <- msprime(model, sequence_length = seq_len, recombination_rate = rec_rate,
-                        samples = samples, random_seed = seed, verbose = FALSE)
+                        schedule = samples, random_seed = seed, verbose = FALSE)
 
   # load the SLiM tree sequence
   ts_slim <- ts_recapitate(ts_slim, Ne = N, recombination_rate = rec_rate, random_seed = seed) %>%

@@ -116,7 +116,7 @@ seconds, but if you don't want to wait, you can set `snapshots = N` manually.")
     attr(result, "history") <- append(attr(result, "history"), changes)
     # for (i in seq_along(inter_regions)[-1]) {
     #   time <- inter_regions[[i]]$time
-    #   result <- resize(result, N = new_N[i - 1], time = time, how = "step")
+    #   result <- resize(result, N = new_N[i - 1], time = time)
     # }
   }
 
@@ -321,12 +321,12 @@ check_split_time <- function(time, parent) {
   direction <- time_direction(parent)
   if (direction == "forward" & time <= parent_time) {
     stop(sprintf("The model implies forward time direction but the specified split
-time (%d) is lower than the parent's (%s)",
+time (%d) is lower or equal to the parent's (%s)",
                  time, parent_time),
          call. = FALSE)
   } else if (direction == "backward" & time >= parent_time) {
     stop(sprintf("The model implies backward time direction but the specified split
-time (%s) is higher than the parent's (%s)",
+time (%s) is higher or equal to the parent's (%s)",
                  time, parent_time),
          call. = FALSE)
   } else if (time == parent_time) {
@@ -398,7 +398,7 @@ check_event_time <- function(time, pop) {
 }
 
 # Check whether a given population will be present for sampling
-# (used exclusively in the schedule_sampling() function to avoid situations when
+# (used exclusively in the schedule_recording() function to avoid situations when
 # a user would sample from a population in the same generation that it
 # would be created)
 check_present_time <- function(time, pop, offset, direction = NULL) {
@@ -505,15 +505,15 @@ has_map <- function(x) {
 }
 
 
-# Process the sampling schedule which was provided by the user or -- if no
-# sampling schedule was specified -- generate one automatically for populations
+# Process the recording schedule which was provided by the user or -- if no
+# such schedule was specified -- generate one automatically for populations
 # which survive to the end of the simulation.
-process_sampling <- function(samples, model, verbose = FALSE) {
-  # if no explicit sampling schedule was given, try to generate it at least
+process_schedule <- function(samples, model, verbose = FALSE) {
+  # if no explicit schedule was given, try to generate it at least
   # for the populations which survive to the present
   if (is.null(samples)) {
     if (verbose)
-      message("Tree-sequence recording is on but no sampling schedule was given. ",
+      message("Tree-sequence recording is on but no recording schedule was given. ",
               "Generating one for all individuals surviving to the end of the simulation.")
 
     # get a list of populations surviving to the end of the simulation
@@ -533,10 +533,10 @@ process_sampling <- function(samples, model, verbose = FALSE) {
     }
 
     # ... and then call
-    #    schedule_sampling(model, end_time, <all surviving populations>)
+    #    schedule_recording(model, end_time, <all surviving populations>)
     # which is what would be called normally by the user, manually
     samples <- do.call(
-      schedule_sampling,
+      schedule_recording,
       c(list(model = model, times = sampling_time),
         purrr::map(surviving_pops, ~ list(.x, Inf)))
     )

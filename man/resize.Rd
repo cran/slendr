@@ -4,20 +4,21 @@
 \alias{resize}
 \title{Change the population size}
 \usage{
-resize(pop, N, how, time, end = NULL)
+resize(pop, N, time, end = NULL, how = NULL)
 }
 \arguments{
 \item{pop}{Object of the class \code{slendr_pop}}
 
 \item{N}{Population size after the change}
 
-\item{how}{How to change the population size (options are \code{"step"} or
-\code{"exponential"})}
-
 \item{time}{Time of the population size change}
 
-\item{end}{End of the population size change period (used for exponential
-change events)}
+\item{end}{End of the population size change period (automatically implies
+an exponential change event)}
+
+\item{how}{Deprecated argument. Specifying the value of \code{end} now
+automatically implies an exponential resize, leaving it out implies an
+instantaneous size change.}
 }
 \value{
 Object of the class \code{slendr_pop}, which contains population
@@ -94,8 +95,8 @@ plot_map(pop1, pop2, pop3)
 
 # individual gene flow events can be saved to a list
 gf <- list(
-  gene_flow(from = pop1, to = pop3, start = 150, end = 200, rate = 0.15),
-  gene_flow(from = pop1, to = pop2, start = 300, end = 330, rate = 0.25)
+  gene_flow(from = pop1, to = pop3, start = 150, end = 200, proportion = 0.15),
+  gene_flow(from = pop1, to = pop2, start = 300, end = 330, proportion = 0.25)
 )
 
 # compilation -------------------------------------------------------------

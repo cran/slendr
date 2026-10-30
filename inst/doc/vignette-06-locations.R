@@ -116,20 +116,20 @@ plot_map(afr, ooa, ehg, eur, ana, yam)
 
 ## -----------------------------------------------------------------------------
 # one ancient individual every two thousand years
-ancient <- schedule_sampling(model,
+ancient <- schedule_recording(model,
                     times = seq(40000, 1, by = -500),
                     list(ooa, 1), list(ehg, 1), list(eur, 1),
                     list(ana, 1), list(yam, 1))
 
 # present-day Africans and Europeans
-present <- schedule_sampling(model, times = 0, list(afr, 5), list(eur, 30))
+present <- schedule_recording(model, times = 0, list(afr, 5), list(eur, 30))
 
 samples <- rbind(ancient, present)
 
 ## -----------------------------------------------------------------------------
 ts <- slim(
   model, sequence_length = 100e3, recombination_rate = 1e-8, burnin = 200e3,
-  samples = samples, method = "batch", random_seed = 314159, max_attempts = 1
+  schedule = samples, method = "batch", random_seed = 314159, max_attempts = 1
 ) %>%
   ts_recapitate(recombination_rate = 1e-8, Ne = 10000, random_seed = seed) %>%
   ts_simplify()

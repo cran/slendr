@@ -1,3 +1,5 @@
+skip_on_cran()
+
 test_that("non-overlapping geneflow leads to error", {
   map <- readRDS("map.rds")
   pop1 <- population("pop1", N = 100, time = 10000,
@@ -48,7 +50,7 @@ test_that("gene-flow rate must be a value between 0 and 1", {
 
 test_that("populations must be already created for a gene flow to happen (forward model)", {
   skip_if(!check_dependencies(python = TRUE))
-  init_env(quiet = TRUE)
+  init_env()
 
   pop1 <- population("pop1", N = 100, time = 100)
   pop2 <- population("pop2", N = 100, time = 200, parent = pop1)
@@ -88,7 +90,7 @@ test_that("gene_flow() behaves as expected in some concrete situations", {
   # this used to say: "Both A and B must be present within the gene-flow window 4e+06-4000005"
   expect_error(
     gene_flow(from = popA, to = popB, start = 4e6, end = (4e6+5), proportion = 0.3),
-    "Inconsistent time direction implied by populations and the gene flow event"
+    "Inconsistent time direction implied by population and gene-flow timings"
   )
 
   # this used to say: "Specified times are not consistent with the assumed direction of time

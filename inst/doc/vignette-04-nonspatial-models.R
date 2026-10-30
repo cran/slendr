@@ -18,14 +18,14 @@ afr <- population("AFR", time = 100000, N = 3000)
 
 # first migrants out of Africa
 ooa <- population("OOA", parent = afr, time = 60000, N = 500, remove = 23000) %>%
-  resize(N = 2000, time = 40000, how = "step")
+  resize(N = 2000, time = 40000)
 
 # Eastern hunter-gatherers
 ehg <- population("EHG", parent = ooa, time = 28000, N = 1000, remove = 6000)
 
 # European population
 eur <- population("EUR", parent = ehg, time = 25000, N = 2000) %>%
-  resize(N = 10000, how = "exponential", time = 5000, end = 0)
+  resize(N = 10000, time = 5000, end = 0)
 
 # Anatolian farmers
 ana <- population("ANA", time = 28000, N = 3000, parent = ooa, remove = 4000)
@@ -48,14 +48,14 @@ model <- compile_model(
 )
 
 ## -----------------------------------------------------------------------------
-samples <- schedule_sampling(
+samples <- schedule_recording(
   model,
   times = c(0, 5000, 12000, 20000, 35000, 39000, 43000),
   list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
 )
 
 ## ----non-spatial-graph_sampling, fig.width=6, fig.height=4--------------------
-plot_model(model, samples = samples)
+plot_model(model, schedule = samples)
 
 ## ----eval = FALSE-------------------------------------------------------------
 # ts_slim <- slim(model, sequence_length = 100000, recombination_rate = 0)
@@ -72,19 +72,19 @@ introgression_model <- read_model(path = system.file("extdata/models/introgressi
 extract_parameters(introgression_model)
 
 ## -----------------------------------------------------------------------------
-schedule_amh <- schedule_sampling(
+schedule_amh <- schedule_recording(
   model,
   times = c(0, 5000, 12000, 20000, 35000, 39000, 43000),
   list(eur, 3), list(ehg, 1), list(yam, 1), list(ana, 3), list(ooa, 1), list(afr, 1)
 )
 
-schedule_ui <- schedule_sampling(model, times = 45000, list(ooa, 1, "Ust_Ishim"))
+schedule_ui <- schedule_recording(model, times = 45000, list(ooa, 1, "Ust_Ishim"))
 
 # bind the two tables together into a single schedule
 schedule <- rbind(schedule_amh, schedule_ui)
 
 ## -----------------------------------------------------------------------------
-ts <- msprime(model, sequence_length = 100000, recombination_rate = 0, samples = schedule)
+ts <- msprime(model, sequence_length = 100000, recombination_rate = 0, schedule = schedule)
 
 ## ----eval=FALSE---------------------------------------------------------------
 # ts_samples(ts)

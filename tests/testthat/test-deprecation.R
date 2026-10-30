@@ -1,8 +1,9 @@
 # In this script we test that all deprecated functions and arguments issue
 # a proper warning for users
 
+skip_on_cran()
 skip_if(!check_dependencies(python = TRUE))
-init_env(quiet = TRUE)
+init_env()
 
 test_that("ts_load() deprecated in favour of ts_read()", {
   expect_warning(ts_load(system.file("extdata/models/introgression_slim.trees", package = "slendr")))
@@ -15,6 +16,14 @@ test_that("ts_save() deprecated in favour of ts_write()", {
 
 pop1 <- population("pop1", N = 100, time = 500)
 pop2 <- population("pop2", N = 100, parent = pop1, time = 120)
+
+test_that("the `how` argument in resize() is no longer necessary", {
+  expect_warning(resize(pop1, time = 600, N = 10, how = "step"))
+  expect_warning(resize(pop1, time = 600, end = 1000, N = 10, how = "exponential"))
+
+  expect_error(resize(pop1, N = 10), "The `time` of the resize event must be specified")
+  expect_error(resize(pop1, end = 1000, N = 10), "The `time` of the resize event must be specified")
+})
 
 test_that("using the rate argument gives a warning", {
   msg <- "The argument `rate` is about to be deprecated"
@@ -47,4 +56,24 @@ test_that("rate argument is correctly distributed into an overall proportion", {
   # also given in the log output of the slim run
   log <- suppressMessages(capture.output(slim(model, sequence_length = 1, recombination_rate = 0, verbose = TRUE)))
   expect_true(sum(grepl("0.012% over 10 generations", log)) == 1)
+})
+
+test_that("`samples` argument is deprecated in favour of `schedule`", {
+  model <- compile_model(list(pop1, pop2), generation_time = 1, simulation_length = 100)
+  schedule <- schedule_recording(model, times = 470, list(pop1, 1))
+  expect_warning(msprime(model, sequence_length = 1, recombination_rate = 1e-8, samples = schedule))
+  expect_warning(slim(model, sequence_length = 1, recombination_rate = 1e-8, samples = schedule))
+  expect_s3_class(msprime(model, sequence_length = 1, recombination_rate = 1e-8, schedule = schedule), "slendr_ts")
+  expect_s3_class(slim(model, sequence_length = 1, recombination_rate = 1e-8, schedule = schedule), "slendr_ts")
+})
+
+test_that("`schedule_sampling()` issues a warning on renaming", {
+  model <- compile_model(list(pop1, pop2), generation_time = 1)
+  expect_warning(schedule_sampling(model, times = 0, list(pop1, 1)), "Starting with slendr v2.0")
+})
+
+test_that("`ts_samples()` issues a warning on renaming", {
+  model <- compile_model(list(pop1, pop2), generation_time = 1)
+  ts <- msprime(model, sequence_length = 1, recombination_rate = 0)
+  expect_warning(ts_samples(ts), "Starting with slendr v2.0")
 })

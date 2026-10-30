@@ -55,26 +55,26 @@ cowplot::plot_grid(
 )
 
 ## -----------------------------------------------------------------------------
-nea_samples <- schedule_sampling(model, times = c(70000, 40000), list(nea, 1))
+nea_samples <- schedule_recording(model, times = c(70000, 40000), list(nea, 1))
 nea_samples
 
 ## -----------------------------------------------------------------------------
-present_samples <- schedule_sampling(model, times = 0, list(chimp, 1), list(afr, 5), list(eur, 10))
+present_samples <- schedule_recording(model, times = 0, list(chimp, 1), list(afr, 5), list(eur, 10))
 present_samples
 
 ## -----------------------------------------------------------------------------
-emh_samples <- schedule_sampling(model, times = runif(n = 40, min = 10000, max = 40000), list(eur, 1))
+emh_samples <- schedule_recording(model, times = runif(n = 40, min = 10000, max = 40000), list(eur, 1))
 emh_samples
 
 ## ----eval = FALSE-------------------------------------------------------------
 # # this attempts to sample a Neanderthal individual at a point when Neanderthals
 # # are already extinct, resulting in an error
-# schedule_sampling(model, times = 10000, list(nea, 1), strict = TRUE)
+# schedule_recording(model, times = 10000, list(nea, 1), strict = TRUE)
 
 ## -----------------------------------------------------------------------------
 ts <- msprime(
   model, sequence_length = 100e6, recombination_rate = 1e-8,
-  samples = rbind(nea_samples, present_samples, emh_samples),
+  schedule = rbind(nea_samples, present_samples, emh_samples),
   random_seed = 314159, verbose = TRUE
 )
 
@@ -85,7 +85,7 @@ output_file <- tempfile()
 
 ts <- msprime(
   model, sequence_length = 100e6, recombination_rate = 1e-8,
-  samples = rbind(nea_samples, present_samples, emh_samples),
+  schedule = rbind(nea_samples, present_samples, emh_samples),
   random_seed = 314159
 )
 

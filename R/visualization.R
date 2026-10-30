@@ -302,7 +302,7 @@ sort_splits <- function(model) {
 #'   algorithm will be used, ordering populations from the most ancestral to the
 #'   most recent using an in-order tree traversal.
 #' @param file Output file for a figure saved via \code{ggsave}
-#' @param samples Sampling schedule to be visualized over the model
+#' @param schedule Recording schedule to be visualized over the model
 #' @param ... Optional argument which will be passed to \code{ggsave}
 #'
 #' @return A ggplot2 object with the visualized slendr model
@@ -318,13 +318,14 @@ sort_splits <- function(model) {
 #'
 #' plot_model(model, sizes = FALSE, log = TRUE)
 #' @importFrom ggplot2 ggplot expand_limits theme_classic element_line unit
-#'   geom_polygon geom_label scale_y_continuous scale_color_discrete scale_fill_discrete
-#'   labs geom_segment arrow
+#' @importFrom ggplot2 geom_polygon geom_label scale_y_continuous scale_color_discrete
+#' @importFrom ggplot2 scale_fill_discrete labs geom_segment arrow
 #' @export
 plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRUE, log = FALSE,
-                       order = NULL, file = NULL, samples = NULL, ...) {
+                       order = NULL, file = NULL, schedule = NULL, ...) {
   populations <- model$populations
 
+  oldest_time <- get_oldest_time(populations, model$direction)
   log10_ydelta <- 0.001
 
   # layout populations along the x-axis according to an in-order population tree traversal
@@ -337,16 +338,26 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
       stop("If order is given manually, all population names must be specified", call. = FALSE)
   }
 
-  split_times <- vapply(pop_names, function(x) attr(populations[[x]], "history")[[1]]$time,
-                        numeric(1))
+  split_times <- vapply(pop_names, function(x) attr(populations[[x]], "history")[[1]]$time, numeric(1))
 
-  pop_factors <- order_pops(model$populations, model$direction)
+  # in case a truncated model is being plotted, filter down all populations
+  # only to those falling within the truncated time window
+  if (model$direction == "backward") {
+    present_pops <- Filter(function(i) split_times[i] >= oldest_time - model$orig_length, seq_along(populations))
+  } else {
+    present_pops <- Filter(function(i) split_times[i] <= oldest_time + model$orig_length, seq_along(populations))
+  }
+  pop_names <- pop_names[present_pops]
+  populations <- populations[pop_names]
+  split_times <- split_times[pop_names]
+
+  pop_factors <- order_pops(populations, model$direction)
 
   # extract times at which each population will be removed from the simulation
   if (model$direction == "backward")
-    default_end <- get_oldest_time(model$populations, model$direction) - model$orig_length + log10_ydelta
+    default_end <- oldest_time - model$orig_length + log10_ydelta
   else
-    default_end <- get_oldest_time(model$populations, model$direction) + model$orig_length
+    default_end <- oldest_time + model$orig_length
 
   end_times <- purrr::map_int(populations, function(pop) {
     remove <- attr(pop, "remove")
@@ -476,6 +487,7 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
   # arrows
   if (!is.null(model$geneflow) && gene_flow) {
     gene_flow <- model$geneflow %>%
+      dplyr::filter(from %in% pop_names, to %in% pop_names) %>% # take care of truncation first
       dplyr::mutate(
         x = purrr::map_dbl(from, ~ centers[centers$pop == .x, ]$center),
         xend = purrr::map_dbl(to, ~ centers[centers$pop == .x, ]$center),
@@ -527,7 +539,7 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
   # labels with population names
   # except for outgroups and populations with two or more daughter populations, all
   # population labels will be plotted at the bottom of the figure
-  # (not currently done because of issues with overplotting with sampling labels)
+  # (not currently done because of issues with overplotting with recording labels)
   # end_labels <- model$splits[
   #   model$splits$parent != "__pop_is_ancestor" &
   #   vapply(model$splits$pop, function(x) sum(x == model$splits$parent), integer(1)) < 2
@@ -564,13 +576,12 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
   # (it seems that the first rectangle that is drawn is plotted even "earlier" than a
   # model start but this takes care of things for now -- if more plotting issues pop up,
   # they can be fixed later)
-  oldest_time <- get_oldest_time(model$populations, model$direction)
   if (model$direction == "forward") {
-    ylim_low <- get_oldest_time(model$populations, model$direction)
+    ylim_low <- oldest_time
     ylim_high <- oldest_time + model$orig_length
     ylim <- c(ylim_high, ylim_low)
   } else {
-    ylim_high <- get_oldest_time(model$populations, model$direction)
+    ylim_high <- oldest_time
     ylim_low <- oldest_time - model$orig_length
     ylim <- c(ylim_low, ylim_high)
   }
@@ -580,10 +591,10 @@ plot_model <- function(model, sizes = TRUE, proportions = FALSE, gene_flow = TRU
                               labels = ifelse(max(abs(c(ylim_low, ylim_high))) < 10e6,
                                               scales::label_comma(), NULL))
 
-  # if specified, overlay sampling points over the model
-  if (!is.null(samples)) {
+  # if specified, overlay recording time points over the model
+  if (!is.null(schedule)) {
     sampling_points <- dplyr::select(centers, pop, center) %>%
-      dplyr::inner_join(samples, by = "pop") %>%
+      dplyr::inner_join(schedule, by = "pop") %>%
       dplyr::mutate(time = ifelse(time == 0, log10_ydelta, time))
     p <- p + geom_label(data = sampling_points, aes(label = n, x = center, y = time),
                    fontface = "bold", alpha = 0.5)

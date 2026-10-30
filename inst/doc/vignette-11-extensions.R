@@ -68,7 +68,7 @@ afr <- population("AFR", time = 90000, N = 3000)
 
 # first migrants out of Africa
 ooa <- population("OOA", parent = afr, time = 60000, N = 500, remove = 23000) %>%
-  resize(N = 2000, time = 40000, how = "step")
+  resize(N = 2000, time = 40000)
 
 # Eastern hunter-gatherers
 ehg <- population("EHG", parent = ooa, time = 28000, N = 1000, remove = 6000)
@@ -439,78 +439,78 @@ model <- compile_model(
 )
 
 ## -----------------------------------------------------------------------------
-nea_samples <- schedule_sampling(model, times = 50000, list(nea, 1))
-modern_samples <- schedule_sampling(model, times = 0, list(eur, 100))
+nea_samples <- schedule_recording(model, times = 50000, list(nea, 1))
+modern_samples <- schedule_recording(model, times = 0, list(eur, 100))
 
 samples <- rbind(nea_samples, modern_samples)
 
 ## ----echo=FALSE, eval = RERUN & run_vignette----------------------------------
 # x = Sys.time()
-# data_dir <- "~/Code/__archive/introgression_data/"
-# slim(model, recombination_rate = 1e-8, samples = samples, path = data_dir)
+# data_dir <- "~/Code/_archive/introgression_data/"
+# slim(model, recombination_rate = 1e-8, schedule = samples, path = data_dir)
 # y = Sys.time()
 # y - x # Time difference of 45.62365 mins
 
 ## ----eval=FALSE---------------------------------------------------------------
-# slim(model, recombination_rate = 1e-8, samples = samples, path = "~/Code/__archive/introgression_data/")
+# slim(model, recombination_rate = 1e-8, schedule = samples, path = "~/Code/_archive/introgression_data/")
 
 ## -----------------------------------------------------------------------------
 n_genes <- 200
 gene_length <- 5e6
 window_length <- 100e3
 
-## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/frequencies.tsv")----
-# freqs <- read_tsv("~/Code/__archive/introgression_data/frequencies.tsv")
+## ----eval = run_vignette & file.exists("~/Code/_archive/introgression_data/frequencies.tsv")----
+freqs <- read_tsv("~/Code/_archive/introgression_data/frequencies.tsv")
 
-## ----introgression_freqs, eval = run_vignette & file.exists("~/Code/__archive/introgression_data/frequencies.tsv")----
-# freqs %>%
-# mutate(pos = pos %% 5e6) %>%
-# group_by(pos) %>%
-# summarise(freq = 100 * mean(freq)) %>%
-# ggplot() +
-#   geom_line(aes(pos, freq)) +
-#   geom_vline(xintercept = gene_length / 2, linetype = 2) +
-#   labs(x = "coordinate along a gene", y = "Neanderthal ancestry proportion [%]",
-#        title = "Proportion of Neanderthal ancestry in Europeans along 5Mb independent genes",
-#        subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)") +
-#   coord_cartesian(ylim = c(0, 3))
+## ----introgression_freqs, eval = run_vignette & file.exists("~/Code/_archive/introgression_data/frequencies.tsv")----
+freqs %>%
+mutate(pos = pos %% 5e6) %>%
+group_by(pos) %>%
+summarise(freq = 100 * mean(freq)) %>%
+ggplot() +
+  geom_line(aes(pos, freq)) +
+  geom_vline(xintercept = gene_length / 2, linetype = 2) +
+  labs(x = "coordinate along a gene", y = "Neanderthal ancestry proportion [%]",
+       title = "Proportion of Neanderthal ancestry in Europeans along 5Mb independent genes",
+       subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)") +
+  coord_cartesian(ylim = c(0, 3))
 
-## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
-# # load a tree sequence and extract the names of recorded individuals
-# ts <- ts_read(file = "~/Code/__archive/introgression_data/slim.trees", model)
-# samples <- ts_names(ts, split = "pop")
-# 
-# samples
-# 
-# # compute coordinates of sliding windows along the genome
-# windows <- seq(from = 0, to = n_genes * gene_length - 1, by = window_length)
-# 
-# head(windows)
-# tail(windows)
-# 
-# # compute divergence from the tree sequence in each window separately
-# divergence <- ts_divergence(ts, samples, windows = windows, mode = "branch")$divergence[[1]]
+## ----eval = run_vignette & file.exists("~/Code/_archive/introgression_data/slim.trees")----
+# load a tree sequence and extract the names of recorded individuals
+ts <- ts_read(file = "~/Code/_archive/introgression_data/slim.trees", model)
+samples <- ts_names(ts, split = TRUE)
 
-## ----eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
-# # compute average divergence at each position in a gene, and a 95% C.I.
-# div_df <- tibble(
-#   pop = "eur",
-#   pos = windows %% gene_length,
-#   div = divergence
-# ) %>%
-#   group_by(pop, pos) %>%
-#   summarise(
-#     mean = mean(div), n = n(), std = sd(div),
-#     ci_low = mean - 2 * std / sqrt(n),
-#     ci_up = mean + 2 * std / sqrt(n)
-#   )
+samples
 
-## ----introgression_divergence, eval = run_vignette & file.exists("~/Code/__archive/introgression_data/slim.trees")----
-# ggplot(div_df) +
-#   geom_ribbon(aes(pos, ymin = ci_low, ymax = ci_up), fill = "grey70") +
-#   geom_line(aes(pos, mean)) +
-#   geom_vline(aes(xintercept = gene_length / 2), linetype = 2) +
-#   labs(x = "coordinate along a gene", y = "divergence to Neanderthal",
-#        title = "Divergence of Europeans to a Neanderthal genome along 5Mb independent genes",
-#        subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)")
+# compute coordinates of sliding windows along the genome
+windows <- seq(from = 0, to = n_genes * gene_length - 1, by = window_length)
+
+head(windows)
+tail(windows)
+
+# compute divergence from the tree sequence in each window separately
+divergence <- ts_divergence(ts, samples, windows = windows, mode = "branch")$divergence[[1]]
+
+## ----eval = run_vignette & file.exists("~/Code/_archive/introgression_data/slim.trees")----
+# compute average divergence at each position in a gene, and a 95% C.I.
+div_df <- tibble(
+  pop = "eur",
+  pos = windows %% gene_length,
+  div = divergence
+) %>%
+  group_by(pop, pos) %>%
+  summarise(
+    mean = mean(div), n = n(), std = sd(div),
+    ci_low = mean - 2 * std / sqrt(n),
+    ci_up = mean + 2 * std / sqrt(n)
+  )
+
+## ----introgression_divergence, eval = run_vignette & file.exists("~/Code/_archive/introgression_data/slim.trees")----
+ggplot(div_df) +
+  geom_ribbon(aes(pos, ymin = ci_low, ymax = ci_up), fill = "grey70") +
+  geom_line(aes(pos, mean)) +
+  geom_vline(aes(xintercept = gene_length / 2), linetype = 2) +
+  labs(x = "coordinate along a gene", y = "divergence to Neanderthal",
+       title = "Divergence of Europeans to a Neanderthal genome along 5Mb independent genes",
+       subtitle = "(dashed line indicates introgressed deleterious Neanderthal allele)")
 

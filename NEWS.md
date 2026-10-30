@@ -1,56 +1,84 @@
+# _slendr_ 1.6.0
+
+- Data frames produces by various $f$-statistics now include a column `statistic`
+  containing a convenient readable name of each triplet, quartet, etc., in the
+  usual naming conventions.
+([#36cb1d14](https://github.com/bodkan/slendr/commit/36cb1d14))
+  
+- `ts_names()` and `ts_recorded()` now properly catch an error when an invalid
+argument `ts` is set (i.e., an object which is not of the class `slendr_ts`).
+([#876114e7](https://github.com/bodkan/slendr/commit/876114e7))
+
+- A new function `ts_replicate()` can be used to automate the computation of a
+given tree-sequence statistical expression across a number of replicates.
+([#f83d6d9c](https://github.com/bodkan/slendr/commit/f83d6d9c))
+
+- To make quick exploratory computation more convenient, the
+`schedule_sampling()` function now supports a syntax `list("each", <number>)`
+which schedules the recording of the given number of individuals from every
+population at a given time.
+([#04e6fa6b](https://github.com/bodkan/slendr/commit/04e6fa6b))
+
+- The `split = "pop"` or `split = "time"` options of `ts_names()` has been
+retired. In reality, only the `split = "pop"` has any application, which is  why
+the function now operates as either `split = FALSE` (the default, and also
+matching the previous default behavior) or `split = TRUE` (equivalent to `split
+= "pop"`). Note that, of course, the original behaviour can be easily recovered
+by applying the base-R function `split()` on the result of the `ts_recorded()`
+table.
+([#ce28fa21](https://github.com/bodkan/slendr/commit/ce28fa21))
+  
+- The argument `how =` of the `resize()` function is now deprecated. Specifying
+a `time` of a resize event now implies an immediate, step-wise change of the
+population size, specifying also the `end` time automatically now implies an
+exponential change. Thus, both of these modes of operation remain unchanged, but
+setting `how = "step"` or `how = "exponential"` is now not needed anymore.
+([#7f7269e8](https://github.com/bodkan/slendr/commit/7f7269e8))
+
+- An issue with visualization of "truncated" models (i.e., models compiled with
+the `simulation_length` argument shorter than the default duration of the model)
+which introduced awkward gaps in places of "missing" populations has been fixed.
+([#00fa2bee](https://github.com/bodkan/slendr/commit/00fa2bee))
+
+- The `quiet =` argument of `init_env()` is now deprecated, as the function is
+"quiet" by default.
+([#c21e5d6f](https://github.com/bodkan/slendr/commit/c21e5d6f))
+
+- The `samples =` argument of `msprime()` and `slim()` (as well as
+`plot_model()` and other functions) is now deprecated in favor of `schedule =`.
+This is in order to keep the naming of things a bit more consistent and to avoid
+clumsy issues with the meaning (and typical use) of the the downstream
+`ts_samples()` and various `ts_*()` statistical functions.
+([PR #200](https://github.com/bodkan/slendr/pull/200))
+
+- The `ts_samples()` function now allows extracting sample metatada not just
+from a given _slendr_ tree sequence, but also from a compiled model. This is
+useful for workflows which need to operate with such information before a
+potentially large simulation is even executed.
+([#8ef6750d](https://github.com/bodkan/slendr/commit/8ef6750d))
+
+- The `ts_names()` function has been updated in the same way as `ts_samples()`
+described above ([#1d27bc0f](https://github.com/bodkan/slendr/commit/1d27bc0f))
+
 # _slendr_ 1.5.0
 
-This release implements a number of important changes to installing and handling Python
-environments of slendr:
+This release implements a number of important changes to installing and handling Python environments of slendr:
 
-1. We now support ephemeral Python virtual environments based on uv, [recently
-   introduced by the reticulate
-   package](https://posit.co/blog/reticulate-1-41). This is mostly useful as a
-   fallback option in situations in which standard process based on
-   `setup_env()` (described below) causes issues. In order to use this feature,
-   users no longer need to create a permanent Python virtual environment with
-   the `setup_env()` function. Instead, calling `init_env(uv = TRUE)` in place
-   of the usual `init_env()` call will instruct _slendr_ to create an ephemeral
-   Python environment with all the required Python modules via the
-   reticulate-based uv interface. In other words, only two R commands
-   `library(slendr); init_env(uv = TRUE)` are now all that is needed for all of
-   the msprime- and tskit-based functionality of slendr. In situations in which
-   having to set `uv = TRUE` in every `init_env()` call becomes frustrating,
-   the uv-based ephemeral environments can be made default by setting the
-   environment variable `SLENDR_UV="TRUE"`, eg. in the `~/.Renviron` file.
+1. We now support ephemeral Python virtual environments based on uv, [recently introduced by the reticulate package](https://posit.co/blog/reticulate-1-41). This is mostly useful as a fallback option in situations in which standard process based on `setup_env()` (described below) causes issues. In order to use this feature, users no longer need to create a permanent Python virtual environment with the `setup_env()` function. Instead, calling `init_env(uv = TRUE)` in place of the usual `init_env()` call will instruct _slendr_ to create an ephemeral Python environment with all the required Python modules via the reticulate-based uv interface. In other words, only two R commands `library(slendr); init_env(uv = TRUE)` are now all that is needed for all of the msprime- and tskit-based functionality of slendr. In situations in which having to set `uv = TRUE` in every `init_env()` call becomes frustrating, the uv-based ephemeral environments can be made default by setting the environment variable `SLENDR_UV="TRUE"`, eg. in the `~/.Renviron` file.
 
-2. The `setup_env()` function now accepts a new argument `env =` with the
-   following behavior:
+2. The `setup_env()` function now accepts a new argument `env =` with the following behavior:
 
-- When called as `setup_env(env = "conda")`, _slendr_ downloads a
-  conda-provided Python interpreter and creates a virtual environment with all
-  of its Python dependencies. The `env = "conda"` mode is therefore equivalent
-  to the plain (and still default) call `setup_env()`.
+- When called as `setup_env(env = "conda")`, _slendr_ downloads a conda-provided Python interpreter and creates a virtual environment with all of its Python dependencies. The `env = "conda"` mode is therefore equivalent to the plain (and still default) call `setup_env()`.
 
-- Alternatively, running `setup_env(env = "venv")` will use a Python
-  interpreter already available on the user's system discovered by the
-  reticulate package, and create a standard Python virtual environment using
-  the built-in Python module `venv` containing all of _slendr_'s Python
-  dependencies.
+- Alternatively, running `setup_env(env = "venv")` will use a Python interpreter already available on the user's system discovered by the reticulate package, and create a standard Python virtual environment using the built-in Python module `venv` containing all of _slendr_'s Python dependencies.
 
-3. Given the expanded possibilities offered by the `setup_env(env = "conda|venv")`
-options, the `pip = TRUE` argument of `setup_env()` is now deprecated.
+3. Given the expanded possibilities offered by the `setup_env(env = "conda|venv")` options, the `pip = TRUE` argument of `setup_env()` is now deprecated.
 
-In either of the above cases, calling `init_env()` will activate the Python
-virtual environment thus created, just like before.
+In either of the above cases, calling `init_env()` will activate the Python virtual environment thus created, just like before.
 
-Finally, please be aware of the Anaconda licensing-related issue described below.
-It has been highlighted recently by [a user on GitHub](https://github.com/bodkan/slendr/issues/198).
-No solution has been found yet, but I do intend to evaluate if (and how) has the
-problem evolved from Anaconda's side since the problem first popped up.
+Finally, please be aware of the Anaconda licensing-related issue described below. It has been highlighted recently by [a user on GitHub](https://github.com/bodkan/slendr/issues/198). No solution has been found yet, but I do intend to evaluate if (and how) has the problem evolved from Anaconda's side since the problem first popped up.
 
-- An issue in which _msprime_-based simulations with implicit sampling schedules
-  produced an incorrect ordering of the sample names column compared to the population
-  names column in `ts_samples()` has been fixed. As a consequence of this fix,
-  implicit sampling (now always happening at "present-day") for _msprime_
-  simulations truly samples only individuals at the end of the simulation.
-  This has always been the case for SLiM (by definition of how sampling in the
-  SLiM engine was implemented), but not for _msprime_. ([PR #199](https://github.com/bodkan/slendr/pull/199))
+- An issue in which _msprime_-based simulations with implicit sampling schedules produced an incorrect ordering of the sample names column compared to the population names column in `ts_samples()` has been fixed. As a consequence of this fix, implicit sampling (now always happening at "present-day") for _msprime_ simulations truly samples only individuals at the end of the simulation. This has always been the case for SLiM (by definition of how sampling in the SLiM engine was implemented), but not for _msprime_. ([PR #199](https://github.com/bodkan/slendr/pull/199))
 
 # _slendr_ 1.4.0
 
